@@ -12,14 +12,6 @@ ALTER TABLE swo_list ADD COLUMN IF NOT EXISTS rejection_reason TEXT DEFAULT NULL
 ALTER TABLE swo_list ADD COLUMN IF NOT EXISTS support_reviewed_at TIMESTAMP NULL DEFAULT NULL;
 ALTER TABLE swo_list ADD COLUMN IF NOT EXISTS control_reviewed_at TIMESTAMP NULL DEFAULT NULL;
 
--- Add foreign keys for new columns (only if not exists)
-ALTER TABLE swo_list ADD CONSTRAINT fk_support_reviewer
-    FOREIGN KEY (support_reviewer_id) REFERENCES users(id)
-    ON DELETE SET NULL;
-ALTER TABLE swo_list ADD CONSTRAINT fk_control_reviewer
-    FOREIGN KEY (control_reviewer_id) REFERENCES users(id)
-    ON DELETE SET NULL;
-
 -- 3. Create support_reviews table
 CREATE TABLE IF NOT EXISTS support_reviews (
     id INT PRIMARY KEY AUTO_INCREMENT,

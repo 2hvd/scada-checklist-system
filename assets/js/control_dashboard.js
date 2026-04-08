@@ -192,7 +192,7 @@ const ControlReview = {
     },
 
     async saveItemReview(itemKey) {
-        const row = document.querySelector(`tr[data-item-key="${CSS.escape(itemKey)}"]`);
+        const row = document.querySelector(`tr[data-item-key="${itemKey.replace(/"/g, '\\"')}"]`);
         if (!row) return;
 
         const decision = row.querySelector('.control-decision-select')?.value ?? '';
