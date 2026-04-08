@@ -1,0 +1,108 @@
+<?php
+$pageTitle = 'Checklist';
+require_once __DIR__ . '/../../config/functions.php';
+requireRole('user');
+
+$swo_id = isset($_GET['swo_id']) ? intval($_GET['swo_id']) : null;
+if (!$swo_id) {
+    header('Location: /scada-checklist-system/views/user/index.php');
+    exit;
+}
+
+// Verify assignment
+require_once __DIR__ . '/../../config/db_config.php';
+$conn = getDBConnection();
+$stmt = $conn->prepare("SELECT swo_number, station_name, swo_type, kcor, status FROM swo_list WHERE id = ? AND assigned_to = ?");
+$stmt->bind_param('ii', $swo_id, $_SESSION['user_id']);
+$stmt->execute();
+$swo = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+$conn->close();
+
+if (!$swo) {
+    header('Location: /scada-checklist-system/views/user/index.php');
+    exit;
+}
+
+$readOnly = $swo['status'] === 'Submitted';
+require_once __DIR__ . '/../components/header.php';
+require_once __DIR__ . '/../components/sidebar.php';
+?>
+<div class="main-content">
+    <div class="topbar">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+            <div>
+                <h1 class="topbar-title" style="margin:0;"><?php echo htmlspecialchars($swo['swo_number']); ?></h1>
+                <div style="font-size:12px;color:#666;"><?php echo htmlspecialchars($swo['station_name']); ?> &mdash; <?php echo htmlspecialchars($swo['swo_type']); ?></div>
+            </div>
+        </div>
+        <div class="topbar-actions">
+            <a href="/scada-checklist-system/views/user/index.php" class="btn btn-secondary btn-sm">← Back</a>
+            <button class="btn btn-secondary btn-sm" onclick="ChecklistPage.exportCSV()">📥 CSV</button>
+            <?php if (!$readOnly): ?>
+            <button class="btn btn-success btn-sm" id="submitBtn" onclick="ChecklistPage.submitChecklist()" disabled title="Complete all items first">
+                📤 Submit
+            </button>
+            <?php else: ?>
+            <button class="btn btn-warning btn-sm" onclick="ChecklistPage.withdrawChecklist()">↩ Withdraw</button>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <div class="page-content">
+        <?php if ($readOnly): ?>
+        <div class="alert alert-info" style="margin-bottom:16px;">
+            ℹ️ This checklist has been submitted for review. Withdraw to make changes.
+        </div>
+        <?php endif; ?>
+
+        <!-- Progress Card -->
+        <div class="card" style="margin-bottom:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <strong style="font-size:15px;">Overall Progress</strong>
+                <strong style="font-size:18px;color:#2e86de;" id="progressPct">—</strong>
+            </div>
+            <div class="progress-bar-wrapper" style="height:12px;">
+                <div class="progress-bar" id="progressBar" style="width:0%"></div>
+            </div>
+            <div class="progress-text" id="progressText"></div>
+        </div>
+
+        <!-- Checklist Sections -->
+        <div id="checklistContainer">
+            <div class="loading-overlay"><div class="loading-spinner"></div></div>
+        </div>
+
+        <!-- Comments -->
+        <div class="card comments-section">
+            <div class="card-header">
+                <h3 class="card-title">Comments</h3>
+            </div>
+            <div id="commentsContainer">
+                <div class="loading-overlay"><div class="loading-spinner"></div></div>
+            </div>
+            <form id="commentForm" style="margin-top:16px;">
+                <div class="comment-form">
+                    <textarea class="form-control" placeholder="Add a comment..." required></textarea>
+                    <button type="submit" class="btn btn-primary">Send</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<?php require_once __DIR__ . '/../components/footer.php'; ?>
+<script src="/scada-checklist-system/assets/js/utils.js"></script>
+<script src="/scada-checklist-system/assets/js/notifications.js"></script>
+<script src="/scada-checklist-system/assets/js/api.js"></script>
+<script src="/scada-checklist-system/assets/js/checklist.js"></script>
+<script>
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('active');
+}
+document.addEventListener('DOMContentLoaded', function() {
+    ChecklistPage.init(<?php echo $swo_id; ?>, <?php echo $readOnly ? 'true' : 'false'; ?>);
+});
+</script>

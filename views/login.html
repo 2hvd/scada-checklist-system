@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCADA Checklist System - Login</title>
+    <link rel="stylesheet" href="/scada-checklist-system/assets/css/style.css">
+    <style>
+        body { background: linear-gradient(135deg, #1a3a5c 0%, #0d1f33 100%); min-height:100vh; display:flex; align-items:center; justify-content:center; }
+        .login-container { background:#fff; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.4); padding:48px 40px; width:100%; max-width:400px; }
+        .login-logo { text-align:center; margin-bottom:32px; }
+        .login-logo .logo-icon { font-size:48px; display:block; margin-bottom:12px; }
+        .login-logo h1 { color:#1a3a5c; font-size:22px; font-weight:700; margin:0; }
+        .login-logo p { color:#666; font-size:13px; margin:4px 0 0; }
+        .error-msg { background:#fde8e8; color:#c0392b; border:1px solid #f5c6c6; border-radius:6px; padding:10px 14px; margin-bottom:16px; font-size:14px; display:none; }
+        .btn-login { width:100%; padding:13px; background:#2e86de; color:#fff; border:none; border-radius:8px; font-size:16px; font-weight:600; cursor:pointer; transition:background 0.2s; margin-top:8px; }
+        .btn-login:hover { background:#1a6db5; }
+        .btn-login:disabled { background:#90bfe8; cursor:not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-logo">
+            <span class="logo-icon">⚙️</span>
+            <h1>SCADA Checklist System</h1>
+            <p>Secure Access Portal</p>
+        </div>
+        <div class="error-msg" id="errorMsg"></div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" class="form-control" placeholder="Enter username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Enter password" required>
+            </div>
+            <button type="submit" class="btn-login" id="loginBtn">Sign In</button>
+        </form>
+    </div>
+    <script src="/scada-checklist-system/assets/js/auth.js"></script>
+</body>
+</html>
