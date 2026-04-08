@@ -43,8 +43,6 @@ if ($swo['status'] !== 'In Progress') {
     $conn->close();
     jsonResponse(false, 'Only In Progress SWOs can be submitted');
 }
-
-// Verify all items have non-empty status
 $stmt = $conn->prepare(
     "SELECT COUNT(*) as empty_count FROM checklist_status 
      WHERE swo_id = ? AND user_id = ? AND status = 'empty'"
@@ -60,7 +58,7 @@ if ($row['empty_count'] > 0) {
 }
 
 // Update SWO status
-$stmt = $conn->prepare("UPDATE swo_list SET status = 'Submitted', submitted_at = NOW() WHERE id = ?");
+$stmt = $conn->prepare("UPDATE swo_list SET status = 'Pending Support Review', submitted_at = NOW() WHERE id = ?");
 $stmt->bind_param('i', $swo_id);
 if (!$stmt->execute()) {
     $stmt->close();
@@ -76,7 +74,7 @@ $stmt->bind_param('iis', $user_id, $swo_id, $notes);
 $stmt->execute();
 $stmt->close();
 
-logAudit($conn, $user_id, $swo_id, 'SUBMIT_CHECKLIST', 'In Progress', 'Submitted');
+logAudit($conn, $user_id, $swo_id, 'SUBMIT_CHECKLIST', 'In Progress', 'Pending Support Review');
 
 $conn->close();
 jsonResponse(true, 'Checklist submitted for review');

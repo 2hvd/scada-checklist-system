@@ -36,6 +36,7 @@ $initial = strtoupper(substr($username, 0, 1));
         <a class="nav-item <?php echo strpos($_SERVER['REQUEST_URI'],'support/index') !== false ? 'active' : ''; ?>"
            href="/scada-checklist-system/views/support/index.php">
             <span class="nav-icon">🏠</span> Dashboard
+            <span class="nav-badge" id="submissionsBadge" style="display:none">0</span>
         </a>
         <a class="nav-item <?php echo strpos($_SERVER['REQUEST_URI'],'create_swo') !== false ? 'active' : ''; ?>"
            href="/scada-checklist-system/views/support/create_swo.php">
@@ -45,10 +46,13 @@ $initial = strtoupper(substr($username, 0, 1));
            href="/scada-checklist-system/views/support/my_swo.php">
             <span class="nav-icon">📁</span> My SWOs
         </a>
-        <a class="nav-item <?php echo strpos($_SERVER['REQUEST_URI'],'submissions') !== false ? 'active' : ''; ?>"
-           href="/scada-checklist-system/views/support/submissions.php">
-            <span class="nav-icon">📬</span> Submissions
-            <span class="nav-badge" id="submissionsBadge" style="display:none">0</span>
+
+        <?php elseif ($role === 'control'): ?>
+        <div class="nav-section-title">Control</div>
+        <a class="nav-item <?php echo strpos($_SERVER['REQUEST_URI'],'control/index') !== false ? 'active' : ''; ?>"
+           href="/scada-checklist-system/views/control/index.php">
+            <span class="nav-icon">🏠</span> Dashboard
+            <span class="nav-badge" id="controlPendingBadge" style="display:none">0</span>
         </a>
 
         <?php else: ?>

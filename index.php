@@ -7,6 +7,8 @@ if (isset($_SESSION['user_id'])) {
         header('Location: views/admin/index.php');
     } elseif ($role === 'support') {
         header('Location: views/support/index.php');
+    } elseif ($role === 'control') {
+        header('Location: views/control/index.php');
     } else {
         header('Location: views/user/index.php');
     }
@@ -192,6 +194,8 @@ $timeout = isset($_GET['timeout']) ? true : false;
                             window.location.href = 'views/admin/index.php';
                         } else if (role === 'support') {
                             window.location.href = 'views/support/index.php';
+                        } else if (role === 'control') {
+                            window.location.href = 'views/control/index.php';
                         } else {
                             window.location.href = 'views/user/index.php';
                         }

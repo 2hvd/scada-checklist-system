@@ -19,13 +19,16 @@ function formatDateShort(dateStr) {
 
 function getStatusBadge(status) {
     const statusMap = {
-        'Draft':      'badge-draft',
-        'Pending':    'badge-pending',
-        'Registered': 'badge-registered',
-        'In Progress':'badge-inprogress',
-        'Submitted':  'badge-submitted',
-        'Completed':  'badge-completed',
-        'Closed':     'badge-closed',
+        'Draft':                    'badge-draft',
+        'Pending':                  'badge-pending',
+        'Registered':               'badge-registered',
+        'In Progress':              'badge-inprogress',
+        'Submitted':                'badge-submitted',
+        'Pending Support Review':   'badge-submitted',
+        'Pending Control Review':   'badge-pending',
+        'Returned from Control':    'badge-warning',
+        'Completed':                'badge-completed',
+        'Closed':                   'badge-closed',
     };
     const cls = statusMap[status] || 'badge-draft';
     return `<span class="badge ${cls}">${escapeHtml(status)}</span>`;
