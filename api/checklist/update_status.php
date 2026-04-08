@@ -29,12 +29,13 @@ if (!in_array($status, $validStatuses)) {
     jsonResponse(false, 'Invalid status value');
 }
 
-$validKeys = getAllItemKeys();
+$conn = getDBConnection();
+
+$validKeys = getAllItemKeysFromDB($conn);
 if (!in_array($item_key, $validKeys)) {
+    $conn->close();
     jsonResponse(false, 'Invalid item key');
 }
-
-$conn = getDBConnection();
 $user_id = $_SESSION['user_id'];
 
 // Verify SWO is assigned to this user and In Progress
