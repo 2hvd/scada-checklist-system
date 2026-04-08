@@ -135,3 +135,100 @@ function getAllItemKeys() {
     }
     return $keys;
 }
+
+/**
+ * Load active checklist items from DB, structured like getChecklistItems().
+ * Falls back to hardcoded list if the table doesn't exist or is empty.
+ */
+function getChecklistItemsFromDB($conn) {
+    $sectionLabels = [
+        'during_config'       => 'During Configuration',
+        'during_commissioning'=> 'During Commissioning',
+        'after_commissioning' => 'After Commissioning',
+    ];
+
+    $result = $conn->query(
+        "SELECT section, section_number, item_key, description
+           FROM checklist_items
+          WHERE is_active = 1 AND is_deleted = 0
+          ORDER BY section, section_number"
+    );
+
+    if (!$result || $result->num_rows === 0) {
+        return getChecklistItems();
+    }
+
+    $structured = [];
+    while ($row = $result->fetch_assoc()) {
+        $sec = $row['section'];
+        if (!isset($structured[$sec])) {
+            $structured[$sec] = [
+                'label' => $sectionLabels[$sec] ?? ucwords(str_replace('_', ' ', $sec)),
+                'items' => [],
+            ];
+        }
+        $structured[$sec]['items'][$row['item_key']] = $row['description'];
+    }
+
+    return $structured ?: getChecklistItems();
+}
+
+/**
+ * Return active item keys from DB, falling back to hardcoded.
+ */
+function getAllItemKeysFromDB($conn) {
+    $keys = [];
+    $result = $conn->query(
+        "SELECT item_key FROM checklist_items WHERE is_active = 1 AND is_deleted = 0 ORDER BY section, section_number"
+    );
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $keys[] = $row['item_key'];
+        }
+        return $keys;
+    }
+    return getAllItemKeys();
+}
+
+/**
+ * Load item labels (key => description) for a specific set of keys.
+ * Used by get_checklist.php to resolve labels for existing SWO items.
+ */
+function getItemLabelsForKeys($conn, array $keys) {
+    if (empty($keys)) {
+        return [];
+    }
+
+    // Build label map from DB
+    $dbLabels = [];
+    $placeholders = implode(',', array_fill(0, count($keys), '?'));
+    $stmt = $conn->prepare(
+        "SELECT item_key, description, section, section_number FROM checklist_items WHERE item_key IN ($placeholders)"
+    );
+    $types = str_repeat('s', count($keys));
+    $stmt->bind_param($types, ...$keys);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    while ($row = $res->fetch_assoc()) {
+        $dbLabels[$row['item_key']] = [
+            'description'    => $row['description'],
+            'section'        => $row['section'],
+            'section_number' => $row['section_number'],
+        ];
+    }
+    $stmt->close();
+
+    // Fall back to hardcoded for any key not found in DB
+    $hardcoded = [];
+    foreach (getChecklistItems() as $secKey => $sec) {
+        foreach ($sec['items'] as $k => $label) {
+            $hardcoded[$k] = ['description' => $label, 'section' => $secKey, 'section_number' => null];
+        }
+    }
+
+    $result = [];
+    foreach ($keys as $k) {
+        $result[$k] = $dbLabels[$k] ?? ($hardcoded[$k] ?? ['description' => $k, 'section' => 'unknown', 'section_number' => null]);
+    }
+    return $result;
+}

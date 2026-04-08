@@ -67,8 +67,8 @@ if (!$stmt->execute()) {
 }
 $stmt->close();
 
-// Initialize checklist items for this user/SWO
-$itemKeys = getAllItemKeys();
+// Initialize checklist items for this user/SWO (use DB-based active items)
+$itemKeys = getAllItemKeysFromDB($conn);
 $insertStmt = $conn->prepare(
     "INSERT IGNORE INTO checklist_status (user_id, swo_id, item_key, status) VALUES (?,?,?,'empty')"
 );

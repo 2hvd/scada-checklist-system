@@ -77,3 +77,16 @@ CREATE TABLE IF NOT EXISTS submissions_history (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (swo_id) REFERENCES swo_list(id)
 );
+
+CREATE TABLE IF NOT EXISTS checklist_items (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    section VARCHAR(50) NOT NULL,
+    section_number INT NOT NULL,
+    description TEXT NOT NULL,
+    item_key VARCHAR(50) UNIQUE NOT NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    is_deleted TINYINT(1) DEFAULT 0,
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id)
+);
