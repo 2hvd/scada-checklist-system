@@ -132,13 +132,13 @@ require_once __DIR__ . '/../components/sidebar.php';
                     <div class="card-header" style="flex-wrap:wrap;gap:10px;">
                         <h3 class="card-title" style="margin:0;">Checklist Items</h3>
                         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-                            <select id="ciSectionFilter" class="form-control" style="width:auto;" onchange="ChecklistItems.load()">
+                            <select id="ciSectionFilter" class="form-control" style="width:auto;">
                                 <option value="">All Sections</option>
                                 <option value="during_config">During Configuration</option>
                                 <option value="during_commissioning">During Commissioning</option>
                                 <option value="after_commissioning">After Commissioning</option>
                             </select>
-                            <input type="text" id="ciSearchFilter" class="form-control" placeholder="🔍 Search description…" style="width:220px;" oninput="ChecklistItems.load()">
+                            <input type="text" id="ciSearchFilter" class="form-control" placeholder="🔍 Search description…" style="width:220px;">
                             <button class="btn btn-primary btn-sm" onclick="ChecklistItems.openAddModal()">+ Add Item</button>
                             <button class="btn btn-secondary btn-sm" onclick="ChecklistItems.load()">🔄 Refresh</button>
                         </div>

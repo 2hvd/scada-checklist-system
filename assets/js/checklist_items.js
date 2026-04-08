@@ -173,7 +173,7 @@ const ChecklistItems = {
     },
 
     async toggleStatus(item_id, is_active) {
-        const action = is_active ? 'activate' : 'deactivate';
+        const action = parseInt(is_active) ? 'activate' : 'deactivate';
         const confirmed = await confirmDialog(`Are you sure you want to ${action} this item?\n\nNote: Existing SWO checklists will NOT be affected.`);
         if (!confirmed) return;
 
@@ -204,7 +204,7 @@ const ChecklistItems = {
     }
 };
 
-// Auto-load when the checklist items tab is clicked
+// Auto-load when the checklist items tab is clicked; attach filter listeners
 document.addEventListener('DOMContentLoaded', function() {
     const tabBtn = document.querySelector('[data-tab="tab-checklist-items"]');
     if (tabBtn) {
@@ -214,4 +214,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    const sectionFilter = document.getElementById('ciSectionFilter');
+    const searchFilter  = document.getElementById('ciSearchFilter');
+    if (sectionFilter) sectionFilter.addEventListener('change', () => ChecklistItems.load());
+    if (searchFilter)  searchFilter.addEventListener('input',  () => ChecklistItems.load());
 });
