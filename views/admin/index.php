@@ -43,6 +43,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                 <button class="tab-btn active" data-tab="tab-statistics">📈 Statistics</button>
                 <button class="tab-btn" data-tab="tab-swo">📋 SWO Management</button>
                 <button class="tab-btn" data-tab="tab-activity">🕐 Recent Activity</button>
+                <button class="tab-btn" data-tab="tab-checklist-items">📝 Manage Checklist Items</button>
             </div>
 
             <!-- Tab: Statistics -->
@@ -104,6 +105,119 @@ require_once __DIR__ . '/../components/sidebar.php';
                     </div>
                 </div>
             </div>
+
+            <!-- Tab: Manage Checklist Items -->
+            <div class="tab-content" id="tab-checklist-items">
+                <!-- Statistics Cards -->
+                <div class="stats-grid" id="checklistItemsStats" style="margin-bottom:20px;">
+                    <div class="stat-card">
+                        <div class="stat-value" id="ciStatTotal">—</div>
+                        <div class="stat-label">Total Items</div>
+                    </div>
+                    <div class="stat-card border-success">
+                        <div class="stat-value" id="ciStatActive">—</div>
+                        <div class="stat-label">Active Items</div>
+                    </div>
+                    <div class="stat-card border-info">
+                        <div class="stat-value" id="ciStatConfig">—</div>
+                        <div class="stat-label">During Config</div>
+                    </div>
+                    <div class="stat-card border-warning">
+                        <div class="stat-value" id="ciStatCommissioning">—</div>
+                        <div class="stat-label">During Commissioning</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header" style="flex-wrap:wrap;gap:10px;">
+                        <h3 class="card-title" style="margin:0;">Checklist Items</h3>
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                            <select id="ciSectionFilter" class="form-control" style="width:auto;" onchange="ChecklistItems.load()">
+                                <option value="">All Sections</option>
+                                <option value="during_config">During Configuration</option>
+                                <option value="during_commissioning">During Commissioning</option>
+                                <option value="after_commissioning">After Commissioning</option>
+                            </select>
+                            <input type="text" id="ciSearchFilter" class="form-control" placeholder="🔍 Search description…" style="width:220px;" oninput="ChecklistItems.load()">
+                            <button class="btn btn-primary btn-sm" onclick="ChecklistItems.openAddModal()">+ Add Item</button>
+                            <button class="btn btn-secondary btn-sm" onclick="ChecklistItems.load()">🔄 Refresh</button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Section</th>
+                                    <th>#</th>
+                                    <th>Description</th>
+                                    <th>Key</th>
+                                    <th>Status</th>
+                                    <th>Created By</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ciTableBody">
+                                <tr><td colspan="8" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Checklist Item Modal -->
+<div class="modal-overlay" id="addChecklistItemModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">Add Checklist Item</span>
+            <button class="modal-close" onclick="closeModal('addChecklistItemModal')">×</button>
+        </div>
+        <div class="form-group">
+            <label>Section *</label>
+            <select id="ciAddSection" class="form-control" onchange="ChecklistItems.suggestNumber()">
+                <option value="">-- Select Section --</option>
+                <option value="during_config">During Configuration</option>
+                <option value="during_commissioning">During Commissioning</option>
+                <option value="after_commissioning">After Commissioning</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Item Number * <small style="color:#999;">(auto-suggested)</small></label>
+            <input type="number" id="ciAddNumber" class="form-control" min="1" max="99" placeholder="e.g. 9">
+        </div>
+        <div class="form-group">
+            <label>Description *</label>
+            <textarea id="ciAddDescription" class="form-control" rows="3" placeholder="Enter checklist item description…"></textarea>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('addChecklistItemModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="ChecklistItems.submitAdd()">Create Item</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Checklist Item Modal -->
+<div class="modal-overlay" id="editChecklistItemModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">Edit Checklist Item</span>
+            <button class="modal-close" onclick="closeModal('editChecklistItemModal')">×</button>
+        </div>
+        <input type="hidden" id="ciEditId">
+        <div class="form-group">
+            <label>Item Key</label>
+            <input type="text" id="ciEditKey" class="form-control" disabled>
+        </div>
+        <div class="form-group">
+            <label>Description *</label>
+            <textarea id="ciEditDescription" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('editChecklistItemModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="ChecklistItems.submitEdit()">Update Item</button>
         </div>
     </div>
 </div>
@@ -167,6 +281,7 @@ require_once __DIR__ . '/../components/sidebar.php';
 <script src="/scada-checklist-system/assets/js/notifications.js"></script>
 <script src="/scada-checklist-system/assets/js/api.js"></script>
 <script src="/scada-checklist-system/assets/js/dashboard.js"></script>
+<script src="/scada-checklist-system/assets/js/checklist_items.js"></script>
 <script>
 document.body.dataset.page = 'admin';
 function toggleSidebar() {
