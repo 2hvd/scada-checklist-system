@@ -55,8 +55,10 @@ require_once __DIR__ . '/../components/sidebar.php';
                 ℹ️ This checklist has been submitted and is awaiting Support review.
             <?php elseif ($swo['status'] === 'Pending Control Review'): ?>
                 ℹ️ This checklist has been accepted by Support and is awaiting Control approval.
+            <?php elseif ($swo['status'] === 'Returned from Control'): ?>
+                🔄 This checklist was returned by Control and is currently under Support re-review.
             <?php elseif ($swo['status'] === 'Completed'): ?>
-                ✅ This checklist has been approved and is Completed.
+                ✅ This checklist has been approved by Control and is Completed.
             <?php else: ?>
                 ℹ️ This checklist is currently under review (<?php echo htmlspecialchars($swo['status']); ?>).
             <?php endif; ?>
