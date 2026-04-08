@@ -130,24 +130,64 @@ const ChecklistItems = {
         document.getElementById('ciAddNumber').value = max + 1;
     },
 
-    async submitAdd() {
-        const section     = document.getElementById('ciAddSection').value;
-        const sectionNum  = parseInt(document.getElementById('ciAddNumber').value);
-        const description = document.getElementById('ciAddDescription').value.trim();
+    // في checklist_items.js - تحديث submitAdd function:
 
-        if (!section)       { showWarning('Please select a section.');       return; }
-        if (!sectionNum || sectionNum < 1) { showWarning('Please enter a valid item number.'); return; }
-        if (!description)   { showWarning('Please enter a description.');     return; }
+async submitAdd() {
+    const sectionEl   = document.getElementById('ciAddSection');
+    const numberEl    = document.getElementById('ciAddNumber');
+    const descEl      = document.getElementById('ciAddDescription');
+    
+    const section     = (sectionEl.value || '').trim();
+    const sectionNum  = parseInt(numberEl.value) || 0;
+    const description = (descEl.value || '').trim();
 
-        const data = await API.post('/checklist/add_item.php', { section, section_number: sectionNum, description });
+    console.log('BEFORE SUBMIT:', { 
+        section, 
+        sectionNum, 
+        description,
+        inputValue: numberEl.value,
+        inputType: typeof numberEl.value
+    });
+
+    if (!section) { 
+        showWarning('Please select a section.'); 
+        return; 
+    }
+    if (sectionNum < 1 || sectionNum > 99) { 
+        showWarning('Item number must be between 1-99.'); 
+        return; 
+    }
+    if (!description) { 
+        showWarning('Please enter a description.'); 
+        return; 
+    }
+
+    try {
+        const payload = { 
+            section: section, 
+            section_number: sectionNum, 
+            description: description
+        };
+        
+        console.log('SENDING TO API:', payload);
+        
+        const data = await API.post('/checklist/add_item.php', payload);
+        
         if (data && data.success) {
-            showSuccess('Checklist item added successfully!');
+            showSuccess('✅ Item added: ' + description);
+            sectionEl.value = '';
+            numberEl.value = '';
+            descEl.value = '';
             closeModal('addChecklistItemModal');
-            this.load();
+            setTimeout(() => this.load(), 500);
         } else {
             showError(data?.message || 'Failed to add item');
         }
-    },
+    } catch (err) {
+        showError('Error: ' + err.message);
+        console.error('API Error:', err);
+    }
+},
 
     openEditModal(id, key, description) {
         document.getElementById('ciEditId').value          = id;

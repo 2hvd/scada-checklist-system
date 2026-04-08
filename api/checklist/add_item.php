@@ -52,12 +52,14 @@ $stmt = $conn->prepare(
     "INSERT INTO checklist_items (section, section_number, description, item_key, is_active, created_by)
      VALUES (?, ?, ?, ?, 1, ?)"
 );
-$stmt->bind_param('siisi', $section, $section_number, $description, $item_key, $user_id);
+
+// الترتيب الصح: s=section, i=section_number, s=description, s=item_key, i=created_by
+$stmt->bind_param('sissi', $section, $section_number, $description, $item_key, $user_id);
 
 if (!$stmt->execute()) {
     $stmt->close();
     $conn->close();
-    jsonResponse(false, 'Failed to add checklist item');
+    jsonResponse(false, 'Database error: ' . $conn->error);
 }
 
 $item_id = $stmt->insert_id;
