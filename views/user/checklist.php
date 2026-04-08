@@ -12,7 +12,7 @@ if (!$swo_id) {
 // Verify assignment
 require_once __DIR__ . '/../../config/db_config.php';
 $conn = getDBConnection();
-$stmt = $conn->prepare("SELECT swo_number, station_name, swo_type, kcor, status FROM swo_list WHERE id = ? AND assigned_to = ?");
+$stmt = $conn->prepare("SELECT swo_number, station_name, swo_type, kcor, status, rejection_reason FROM swo_list WHERE id = ? AND assigned_to = ?");
 $stmt->bind_param('ii', $swo_id, $_SESSION['user_id']);
 $stmt->execute();
 $swo = $stmt->get_result()->fetch_assoc();
@@ -24,7 +24,7 @@ if (!$swo) {
     exit;
 }
 
-$readOnly = $swo['status'] === 'Submitted';
+$readOnly = !in_array($swo['status'], ['In Progress']);
 require_once __DIR__ . '/../components/header.php';
 require_once __DIR__ . '/../components/sidebar.php';
 ?>
@@ -44,8 +44,6 @@ require_once __DIR__ . '/../components/sidebar.php';
             <button class="btn btn-success btn-sm" id="submitBtn" onclick="ChecklistPage.submitChecklist()" disabled title="Complete all items first">
                 📤 Submit
             </button>
-            <?php else: ?>
-            <button class="btn btn-warning btn-sm" onclick="ChecklistPage.withdrawChecklist()">↩ Withdraw</button>
             <?php endif; ?>
         </div>
     </div>
@@ -53,7 +51,15 @@ require_once __DIR__ . '/../components/sidebar.php';
     <div class="page-content">
         <?php if ($readOnly): ?>
         <div class="alert alert-info" style="margin-bottom:16px;">
-            ℹ️ This checklist has been submitted for review. Withdraw to make changes.
+            <?php if ($swo['status'] === 'Pending Support Review'): ?>
+                ℹ️ This checklist has been submitted and is awaiting Support review.
+            <?php elseif ($swo['status'] === 'Pending Control Review'): ?>
+                ℹ️ This checklist has been accepted by Support and is awaiting Control approval.
+            <?php elseif ($swo['status'] === 'Completed'): ?>
+                ✅ This checklist has been approved and is Completed.
+            <?php else: ?>
+                ℹ️ This checklist is currently under review (<?php echo htmlspecialchars($swo['status']); ?>).
+            <?php endif; ?>
         </div>
         <?php endif; ?>
 

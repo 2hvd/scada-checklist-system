@@ -74,7 +74,9 @@ async function loadUserDashboard() {
 function updateSummary(swos) {
     document.getElementById('statAssigned').textContent = swos.length;
     document.getElementById('statInProgress').textContent = swos.filter(s => s.status === 'In Progress').length;
-    document.getElementById('statSubmitted').textContent = swos.filter(s => s.status === 'Submitted').length;
+    document.getElementById('statSubmitted').textContent = swos.filter(s =>
+        ['Pending Support Review', 'Pending Control Review'].includes(s.status)
+    ).length;
 
     if (swos.length > 0) {
         const avgPct = Math.round(swos.reduce((sum, s) => sum + parseFloat(s.progress || 0), 0) / swos.length);
@@ -94,10 +96,20 @@ function renderSWOCards(swos, container) {
         return;
     }
 
+    const editableStatuses = ['In Progress'];
+    const reviewStatuses   = ['Pending Support Review', 'Pending Control Review', 'Returned from Control', 'Completed'];
+
     container.innerHTML = swos.map(swo => {
         const counts = swo.checklist_counts || {};
-        const statusClass = swo.status === 'Submitted' ? 'status-submitted' : (swo.status === 'Completed' ? 'status-completed' : '');
-        const canOpenChecklist = ['In Progress', 'Submitted'].includes(swo.status);
+        const isEditable = editableStatuses.includes(swo.status);
+        const canOpenChecklist = isEditable || reviewStatuses.includes(swo.status);
+        const statusClass = swo.status === 'Completed' ? 'status-completed' : '';
+
+        let rejectionNotice = '';
+        if (swo.rejection_reason && swo.status === 'In Progress') {
+            rejectionNotice = `<div class="alert alert-warning" style="margin-top:8px;font-size:12px;padding:6px 10px;">
+                ⚠️ Rejected by Support: ${escapeHtml(swo.rejection_reason)}</div>`;
+        }
 
         return `
         <div class="swo-card ${statusClass}">
@@ -109,6 +121,8 @@ function renderSWOCards(swos, container) {
                 </div>
                 ${getStatusBadge(swo.status)}
             </div>
+
+            ${rejectionNotice}
 
             <div class="swo-item-counts">
                 <span class="item-count-badge status-done">✓ ${counts.done || 0} Done</span>
@@ -123,11 +137,9 @@ function renderSWOCards(swos, container) {
             <div class="swo-card-actions">
                 ${canOpenChecklist ? `
                     <a href="/scada-checklist-system/views/user/checklist.php?swo_id=${swo.id}"
-                       class="btn btn-primary btn-sm">📝 Open Checklist</a>` : ''}
+                       class="btn ${isEditable ? 'btn-primary' : 'btn-secondary'} btn-sm">📝 ${isEditable ? 'Edit Checklist' : 'View Checklist'}</a>` : ''}
                 ${swo.status === 'In Progress' && (counts.empty || 0) === 0 ? `
                     <button class="btn btn-success btn-sm" onclick="submitChecklist(${swo.id})">📤 Submit</button>` : ''}
-                ${swo.status === 'Submitted' ? `
-                    <button class="btn btn-warning btn-sm" onclick="withdrawChecklist(${swo.id})">↩ Withdraw</button>` : ''}
             </div>
         </div>`;
     }).join('');
@@ -138,22 +150,10 @@ async function submitChecklist(swoId) {
     if (!confirmed) return;
     const data = await API.post('/checklist/submit_checklist.php', {swo_id: swoId});
     if (data && data.success) {
-        showSuccess('Checklist submitted!');
+        showSuccess('Checklist submitted for review!');
         setTimeout(() => loadUserDashboard(), 1500);
     } else {
         showError(data?.message || 'Failed to submit');
-    }
-}
-
-async function withdrawChecklist(swoId) {
-    const confirmed = await confirmDialog('Withdraw this submission to make changes?');
-    if (!confirmed) return;
-    const data = await API.post('/checklist/withdraw_checklist.php', {swo_id: swoId});
-    if (data && data.success) {
-        showSuccess('Checklist withdrawn.');
-        setTimeout(() => loadUserDashboard(), 1500);
-    } else {
-        showError(data?.message || 'Failed to withdraw');
     }
 }
 

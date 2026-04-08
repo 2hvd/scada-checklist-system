@@ -1,7 +1,7 @@
 <?php
-$pageTitle = 'Support Dashboard';
+$pageTitle = 'Control Dashboard';
 require_once __DIR__ . '/../../config/functions.php';
-requireRole('support');
+requireRole('control');
 require_once __DIR__ . '/../components/header.php';
 require_once __DIR__ . '/../components/sidebar.php';
 ?>
@@ -9,38 +9,39 @@ require_once __DIR__ . '/../components/sidebar.php';
     <div class="topbar">
         <div style="display:flex;align-items:center;gap:12px;">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
-            <h1 class="topbar-title">Support Dashboard</h1>
-        </div>
-        <div class="topbar-actions">
-            <a href="/scada-checklist-system/views/support/create_swo.php" class="btn btn-primary btn-sm">➕ Create SWO</a>
+            <h1 class="topbar-title">Control Dashboard</h1>
         </div>
     </div>
 
     <div class="page-content">
         <!-- Summary -->
-        <div class="stats-grid" id="supportSummaryCards">
-            <div class="stat-card"><div class="stat-value">—</div><div class="stat-label">Total SWOs</div></div>
-            <div class="stat-card border-warning"><div class="stat-value" id="statSupportPending">—</div><div class="stat-label">Pending Review</div></div>
-            <div class="stat-card border-success"><div class="stat-value">—</div><div class="stat-label">In Progress</div></div>
-            <div class="stat-card border-info"><div class="stat-value">—</div><div class="stat-label">Sent to Control</div></div>
+        <div class="stats-grid" id="controlSummaryCards">
+            <div class="stat-card border-warning">
+                <div class="stat-value" id="statControlPending">—</div>
+                <div class="stat-label">Pending Review</div>
+            </div>
+            <div class="stat-card border-success">
+                <div class="stat-value" id="statControlCompleted">—</div>
+                <div class="stat-label">Completed</div>
+            </div>
         </div>
 
         <!-- Tabs -->
         <div id="mainTabs">
             <div class="tabs">
-                <button class="tab-btn active" data-tab="tab-submissions">
-                    📬 Pending Reviews
-                    <span class="nav-badge" id="submissionsBadge" style="display:none">0</span>
+                <button class="tab-btn active" data-tab="tab-pending">
+                    📋 Pending Reviews
+                    <span class="nav-badge" id="controlPendingBadge" style="display:none">0</span>
                 </button>
-                <button class="tab-btn" data-tab="tab-myswos">📁 My SWOs</button>
+                <button class="tab-btn" data-tab="tab-completed">✅ Completed</button>
             </div>
 
             <!-- Pending Reviews Tab -->
-            <div class="tab-content active" id="tab-submissions">
+            <div class="tab-content active" id="tab-pending">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Checklists Awaiting Review</h3>
-                        <button class="btn btn-secondary btn-sm" onclick="SupportDashboard.loadData()">🔄 Refresh</button>
+                        <h3 class="card-title">Submissions Awaiting Control Review</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="ControlDashboard.loadData()">🔄 Refresh</button>
                     </div>
                     <div class="table-wrapper">
                         <table>
@@ -49,12 +50,12 @@ require_once __DIR__ . '/../components/sidebar.php';
                                     <th>SWO Number</th>
                                     <th>Station</th>
                                     <th>Assigned To</th>
-                                    <th>Status</th>
-                                    <th>Submitted</th>
+                                    <th>Support Reviewer</th>
+                                    <th>Support Date</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="pendingSubTableBody">
+                            <tbody id="controlPendingTableBody">
                                 <tr><td colspan="6" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
                             </tbody>
                         </table>
@@ -62,12 +63,11 @@ require_once __DIR__ . '/../components/sidebar.php';
                 </div>
             </div>
 
-            <!-- My SWOs -->
-            <div class="tab-content" id="tab-myswos">
+            <!-- Completed Tab -->
+            <div class="tab-content" id="tab-completed">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">My SWOs</h3>
-                        <a href="/scada-checklist-system/views/support/create_swo.php" class="btn btn-primary btn-sm">➕ New SWO</a>
+                        <h3 class="card-title">Completed Reviews</h3>
                     </div>
                     <div class="table-wrapper">
                         <table>
@@ -75,14 +75,12 @@ require_once __DIR__ . '/../components/sidebar.php';
                                 <tr>
                                     <th>SWO Number</th>
                                     <th>Station</th>
-                                    <th>Type</th>
-                                    <th>Status</th>
                                     <th>Assigned To</th>
-                                    <th>Created</th>
+                                    <th>Completed At</th>
                                 </tr>
                             </thead>
-                            <tbody id="mySwoTableBody">
-                                <tr><td colspan="6" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
+                            <tbody id="controlCompletedTableBody">
+                                <tr><td colspan="4" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -92,17 +90,17 @@ require_once __DIR__ . '/../components/sidebar.php';
     </div>
 </div>
 
-<!-- Support Review Modal -->
-<div class="modal-overlay" id="supportReviewModal">
+<!-- Control Review Modal -->
+<div class="modal-overlay" id="controlReviewModal">
     <div class="modal" style="max-width:900px;width:95vw;">
         <div class="modal-header">
-            <span class="modal-title" id="supportModalTitle">Support Review</span>
-            <button class="modal-close" onclick="closeModal('supportReviewModal')">✕</button>
+            <span class="modal-title" id="controlModalTitle">Control Review</span>
+            <button class="modal-close" onclick="closeModal('controlReviewModal')">✕</button>
         </div>
-        <div id="supportModalSwoInfo" style="font-size:13px;color:#666;margin-bottom:16px;"></div>
+        <div id="controlModalSwoInfo" style="font-size:13px;color:#666;margin-bottom:16px;"></div>
 
         <div class="table-wrapper" style="max-height:50vh;overflow-y:auto;">
-            <table id="supportReviewTable">
+            <table id="controlReviewTable">
                 <thead>
                     <tr>
                         <th style="width:40px">#</th>
@@ -110,26 +108,28 @@ require_once __DIR__ . '/../components/sidebar.php';
                         <th style="width:120px">User Status</th>
                         <th style="width:140px">Support Decision</th>
                         <th>Support Comment</th>
+                        <th style="width:140px">Control Decision</th>
+                        <th>Control Comment</th>
                     </tr>
                 </thead>
-                <tbody id="supportReviewTableBody">
-                    <tr><td colspan="5" class="text-center">Loading...</td></tr>
+                <tbody id="controlReviewTableBody">
+                    <tr><td colspan="7" class="text-center">Loading...</td></tr>
                 </tbody>
             </table>
         </div>
 
         <div style="margin-top:16px;">
             <label style="font-weight:600;display:block;margin-bottom:6px;">Overall Comments:</label>
-            <textarea id="supportOverallComments" class="form-control" rows="3" placeholder="Add overall review comments..."></textarea>
+            <textarea id="controlOverallComments" class="form-control" rows="3" placeholder="Add overall review comments..."></textarea>
         </div>
 
         <div class="modal-footer" style="margin-top:16px;">
-            <button class="btn btn-secondary" onclick="closeModal('supportReviewModal')">Cancel</button>
-            <button class="btn btn-danger" id="supportRejectBtn" onclick="SupportDashboard.submitReject()">
-                ❌ Reject (Back to User)
+            <button class="btn btn-secondary" onclick="closeModal('controlReviewModal')">Cancel</button>
+            <button class="btn btn-warning" id="controlReturnBtn" onclick="ControlDashboard.submitReturn()">
+                ↩ Return to Support
             </button>
-            <button class="btn btn-success" id="supportAcceptBtn" onclick="SupportDashboard.submitAccept()">
-                ✅ Accept (Send to Control)
+            <button class="btn btn-success" id="controlApproveBtn" onclick="ControlDashboard.submitApprove()">
+                ✅ Approve (Complete)
             </button>
         </div>
     </div>
@@ -139,16 +139,15 @@ require_once __DIR__ . '/../components/sidebar.php';
 <script src="/scada-checklist-system/assets/js/utils.js"></script>
 <script src="/scada-checklist-system/assets/js/notifications.js"></script>
 <script src="/scada-checklist-system/assets/js/api.js"></script>
-<script src="/scada-checklist-system/assets/js/dashboard.js"></script>
-<script src="/scada-checklist-system/assets/js/support_dashboard.js"></script>
+<script src="/scada-checklist-system/assets/js/control_dashboard.js"></script>
 <script>
-document.body.dataset.page = 'support';
+document.body.dataset.page = 'control';
 function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
     document.getElementById('sidebarOverlay').classList.toggle('active');
 }
 document.addEventListener('DOMContentLoaded', function() {
     initTabs('mainTabs');
-    SupportDashboard.init();
+    ControlDashboard.loadData();
 });
 </script>

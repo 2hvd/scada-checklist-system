@@ -30,15 +30,16 @@ while ($row = $swoResult->fetch_assoc()) {
 }
 $swoStmt->close();
 
-// SWOs awaiting review (Submitted status, created by me)
+// SWOs awaiting support review (all pending, not just own)
 $pendingStmt = $conn->prepare(
-    "SELECT s.*, ua.username AS assigned_to_name
+    "SELECT s.id, s.swo_number, s.station_name, s.swo_type, s.status,
+            s.submitted_at, s.rejection_reason,
+            ua.username AS assigned_to_name
      FROM swo_list s
-     JOIN users ua ON s.assigned_to = ua.id
-     WHERE s.created_by = ? AND s.status = 'Submitted'
+     LEFT JOIN users ua ON s.assigned_to = ua.id
+     WHERE s.status IN ('Pending Support Review', 'Returned from Control')
      ORDER BY s.submitted_at DESC"
 );
-$pendingStmt->bind_param('i', $user_id);
 $pendingStmt->execute();
 $pendingResult = $pendingStmt->get_result();
 $pendingSubmissions = [];

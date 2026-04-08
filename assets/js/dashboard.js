@@ -264,10 +264,9 @@ const AdminDashboard = {
     }
 };
 
-// Support Dashboard
+// Support Dashboard (legacy - now handled by support_dashboard.js)
 const SupportDashboard = {
     async init() {
-        initTabs('mainTabs');
         this.loadData();
     },
 
@@ -288,11 +287,14 @@ const SupportDashboard = {
         const total = Object.values(summary).reduce((a, b) => a + b, 0);
         const el = document.getElementById('supportSummaryCards');
         if (!el) return;
+        const pendingSupport = (summary['Pending Support Review'] || 0) + (summary['Returned from Control'] || 0);
+        const inProgress = summary['In Progress'] || 0;
+        const sentToControl = summary['Pending Control Review'] || 0;
         el.innerHTML = `
             <div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">Total SWOs</div></div>
-            <div class="stat-card border-warning"><div class="stat-value">${summary['Pending'] || 0}</div><div class="stat-label">Pending Approval</div></div>
-            <div class="stat-card border-success"><div class="stat-value">${summary['In Progress'] || 0}</div><div class="stat-label">In Progress</div></div>
-            <div class="stat-card border-info"><div class="stat-value">${summary['Submitted'] || 0}</div><div class="stat-label">Awaiting Review</div></div>
+            <div class="stat-card border-warning"><div class="stat-value" id="statSupportPending">${pendingSupport}</div><div class="stat-label">Pending Review</div></div>
+            <div class="stat-card border-success"><div class="stat-value">${inProgress}</div><div class="stat-label">In Progress</div></div>
+            <div class="stat-card border-info"><div class="stat-value">${sentToControl}</div><div class="stat-label">Sent to Control</div></div>
         `;
     },
 
@@ -326,7 +328,7 @@ const SupportDashboard = {
         }
 
         if (!swos.length) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No pending submissions.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No pending submissions.</td></tr>';
             return;
         }
         tbody.innerHTML = swos.map(s => `
@@ -334,16 +336,13 @@ const SupportDashboard = {
                 <td><strong>${escapeHtml(s.swo_number)}</strong></td>
                 <td>${escapeHtml(s.station_name)}</td>
                 <td>${escapeHtml(s.assigned_to_name || '—')}</td>
+                <td>${getStatusBadge(s.status)}</td>
                 <td>${formatDate(s.submitted_at)}</td>
                 <td>
-                    <button class="btn btn-primary btn-sm" onclick="SupportDashboard.viewSubmission(${s.id})">Review</button>
+                    <button class="btn btn-primary btn-sm" onclick="SupportReview.openModal(${s.id}, '${escapeHtml(s.swo_number)}', '${escapeHtml(s.station_name)}', '${escapeHtml(s.status)}')">Review</button>
                 </td>
             </tr>
         `).join('');
-    },
-
-    viewSubmission(swoId) {
-        window.location.href = '/scada-checklist-system/views/support/submissions.php?swo_id=' + swoId;
     }
 };
 
@@ -351,7 +350,6 @@ const SupportDashboard = {
 document.addEventListener('DOMContentLoaded', function() {
     if (document.body.dataset.page === 'admin') {
         AdminDashboard.init();
-    } else if (document.body.dataset.page === 'support') {
-        SupportDashboard.init();
     }
+    // support and control pages initialise via their own scripts
 });
