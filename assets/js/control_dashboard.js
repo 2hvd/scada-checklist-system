@@ -42,10 +42,10 @@ const ControlDashboard = {
                 <td>${escapeHtml(s.support_reviewer_name || '—')}</td>
                 <td>${formatDate(s.support_reviewed_at)}</td>
                 <td>
-                    <button class="btn btn-primary btn-sm"
-                            onclick="ControlReview.openModal(${s.id}, '${escapeHtml(s.swo_number)}', '${escapeHtml(s.station_name)}')">
+                    <a class="btn btn-primary btn-sm"
+                       href="/scada-checklist-system/views/control/review_swo.php?swo_id=${s.id}">
                         Review
-                    </button>
+                    </a>
                 </td>
             </tr>
         `).join('');

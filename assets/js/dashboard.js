@@ -339,7 +339,10 @@ const SupportDashboard = {
                 <td>${getStatusBadge(s.status)}</td>
                 <td>${formatDate(s.submitted_at)}</td>
                 <td>
-                    <button class="btn btn-primary btn-sm" onclick="SupportReview.openModal(${s.id}, '${escapeHtml(s.swo_number)}', '${escapeHtml(s.station_name)}', '${escapeHtml(s.status)}')">Review</button>
+                    <a class="btn btn-primary btn-sm"
+                       href="/scada-checklist-system/views/support/review_swo.php?swo_id=${s.id}">
+                        Review
+                    </a>
                 </td>
             </tr>
         `).join('');

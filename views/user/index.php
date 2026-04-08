@@ -105,10 +105,22 @@ function renderSWOCards(swos, container) {
         const canOpenChecklist = isEditable || reviewStatuses.includes(swo.status);
         const statusClass = swo.status === 'Completed' ? 'status-completed' : '';
 
-        let rejectionNotice = '';
+        let statusNotice = '';
         if (swo.rejection_reason && swo.status === 'In Progress') {
-            rejectionNotice = `<div class="alert alert-warning" style="margin-top:8px;font-size:12px;padding:6px 10px;">
+            statusNotice = `<div class="alert alert-warning" style="margin-top:8px;font-size:12px;padding:6px 10px;">
                 ⚠️ Rejected by Support: ${escapeHtml(swo.rejection_reason)}</div>`;
+        } else if (swo.status === 'Pending Support Review') {
+            statusNotice = `<div class="alert alert-info" style="margin-top:8px;font-size:12px;padding:6px 10px;">
+                ℹ️ Submitted — awaiting Support review.</div>`;
+        } else if (swo.status === 'Pending Control Review') {
+            statusNotice = `<div class="alert alert-info" style="margin-top:8px;font-size:12px;padding:6px 10px;">
+                ℹ️ Accepted by Support — awaiting Control approval.</div>`;
+        } else if (swo.status === 'Returned from Control') {
+            statusNotice = `<div class="alert alert-warning" style="margin-top:8px;font-size:12px;padding:6px 10px;">
+                🔄 Returned by Control — under Support re-review.</div>`;
+        } else if (swo.status === 'Completed') {
+            statusNotice = `<div class="alert alert-success" style="margin-top:8px;font-size:12px;padding:6px 10px;">
+                ✅ Completed — approved by Control.</div>`;
         }
 
         return `
@@ -122,7 +134,7 @@ function renderSWOCards(swos, container) {
                 ${getStatusBadge(swo.status)}
             </div>
 
-            ${rejectionNotice}
+            ${statusNotice}
 
             <div class="swo-item-counts">
                 <span class="item-count-badge status-done">✓ ${counts.done || 0} Done</span>
