@@ -3,6 +3,7 @@
 const ChecklistPage = {
     swoId: null,
     readOnly: false,
+    supportMode: false,
 
     async init(swoId, readOnly = false) {
         this.swoId = swoId;
@@ -44,11 +45,11 @@ const ChecklistPage = {
                 const num = idx + 1;
                 const disabled = this.readOnly ? 'disabled' : '';
                 html += `
-                    <div class="checklist-item" data-key="${escapeHtml(item.key)}">
+                    <div class="checklist-item${this.supportMode ? ' checklist-item--support' : ''}" data-key="${escapeHtml(item.key)}">
                         <div class="item-number">${num}</div>
                         <div class="item-label">${escapeHtml(item.label)}</div>
                         ${this.readOnly
-                            ? `<div>${getChecklistStatusBadge(item.status)}</div>`
+                            ? `<div class="item-user-status">${getChecklistStatusBadge(item.status)}</div>`
                             : `<select class="item-status-select status-${item.status}" 
                                 data-key="${escapeHtml(item.key)}" 
                                 onchange="ChecklistPage.updateStatus('${escapeHtml(item.key)}', this.value, this)"
@@ -60,6 +61,22 @@ const ChecklistPage = {
                                     <option value="still"   ${item.status==='still'   ?'selected':''}>Still</option>
                                </select>`
                         }
+                        ${this.supportMode ? `
+                        <select class="item-status-select support-decision"
+                                data-item-key="${escapeHtml(item.key)}"
+                                data-swo-id="${this.swoId}">
+                            <option value="">—</option>
+                            <option value="done">Done</option>
+                            <option value="na">N/A</option>
+                            <option value="still">Still</option>
+                            <option value="not_yet">Not Yet</option>
+                        </select>
+                        <textarea class="form-control support-comment"
+                                  data-item-key="${escapeHtml(item.key)}"
+                                  data-swo-id="${this.swoId}"
+                                  rows="2"
+                                  placeholder="Add comments..."></textarea>
+                        ` : ''}
                     </div>
                 `;
             });

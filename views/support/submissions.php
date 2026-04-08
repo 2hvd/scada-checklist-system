@@ -96,6 +96,7 @@ require_once __DIR__ . '/../components/sidebar.php';
 <script src="/scada-checklist-system/assets/js/notifications.js"></script>
 <script src="/scada-checklist-system/assets/js/api.js"></script>
 <script src="/scada-checklist-system/assets/js/checklist.js"></script>
+<script src="/scada-checklist-system/assets/js/support_submissions.js"></script>
 <script>
 function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
@@ -118,8 +119,8 @@ document.addEventListener('DOMContentLoaded', async function() {
              Submitted: <strong>${formatDate(s.submitted_at)}</strong>`;
     }
 
-    // Load checklist in read-only mode
-    ChecklistPage.init(swoId, true);
+    // Load checklist in read-only mode with support review columns
+    SupportSubmissions.init(swoId);
 });
 <?php else: ?>
 async function loadSubmissions() {
