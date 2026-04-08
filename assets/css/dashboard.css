@@ -397,6 +397,30 @@
 .item-status-select.status-still   { background: #fff3cd; border-color: #ffc107; color: #856404; }
 .item-status-select.status-empty   { background: #fff; }
 
+/* ========== Support Review Columns ========== */
+.checklist-item--support {
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+.checklist-item--support .item-number { margin-top: 6px; }
+.checklist-item--support .item-label  { margin-top: 6px; }
+.checklist-item--support .item-user-status { margin-top: 6px; }
+.support-decision {
+    min-width: 120px;
+    flex-shrink: 0;
+}
+.support-comment {
+    flex: 1;
+    min-width: 160px;
+    resize: vertical;
+    font-size: 13px;
+    padding: 6px 10px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    transition: border-color var(--transition);
+}
+.support-comment:focus { border-color: var(--accent); outline: none; }
+
 /* ========== Comments Section ========== */
 .comments-section { margin-top: 24px; }
 .comment-item {
