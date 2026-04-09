@@ -63,12 +63,6 @@ const ReviewManager = {
             `${counts.done || 0} Done, ${counts.na || 0} N/A, ${counts.still || 0} Still, ` +
             `${counts.not_yet || 0} Not Yet, ${counts.empty || 0} Empty`;
 
-        // Support overall comments panel (control only)
-        const supportOverallEl = document.getElementById('supportOverallComments');
-        if (supportOverallEl) {
-            supportOverallEl.textContent = data.support_overall_comments || '—';
-        }
-
         // Sections
         const container = document.getElementById('reviewSections');
         if (!container) return;
@@ -79,12 +73,13 @@ const ReviewManager = {
                 <table class="review-table">
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>Item</th>
-                            <th class="col-status">User Status</th>
-                            ${this.role === 'control' ? '<th class="col-status">Support Decision</th><th class="support-col-readonly">Support Comment</th>' : ''}
-                            ${this.role !== 'user' ? '<th class="col-decision">Decision</th>' : ''}
-                            <th class="col-comment">Comment</th>
+                            <th scope="col">#</th>
+                            <th scope="col">Item</th>
+                            <th scope="col" class="col-status">User Status</th>
+                            ${this.role !== 'user' ? '<th scope="col" class="col-comment user-col-readonly">User Comment</th>' : ''}
+                            ${this.role === 'control' ? '<th scope="col" class="col-status">Support Decision</th><th scope="col" class="col-comment support-col-readonly">Support Comment</th>' : ''}
+                            ${this.role !== 'user' ? '<th scope="col" class="col-decision">Decision</th>' : ''}
+                            <th scope="col" class="col-comment">Comment</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -108,9 +103,14 @@ const ReviewManager = {
                 </select>
             </td>` : '';
 
+        const userCommentColHtml = this.role !== 'user' ? `
+            <td class="col-comment user-col-readonly">
+                <span class="user-comment-readonly">${escapeHtml(item.user_comment || '—')}</span>
+            </td>` : '';
+
         const supportColsHtml = this.role === 'control' ? `
             <td class="col-status">${item.support_decision ? getChecklistStatusBadge(item.support_decision) : '<span class="text-muted">—</span>'}</td>
-            <td class="support-col-readonly">
+            <td class="col-comment support-col-readonly">
                 <span class="support-comment-readonly">${escapeHtml(item.support_comment || '—')}</span>
             </td>` : '';
 
@@ -119,6 +119,7 @@ const ReviewManager = {
                 <td>${num}</td>
                 <td>${escapeHtml(item.label)}</td>
                 <td class="col-status">${getChecklistStatusBadge(item.status)}</td>
+                ${userCommentColHtml}
                 ${supportColsHtml}
                 ${decisionHtml}
                 <td class="col-comment">

@@ -58,23 +58,15 @@ require_once __DIR__ . '/../components/sidebar.php';
                 <div class="loading-overlay"><div class="loading-spinner"></div></div>
             </div>
 
-            <!-- Overall comments -->
-            <div class="review-overall-comments">
-                <label for="overallCommentsTextarea">Overall Review Comments:</label>
-                <textarea id="overallCommentsTextarea"
-                          rows="4"
-                          placeholder="Add overall review comments here… (auto-saved on blur)"></textarea>
-            </div>
-
             <!-- Action buttons -->
             <div class="review-actions">
                 <a href="/scada-checklist-system/views/support/index.php" class="btn btn-secondary">Cancel</a>
                 <button class="btn btn-danger" id="rejectBtn"
-                        onclick="SupportReview.rejectAndSendToUser()">
+                        onclick="ReviewManager.reject()">
                     ❌ Reject (Back to User)
                 </button>
                 <button class="btn btn-success" id="acceptBtn"
-                        onclick="SupportReview.acceptAndSendToControl()">
+                        onclick="ReviewManager.accept()">
                     ✅ Accept (Send to Control)
                 </button>
             </div>
@@ -87,7 +79,7 @@ require_once __DIR__ . '/../components/sidebar.php';
 <script src="/scada-checklist-system/assets/js/utils.js"></script>
 <script src="/scada-checklist-system/assets/js/notifications.js"></script>
 <script src="/scada-checklist-system/assets/js/api.js"></script>
-<script src="/scada-checklist-system/assets/js/support_review.js"></script>
+<script src="/scada-checklist-system/assets/js/review_manager.js"></script>
 <script>
 function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
@@ -95,6 +87,6 @@ function toggleSidebar() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    SupportReview.init(<?php echo $swo_id; ?>);
+    ReviewManager.init(<?php echo $swo_id; ?>, 'support');
 });
 </script>

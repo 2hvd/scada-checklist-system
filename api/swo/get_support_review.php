@@ -66,14 +66,19 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
-// Load overall support review comments
+// Load user item comments (read-only for support)
 $stmt = $conn->prepare(
-    "SELECT comments FROM support_reviews WHERE swo_id = ? ORDER BY created_at DESC LIMIT 1"
+    "SELECT item_key, comment FROM user_item_comments WHERE swo_id = ?"
 );
 $stmt->bind_param('i', $swo_id);
 $stmt->execute();
-$overallRow = $stmt->get_result()->fetch_assoc();
+$result = $stmt->get_result();
+$userComments = [];
+while ($row = $result->fetch_assoc()) {
+    $userComments[$row['item_key']] = $row['comment'] ?? '';
+}
 $stmt->close();
+
 $conn->close();
 
 // Build structured sections
@@ -88,11 +93,12 @@ foreach ($checklistItems as $secKey => $section) {
         $review     = $itemReviews[$itemKey] ?? ['decision' => '', 'comment' => ''];
 
         $sectionData['items'][] = [
-            'key'      => $itemKey,
-            'label'    => $itemLabel,
-            'status'   => $userStatus,
-            'decision' => $review['decision'],
-            'comment'  => $review['comment'],
+            'key'          => $itemKey,
+            'label'        => $itemLabel,
+            'status'       => $userStatus,
+            'user_comment' => $userComments[$itemKey] ?? '',
+            'decision'     => $review['decision'],
+            'comment'      => $review['comment'],
         ];
 
         $totalItems++;
@@ -111,10 +117,10 @@ $completed = $doneCount + $naCount;
 $progress  = $totalItems > 0 ? round($completed / $totalItems * 100, 1) : 0;
 
 jsonResponse(true, 'Support review data retrieved', [
-    'swo'             => $swo,
-    'sections'        => $sections,
-    'progress'        => $progress,
-    'counts'          => [
+    'swo'      => $swo,
+    'sections' => $sections,
+    'progress' => $progress,
+    'counts'   => [
         'done'    => $doneCount,
         'na'      => $naCount,
         'still'   => $stillCount,
@@ -122,5 +128,4 @@ jsonResponse(true, 'Support review data retrieved', [
         'empty'   => $emptyCount,
         'total'   => $totalItems,
     ],
-    'overall_comments' => $overallRow['comments'] ?? '',
 ]);

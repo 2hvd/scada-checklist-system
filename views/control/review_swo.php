@@ -53,34 +53,20 @@ require_once __DIR__ . '/../components/sidebar.php';
                 <div class="review-progress-text" id="reviewProgressText"></div>
             </div>
 
-            <!-- Support overall comments (read-only) -->
-            <div class="review-overall-comments" style="border-left: 4px solid #2e86de;">
-                <label>Support Overall Comments (read-only):</label>
-                <p id="supportOverallComments" style="margin:0;font-size:13px;color:#555;white-space:pre-wrap;">—</p>
-            </div>
-
             <!-- Checklist sections (populated by JS) -->
             <div id="reviewSections">
                 <div class="loading-overlay"><div class="loading-spinner"></div></div>
-            </div>
-
-            <!-- Overall control comments -->
-            <div class="review-overall-comments">
-                <label for="overallCommentsTextarea">Overall Control Comments:</label>
-                <textarea id="overallCommentsTextarea"
-                          rows="4"
-                          placeholder="Add overall control comments here… (auto-saved on blur)"></textarea>
             </div>
 
             <!-- Action buttons -->
             <div class="review-actions">
                 <a href="/scada-checklist-system/views/control/index.php" class="btn btn-secondary">Cancel</a>
                 <button class="btn btn-warning" id="returnBtn"
-                        onclick="ControlReviewPage.returnToSupport()">
+                        onclick="ReviewManager.returnToSupport()">
                     ↩ Return to Support
                 </button>
                 <button class="btn btn-success" id="approveBtn"
-                        onclick="ControlReviewPage.approveAndComplete()">
+                        onclick="ReviewManager.approve()">
                     ✅ Approve (Complete)
                 </button>
             </div>
@@ -93,7 +79,7 @@ require_once __DIR__ . '/../components/sidebar.php';
 <script src="/scada-checklist-system/assets/js/utils.js"></script>
 <script src="/scada-checklist-system/assets/js/notifications.js"></script>
 <script src="/scada-checklist-system/assets/js/api.js"></script>
-<script src="/scada-checklist-system/assets/js/control_review.js"></script>
+<script src="/scada-checklist-system/assets/js/review_manager.js"></script>
 <script>
 function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
@@ -101,6 +87,6 @@ function toggleSidebar() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    ControlReviewPage.init(<?php echo $swo_id; ?>);
+    ReviewManager.init(<?php echo $swo_id; ?>, 'control');
 });
 </script>
