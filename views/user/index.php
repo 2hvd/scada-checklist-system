@@ -147,9 +147,12 @@ function renderSWOCards(swos, container) {
             ${renderProgressBar(swo.progress)}
 
             <div class="swo-card-actions">
-                ${canOpenChecklist ? `
+                ${isEditable ? `
                     <a href="/scada-checklist-system/views/user/checklist.php?swo_id=${swo.id}"
-                       class="btn ${isEditable ? 'btn-primary' : 'btn-secondary'} btn-sm">📝 ${isEditable ? 'Edit Checklist' : 'View Checklist'}</a>` : ''}
+                       class="btn btn-primary btn-sm">📝 Edit Checklist</a>` : ''}
+                ${!isEditable && canOpenChecklist ? `
+                    <a href="/scada-checklist-system/views/user/review_swo.php?swo_id=${swo.id}"
+                       class="btn btn-secondary btn-sm">👁 Review</a>` : ''}
                 ${swo.status === 'In Progress' && (counts.empty || 0) === 0 ? `
                     <button class="btn btn-success btn-sm" onclick="submitChecklist(${swo.id})">📤 Submit</button>` : ''}
             </div>
