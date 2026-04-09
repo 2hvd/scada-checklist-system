@@ -68,6 +68,19 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
+// Load user item comments (read-only for control)
+$stmt = $conn->prepare(
+    "SELECT item_key, comment FROM user_item_comments WHERE swo_id = ?"
+);
+$stmt->bind_param('i', $swo_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$userComments = [];
+while ($row = $result->fetch_assoc()) {
+    $userComments[$row['item_key']] = $row['comment'] ?? '';
+}
+$stmt->close();
+
 // Load existing control item reviews
 $stmt = $conn->prepare(
     "SELECT item_key, control_decision, control_comment
@@ -83,24 +96,6 @@ while ($row = $result->fetch_assoc()) {
         'comment'  => $row['control_comment']  ?? '',
     ];
 }
-$stmt->close();
-
-// Load overall control review comments
-$stmt = $conn->prepare(
-    "SELECT comments FROM control_reviews WHERE swo_id = ? ORDER BY created_at DESC LIMIT 1"
-);
-$stmt->bind_param('i', $swo_id);
-$stmt->execute();
-$overallRow = $stmt->get_result()->fetch_assoc();
-$stmt->close();
-
-// Load support overall comments
-$stmt = $conn->prepare(
-    "SELECT comments FROM support_reviews WHERE swo_id = ? ORDER BY created_at DESC LIMIT 1"
-);
-$stmt->bind_param('i', $swo_id);
-$stmt->execute();
-$supportOverallRow = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 $conn->close();
@@ -121,6 +116,7 @@ foreach ($checklistItems as $secKey => $section) {
             'key'              => $itemKey,
             'label'            => $itemLabel,
             'status'           => $userStatus,
+            'user_comment'     => $userComments[$itemKey] ?? '',
             'support_decision' => $supportReview['support_decision'],
             'support_comment'  => $supportReview['support_comment'],
             'decision'         => $controlReview['decision'],
@@ -143,10 +139,10 @@ $completed = $doneCount + $naCount;
 $progress  = $totalItems > 0 ? round($completed / $totalItems * 100, 1) : 0;
 
 jsonResponse(true, 'Control review data retrieved', [
-    'swo'                    => $swo,
-    'sections'               => $sections,
-    'progress'               => $progress,
-    'counts'                 => [
+    'swo'      => $swo,
+    'sections' => $sections,
+    'progress' => $progress,
+    'counts'   => [
         'done'    => $doneCount,
         'na'      => $naCount,
         'still'   => $stillCount,
@@ -154,6 +150,4 @@ jsonResponse(true, 'Control review data retrieved', [
         'empty'   => $emptyCount,
         'total'   => $totalItems,
     ],
-    'overall_comments'         => $overallRow['comments'] ?? '',
-    'support_overall_comments' => $supportOverallRow['comments'] ?? '',
 ]);

@@ -224,6 +224,22 @@
     box-shadow: 0 0 0 2px rgba(46,134,222,.15);
 }
 
+/* Read-only user comment columns for support and control view */
+.user-col-readonly {
+    background: #fafbfc;
+    font-size: 12px;
+    color: #555;
+    max-width: 180px;
+}
+
+.user-comment-readonly {
+    font-size: 12px;
+    color: #555;
+    font-style: italic;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
 /* Read-only support columns for control view */
 .support-col-readonly {
     background: #fafbfc;
