@@ -16,14 +16,10 @@ if (!$input) {
     $input = $_POST;
 }
 
-$item_id   = intval($input['item_id'] ?? 0);
-$is_active = isset($input['is_active']) ? (intval($input['is_active']) ? 1 : 0) : null;
+$item_id = intval($input['item_id'] ?? 0);
 
 if (!$item_id) {
     jsonResponse(false, 'Item ID is required');
-}
-if ($is_active === null) {
-    jsonResponse(false, 'is_active value is required');
 }
 
 $conn    = getDBConnection();
@@ -42,7 +38,8 @@ if (!$item) {
 }
 
 $stmt = $conn->prepare("UPDATE checklist_items SET is_active = ? WHERE id = ?");
-$stmt->bind_param('ii', $is_active, $item_id);
+$new_active = $item['is_active'] ? 0 : 1;
+$stmt->bind_param('ii', $new_active, $item_id);
 
 if (!$stmt->execute()) {
     $stmt->close();
@@ -51,7 +48,7 @@ if (!$stmt->execute()) {
 }
 $stmt->close();
 
-$newStatus = $is_active ? 'active' : 'inactive';
+$newStatus = $new_active ? 'active' : 'inactive';
 logAudit($conn, $user_id, null, "TOGGLE_CHECKLIST_ITEM: {$item['item_key']}", $item['is_active'] ? 'active' : 'inactive', $newStatus);
 
 $conn->close();

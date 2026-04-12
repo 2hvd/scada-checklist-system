@@ -11,6 +11,7 @@ $conn = getDBConnection();
 
 $sectionFilter = trim($_GET['section'] ?? '');
 $search        = trim($_GET['search'] ?? '');
+$statusFilter  = trim($_GET['status'] ?? 'active'); // active, inactive, all
 
 $validSections = ['during_config', 'during_commissioning', 'after_commissioning'];
 $sectionLabels = [
@@ -27,6 +28,11 @@ if ($sectionFilter !== '' && in_array($sectionFilter, $validSections, true)) {
     $whereClauses[] = 'ci.section = ?';
     $params[]       = $sectionFilter;
     $types         .= 's';
+}
+if ($statusFilter === 'active') {
+    $whereClauses[] = 'ci.is_active = 1';
+} elseif ($statusFilter === 'inactive') {
+    $whereClauses[] = 'ci.is_active = 0';
 }
 if ($search !== '') {
     $whereClauses[] = 'ci.description LIKE ?';

@@ -122,6 +122,16 @@ const SupportReview = {
 
     async submitAccept() {
         const comments = document.getElementById('supportOverallComments').value.trim();
+
+        // Validate all items have a decision
+        const decisions = document.querySelectorAll('#supportReviewTableBody .support-decision-select');
+        for (const dropdown of decisions) {
+            if (!dropdown.value || dropdown.value.trim() === '') {
+                showError('All items must have a decision before accepting');
+                return;
+            }
+        }
+
         const confirmed = await confirmDialog('Accept this submission and send to Control for final approval?');
         if (!confirmed) return;
 

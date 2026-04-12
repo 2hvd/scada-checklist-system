@@ -39,8 +39,8 @@ $stmt = $conn->prepare(
            ON cs.item_key = ci.item_key
           AND cs.swo_id   = ?
           AND cs.user_id  = ?
-     WHERE ci.is_active = 1
-       AND ci.is_deleted = 0
+     WHERE (ci.is_active = 1 AND ci.is_deleted = 0)
+        OR (cs.id IS NOT NULL)
      ORDER BY ci.section, ci.section_number"
 );
 $stmt->bind_param('ii', $swo_id, $assigned_id);

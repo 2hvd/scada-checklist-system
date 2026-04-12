@@ -4,11 +4,16 @@ const ChecklistPage = {
     swoId: null,
     readOnly: false,
     supportMode: false,
+    _savedTimer: null,
 
     async init(swoId, readOnly = false) {
         this.swoId = swoId;
         this.readOnly = readOnly;
         await this.loadChecklist();
+        if (!readOnly) {
+            await this.loadUserItemComments();
+            this.bindCommentAutoSave();
+        }
         await this.loadComments();
         this.bindCommentForm();
     },
@@ -37,31 +42,41 @@ const ChecklistPage = {
         let html = '';
 
         sections.forEach(section => {
+            const extraHeads = this.supportMode
+                ? '<th class="col-decision">Support Decision</th><th class="col-comment">Support Comment</th>'
+                : '';
+            const commentHead = !this.readOnly
+                ? '<th class="col-comment">Comment</th>'
+                : '';
+
             html += `
                 <div class="checklist-section">
                     <div class="checklist-section-header">${escapeHtml(section.label)}</div>
+                    <table class="checklist-table">
+                        <thead>
+                            <tr>
+                                <th class="col-number">#</th>
+                                <th>Item</th>
+                                <th class="col-status">Status</th>
+                                ${commentHead}
+                                ${extraHeads}
+                            </tr>
+                        </thead>
+                        <tbody>
             `;
             section.items.forEach((item, idx) => {
                 const num = idx + 1;
                 const disabled = this.readOnly ? 'disabled' : '';
-                html += `
-                    <div class="checklist-item${this.supportMode ? ' checklist-item--support' : ''}" data-key="${escapeHtml(item.key)}">
-                        <div class="item-number">${num}</div>
-                        <div class="item-label">${escapeHtml(item.label)}</div>
-                        ${this.readOnly
-                            ? `<div class="item-user-status">${getChecklistStatusBadge(item.status)}</div>`
-                            : `<select class="item-status-select status-${item.status}" 
-                                data-key="${escapeHtml(item.key)}" 
-                                onchange="ChecklistPage.updateStatus('${escapeHtml(item.key)}', this.value, this)"
-                                ${disabled}>
-                                    <option value="empty"   ${item.status==='empty'   ?'selected':''}>— Select —</option>
-                                    <option value="done"    ${item.status==='done'    ?'selected':''}>Done</option>
-                                    <option value="na"      ${item.status==='na'      ?'selected':''}>N/A</option>
-                                    <option value="not_yet" ${item.status==='not_yet' ?'selected':''}>Not Yet</option>
-                                    <option value="still"   ${item.status==='still'   ?'selected':''}>Still</option>
-                               </select>`
-                        }
-                        ${this.supportMode ? `
+                const commentCell = !this.readOnly
+                    ? `<td class="col-comment">
+                           <textarea class="user-comment-textarea"
+                                     data-key="${escapeHtml(item.key)}"
+                                     rows="2"
+                                     placeholder="Add comment..."></textarea>
+                       </td>`
+                    : '';
+                const supportCells = this.supportMode ? `
+                    <td class="col-decision">
                         <select class="item-status-select support-decision"
                                 data-item-key="${escapeHtml(item.key)}"
                                 data-swo-id="${this.swoId}">
@@ -71,16 +86,40 @@ const ChecklistPage = {
                             <option value="still">Still</option>
                             <option value="not_yet">Not Yet</option>
                         </select>
+                    </td>
+                    <td class="col-comment">
                         <textarea class="form-control support-comment"
                                   data-item-key="${escapeHtml(item.key)}"
                                   data-swo-id="${this.swoId}"
                                   rows="2"
                                   placeholder="Add comments..."></textarea>
-                        ` : ''}
-                    </div>
+                    </td>` : '';
+
+                html += `
+                    <tr class="checklist-item${this.supportMode ? ' checklist-item--support' : ''}" data-key="${escapeHtml(item.key)}">
+                        <td class="col-number"><div class="item-number">${num}</div></td>
+                        <td class="item-label">${escapeHtml(item.label)}</td>
+                        <td class="col-status">
+                            ${this.readOnly
+                                ? `<div class="item-user-status">${getChecklistStatusBadge(item.status)}</div>`
+                                : `<select class="item-status-select status-${item.status}"
+                                       data-key="${escapeHtml(item.key)}"
+                                       onchange="ChecklistPage.updateStatus('${escapeHtml(item.key)}', this.value, this)"
+                                       ${disabled}>
+                                       <option value="empty"   ${item.status==='empty'   ?'selected':''}>— Select —</option>
+                                       <option value="done"    ${item.status==='done'    ?'selected':''}>Done</option>
+                                       <option value="na"      ${item.status==='na'      ?'selected':''}>N/A</option>
+                                       <option value="not_yet" ${item.status==='not_yet' ?'selected':''}>Not Yet</option>
+                                       <option value="still"   ${item.status==='still'   ?'selected':''}>Still</option>
+                                   </select>`
+                            }
+                        </td>
+                        ${commentCell}
+                        ${supportCells}
+                    </tr>
                 `;
             });
-            html += '</div>';
+            html += `</tbody></table></div>`;
         });
         container.innerHTML = html;
     },
@@ -230,5 +269,66 @@ const ChecklistPage = {
 
     exportCSV() {
         window.location.href = `/scada-checklist-system/api/export/csv_export.php?swo_id=${this.swoId}`;
-    }
+    },
+
+    async loadUserItemComments() {
+        try {
+            const data = await API.get('/swo/get_user_comments.php', { swo_id: this.swoId });
+            if (data && data.success && data.comments) {
+                Object.keys(data.comments).forEach(itemKey => {
+                    const textarea = document.querySelector(`.user-comment-textarea[data-key="${CSS.escape(itemKey)}"]`);
+                    if (textarea) textarea.value = data.comments[itemKey];
+                });
+            }
+        } catch (err) {
+            console.error('Failed to load user item comments:', err);
+        }
+    },
+
+    bindCommentAutoSave() {
+        const container = document.getElementById('checklistContainer');
+        if (!container) return;
+        container.addEventListener('blur', (e) => {
+            if (e.target.classList.contains('user-comment-textarea')) {
+                const itemKey = e.target.dataset.key;
+                this.saveItemComment(itemKey, e.target.value);
+            }
+        }, true);
+    },
+
+    async saveItemComment(itemKey, comment) {
+        this.showSaving();
+        try {
+            const data = await API.post('/swo/user_item_comment.php', {
+                swo_id: this.swoId,
+                item_key: itemKey,
+                comment: comment
+            });
+            if (data && data.success) {
+                this.showSaved();
+            } else {
+                showError(data?.message || 'Failed to save comment');
+            }
+        } catch (err) {
+            showError('Failed to save comment');
+        }
+    },
+
+    showSaving() {
+        const el = document.getElementById('saveIndicator');
+        if (!el) return;
+        el.className = 'save-indicator saving';
+        el.textContent = '⏳ Saving…';
+    },
+
+    showSaved() {
+        const el = document.getElementById('saveIndicator');
+        if (!el) return;
+        el.className = 'save-indicator saved';
+        el.textContent = '✓ Saved';
+        clearTimeout(this._savedTimer);
+        this._savedTimer = setTimeout(() => {
+            el.className = 'save-indicator hidden';
+        }, 2500);
+    },
 };

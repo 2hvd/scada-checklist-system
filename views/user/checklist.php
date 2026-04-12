@@ -38,6 +38,7 @@ require_once __DIR__ . '/../components/sidebar.php';
             </div>
         </div>
         <div class="topbar-actions">
+            <span class="save-indicator hidden" id="saveIndicator"></span>
             <a href="/scada-checklist-system/views/user/index.php" class="btn btn-secondary btn-sm">← Back</a>
             <button class="btn btn-secondary btn-sm" onclick="ChecklistPage.exportCSV()">📥 CSV</button>
             <?php if (!$readOnly): ?>
@@ -55,8 +56,10 @@ require_once __DIR__ . '/../components/sidebar.php';
                 ℹ️ This checklist has been submitted and is awaiting Support review.
             <?php elseif ($swo['status'] === 'Pending Control Review'): ?>
                 ℹ️ This checklist has been accepted by Support and is awaiting Control approval.
+            <?php elseif ($swo['status'] === 'Returned from Control'): ?>
+                🔄 This checklist was returned by Control and is currently under Support re-review.
             <?php elseif ($swo['status'] === 'Completed'): ?>
-                ✅ This checklist has been approved and is Completed.
+                ✅ This checklist has been approved by Control and is Completed.
             <?php else: ?>
                 ℹ️ This checklist is currently under review (<?php echo htmlspecialchars($swo['status']); ?>).
             <?php endif; ?>
@@ -78,22 +81,6 @@ require_once __DIR__ . '/../components/sidebar.php';
         <!-- Checklist Sections -->
         <div id="checklistContainer">
             <div class="loading-overlay"><div class="loading-spinner"></div></div>
-        </div>
-
-        <!-- Comments -->
-        <div class="card comments-section">
-            <div class="card-header">
-                <h3 class="card-title">Comments</h3>
-            </div>
-            <div id="commentsContainer">
-                <div class="loading-overlay"><div class="loading-spinner"></div></div>
-            </div>
-            <form id="commentForm" style="margin-top:16px;">
-                <div class="comment-form">
-                    <textarea class="form-control" placeholder="Add a comment..." required></textarea>
-                    <button type="submit" class="btn btn-primary">Send</button>
-                </div>
-            </form>
         </div>
     </div>
 </div>

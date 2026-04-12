@@ -44,6 +44,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                 <button class="tab-btn" data-tab="tab-swo">📋 SWO Management</button>
                 <button class="tab-btn" data-tab="tab-activity">🕐 Recent Activity</button>
                 <button class="tab-btn" data-tab="tab-checklist-items">📝 Manage Checklist Items</button>
+                <button class="tab-btn" data-tab="tab-timeline">📊 SWO Timeline</button>
             </div>
 
             <!-- Tab: Statistics -->
@@ -138,6 +139,11 @@ require_once __DIR__ . '/../components/sidebar.php';
                                 <option value="during_commissioning">During Commissioning</option>
                                 <option value="after_commissioning">After Commissioning</option>
                             </select>
+                            <select id="ciStatusFilter" class="form-control" style="width:auto;">
+                                <option value="active">Active Only</option>
+                                <option value="inactive">Inactive Only</option>
+                                <option value="all">All Items</option>
+                            </select>
                             <input type="text" id="ciSearchFilter" class="form-control" placeholder="🔍 Search description…" style="width:220px;">
                             <button class="btn btn-primary btn-sm" onclick="ChecklistItems.openAddModal()">+ Add Item</button>
                             <button class="btn btn-secondary btn-sm" onclick="ChecklistItems.load()">🔄 Refresh</button>
@@ -163,6 +169,11 @@ require_once __DIR__ . '/../components/sidebar.php';
                         </table>
                     </div>
                 </div>
+            </div>
+
+            <!-- Tab: SWO Timeline -->
+            <div class="tab-content" id="tab-timeline">
+                <?php include __DIR__ . '/swo_timeline.php'; ?>
             </div>
         </div>
     </div>
@@ -288,4 +299,59 @@ function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
     document.getElementById('sidebarOverlay').classList.toggle('active');
 }
+
+const AdminTimeline = {
+    loaded: false,
+
+    async load() {
+        const tbody = document.getElementById('timelineTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="12" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>';
+        try {
+            const data = await API.get('/swo/get_swo_list.php');
+            if (!data || !data.success) {
+                tbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted">Failed to load SWOs.</td></tr>';
+                return;
+            }
+            const swos = data.data || [];
+            if (!swos.length) {
+                tbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted">No SWOs found.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = swos.map(s => `
+                <tr>
+                    <td><strong>${escapeHtml(s.swo_number)}</strong></td>
+                    <td>${escapeHtml(s.station_name)}</td>
+                    <td>${getStatusBadge(s.status)}</td>
+                    <td>${s.created_at ? formatDateShort(s.created_at) : '—'}</td>
+                    <td>${escapeHtml(s.created_by_name || '—')}</td>
+                    <td>${s.approved_at ? formatDateShort(s.approved_at) : '—'}</td>
+                    <td>${escapeHtml(s.assigned_to_name || '—')}</td>
+                    <td>${s.started_at ? formatDateShort(s.started_at) : '—'}</td>
+                    <td>${s.submitted_at ? formatDateShort(s.submitted_at) : '—'}</td>
+                    <td>${s.support_reviewed_at ? formatDateShort(s.support_reviewed_at) : '—'}</td>
+                    <td>${s.control_reviewed_at ? formatDateShort(s.control_reviewed_at) : '—'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="AdminDashboard.viewSWO(${s.id})">View</button>
+                    </td>
+                </tr>
+            `).join('');
+            this.loaded = true;
+        } catch (err) {
+            tbody.innerHTML = '<tr><td colspan="12" class="text-center text-danger">Error loading timeline.</td></tr>';
+        }
+    }
+};
+
+// Load timeline when tab is activated (only first time; Refresh button reloads)
+document.addEventListener('DOMContentLoaded', function() {
+    const timelineBtn = document.querySelector('[data-tab="tab-timeline"]');
+    if (timelineBtn) {
+        timelineBtn.addEventListener('click', function() {
+            if (!AdminTimeline.loaded) {
+                AdminTimeline.load();
+            }
+        });
+    }
+});
 </script>

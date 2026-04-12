@@ -174,6 +174,53 @@ function getChecklistItemsFromDB($conn) {
 }
 
 /**
+ * Load checklist items for a specific SWO:
+ * returns all active items PLUS any items that already have saved data
+ * in checklist_status for this SWO (even if since deactivated).
+ * Falls back to getChecklistItemsFromDB() if no rows are found.
+ */
+function getChecklistItemsForSWO($conn, $swo_id) {
+    $sectionLabels = [
+        'during_config'        => 'During Configuration',
+        'during_commissioning' => 'During Commissioning',
+        'after_commissioning'  => 'After Commissioning',
+    ];
+
+    $stmt = $conn->prepare(
+        "SELECT ci.section, ci.section_number, ci.item_key, ci.description
+           FROM checklist_items ci
+           LEFT JOIN checklist_status cs ON ci.item_key = cs.item_key AND cs.swo_id = ?
+          WHERE (ci.is_active = 1 AND ci.is_deleted = 0)
+             OR (cs.id IS NOT NULL)
+          GROUP BY ci.section, ci.section_number, ci.item_key, ci.description
+          ORDER BY ci.section, ci.section_number"
+    );
+    $stmt->bind_param('i', $swo_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if (!$result || $result->num_rows === 0) {
+        $stmt->close();
+        return getChecklistItemsFromDB($conn);
+    }
+
+    $structured = [];
+    while ($row = $result->fetch_assoc()) {
+        $sec = $row['section'];
+        if (!isset($structured[$sec])) {
+            $structured[$sec] = [
+                'label' => $sectionLabels[$sec] ?? ucwords(str_replace('_', ' ', $sec)),
+                'items' => [],
+            ];
+        }
+        $structured[$sec]['items'][$row['item_key']] = $row['description'];
+    }
+    $stmt->close();
+
+    return $structured;
+}
+
+/**
  * Return active item keys from DB, falling back to hardcoded.
  */
 function getAllItemKeysFromDB($conn) {

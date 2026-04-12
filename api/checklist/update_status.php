@@ -70,6 +70,12 @@ if (!$stmt->execute()) {
 }
 $stmt->close();
 
+// Set started_at timestamp on first interaction
+$stmt = $conn->prepare("UPDATE swo_list SET started_at = NOW() WHERE id = ? AND started_at IS NULL");
+$stmt->bind_param('i', $swo_id);
+$stmt->execute();
+$stmt->close();
+
 logAudit($conn, $user_id, $swo_id, "UPDATE_CHECKLIST:$item_key", null, $status);
 
 $conn->close();

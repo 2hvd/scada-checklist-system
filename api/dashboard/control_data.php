@@ -13,7 +13,7 @@ $user_id = $_SESSION['user_id'];
 // SWOs pending control review
 $pendingStmt = $conn->prepare(
     "SELECT s.id, s.swo_number, s.station_name, s.swo_type, s.kcor, s.status,
-            s.submitted_at, s.support_reviewed_at,
+            s.submitted_at, s.support_reviewed_at, s.control_reviewed_at,
             ua.username AS assigned_to_name,
             us.username AS support_reviewer_name
      FROM swo_list s

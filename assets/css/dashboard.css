@@ -421,6 +421,95 @@
 }
 .support-comment:focus { border-color: var(--accent); outline: none; }
 
+/* ========== User Item Comment Textarea ========== */
+.user-comment-textarea {
+    width: 100%;
+    padding: 6px 10px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 54px;
+    color: var(--text);
+    transition: border-color var(--transition);
+    box-sizing: border-box;
+}
+
+.user-comment-textarea:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(46,134,222,.15);
+}
+
+/* ========== Checklist Table (user checklist with column headers) ========== */
+.checklist-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.checklist-table thead {
+    background: #34495e;
+    color: #fff;
+    font-weight: 600;
+}
+.checklist-table th {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 2px solid #2c3e50;
+    white-space: nowrap;
+}
+.checklist-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+}
+.checklist-table tbody tr:last-child td { border-bottom: none; }
+.checklist-table tbody tr:hover { background: #f8f9ff; }
+.checklist-table .col-number {
+    width: 44px;
+    text-align: center;
+}
+.checklist-table .col-status { width: 150px; }
+.checklist-table .col-comment { width: 35%; }
+.checklist-table .col-decision { width: 140px; }
+.checklist-table .item-label { font-size: 14px; }
+
+/* ========== Save Indicator (checklist page) ========== */
+.save-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    transition: opacity .3s;
+    min-width: 90px;
+    justify-content: center;
+}
+
+.save-indicator.saving {
+    background: #fff8e1;
+    color: #f39c12;
+    border: 1px solid #ffc107;
+}
+
+.save-indicator.saved {
+    background: #e8f5e9;
+    color: #27ae60;
+    border: 1px solid #a5d6a7;
+}
+
+.save-indicator.error {
+    background: #fdecea;
+    color: #e74c3c;
+    border: 1px solid #f5c6cb;
+}
+
+.save-indicator.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
 /* ========== Comments Section ========== */
 .comments-section { margin-top: 24px; }
 .comment-item {
@@ -454,4 +543,134 @@
     flex: 1;
     resize: none;
     height: 60px;
+}
+
+/* ========== Timeline Tables ========== */
+.swo-timeline-table,
+.swo-complete-timeline-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.swo-timeline-table th,
+.swo-complete-timeline-table th {
+    background: #34495e;
+    color: white;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.swo-timeline-table td,
+.swo-complete-timeline-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #ecf0f1;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.swo-timeline-table tbody tr:hover,
+.swo-complete-timeline-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge-completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+/* ========== SWO Management & Feedback Tables ========== */
+.swo-management-table,
+.swo-submitted-table,
+.swo-pending-table,
+.feedback-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 4px;
+}
+
+.swo-management-table thead,
+.swo-submitted-table thead,
+.swo-pending-table thead,
+.feedback-table thead {
+    background: #34495e;
+    color: white;
+}
+
+.swo-management-table th,
+.swo-submitted-table th,
+.swo-pending-table th,
+.feedback-table th {
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.swo-management-table td,
+.swo-submitted-table td,
+.swo-pending-table td,
+.feedback-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #ecf0f1;
+    font-size: 13px;
+    vertical-align: top;
+}
+
+.swo-management-table tbody tr:hover,
+.swo-submitted-table tbody tr:hover,
+.swo-pending-table tbody tr:hover,
+.feedback-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.feedback-comment,
+.feedback-alert {
+    background: #fff3cd;
+    color: #856404;
+    padding: 8px 10px;
+    border-left: 3px solid #ffc107;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+/* ========== Status Badge Extensions ========== */
+.badge-in-progress {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.badge-returned-from-control {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.badge-rejected-by-support {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.badge-pending-control-review {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge-pending-support-review {
+    background: #cce5ff;
+    color: #004085;
 }
