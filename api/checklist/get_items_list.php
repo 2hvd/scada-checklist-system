@@ -11,7 +11,7 @@ $conn = getDBConnection();
 
 $sectionFilter = trim($_GET['section'] ?? '');
 $search        = trim($_GET['search'] ?? '');
-$statusFilter  = trim($_GET['status'] ?? 'all');   // active, inactive, all
+$statusFilter  = trim($_GET['status'] ?? 'active'); // active, inactive, all
 
 $validSections = ['during_config', 'during_commissioning', 'after_commissioning'];
 $sectionLabels = [
