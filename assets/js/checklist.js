@@ -4,11 +4,16 @@ const ChecklistPage = {
     swoId: null,
     readOnly: false,
     supportMode: false,
+    _savedTimer: null,
 
     async init(swoId, readOnly = false) {
         this.swoId = swoId;
         this.readOnly = readOnly;
         await this.loadChecklist();
+        if (!readOnly) {
+            await this.loadUserItemComments();
+            this.bindCommentAutoSave();
+        }
         await this.loadComments();
         this.bindCommentForm();
     },
@@ -59,7 +64,11 @@ const ChecklistPage = {
                                     <option value="na"      ${item.status==='na'      ?'selected':''}>N/A</option>
                                     <option value="not_yet" ${item.status==='not_yet' ?'selected':''}>Not Yet</option>
                                     <option value="still"   ${item.status==='still'   ?'selected':''}>Still</option>
-                               </select>`
+                               </select>
+                               <textarea class="user-comment-textarea"
+                                         data-key="${escapeHtml(item.key)}"
+                                         rows="2"
+                                         placeholder="Add comment..."></textarea>`
                         }
                         ${this.supportMode ? `
                         <select class="item-status-select support-decision"
@@ -230,5 +239,66 @@ const ChecklistPage = {
 
     exportCSV() {
         window.location.href = `/scada-checklist-system/api/export/csv_export.php?swo_id=${this.swoId}`;
-    }
+    },
+
+    async loadUserItemComments() {
+        try {
+            const data = await API.get('/swo/get_user_comments.php', { swo_id: this.swoId });
+            if (data && data.success && data.comments) {
+                Object.keys(data.comments).forEach(itemKey => {
+                    const textarea = document.querySelector(`.user-comment-textarea[data-key="${CSS.escape(itemKey)}"]`);
+                    if (textarea) textarea.value = data.comments[itemKey];
+                });
+            }
+        } catch (err) {
+            console.error('Failed to load user item comments:', err);
+        }
+    },
+
+    bindCommentAutoSave() {
+        const container = document.getElementById('checklistContainer');
+        if (!container) return;
+        container.addEventListener('blur', (e) => {
+            if (e.target.classList.contains('user-comment-textarea')) {
+                const itemKey = e.target.dataset.key;
+                this.saveItemComment(itemKey, e.target.value);
+            }
+        }, true);
+    },
+
+    async saveItemComment(itemKey, comment) {
+        this.showSaving();
+        try {
+            const data = await API.post('/swo/user_item_comment.php', {
+                swo_id: this.swoId,
+                item_key: itemKey,
+                comment: comment
+            });
+            if (data && data.success) {
+                this.showSaved();
+            } else {
+                showError(data?.message || 'Failed to save comment');
+            }
+        } catch (err) {
+            showError('Failed to save comment');
+        }
+    },
+
+    showSaving() {
+        const el = document.getElementById('saveIndicator');
+        if (!el) return;
+        el.className = 'save-indicator saving';
+        el.textContent = '⏳ Saving…';
+    },
+
+    showSaved() {
+        const el = document.getElementById('saveIndicator');
+        if (!el) return;
+        el.className = 'save-indicator saved';
+        el.textContent = '✓ Saved';
+        clearTimeout(this._savedTimer);
+        this._savedTimer = setTimeout(() => {
+            el.className = 'save-indicator hidden';
+        }, 2500);
+    },
 };
