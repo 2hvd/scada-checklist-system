@@ -421,6 +421,64 @@
 }
 .support-comment:focus { border-color: var(--accent); outline: none; }
 
+/* ========== User Item Comment Textarea ========== */
+.user-comment-textarea {
+    flex: 1;
+    min-width: 160px;
+    padding: 6px 10px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 54px;
+    color: var(--text);
+    transition: border-color var(--transition);
+    box-sizing: border-box;
+}
+
+.user-comment-textarea:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(46,134,222,.15);
+}
+
+/* ========== Save Indicator (checklist page) ========== */
+.save-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    transition: opacity .3s;
+    min-width: 90px;
+    justify-content: center;
+}
+
+.save-indicator.saving {
+    background: #fff8e1;
+    color: #f39c12;
+    border: 1px solid #ffc107;
+}
+
+.save-indicator.saved {
+    background: #e8f5e9;
+    color: #27ae60;
+    border: 1px solid #a5d6a7;
+}
+
+.save-indicator.error {
+    background: #fdecea;
+    color: #e74c3c;
+    border: 1px solid #f5c6cb;
+}
+
+.save-indicator.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
 /* ========== Comments Section ========== */
 .comments-section { margin-top: 24px; }
 .comment-item {

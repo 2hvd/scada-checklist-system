@@ -38,6 +38,7 @@ require_once __DIR__ . '/../components/sidebar.php';
             </div>
         </div>
         <div class="topbar-actions">
+            <span class="save-indicator hidden" id="saveIndicator"></span>
             <a href="/scada-checklist-system/views/user/index.php" class="btn btn-secondary btn-sm">← Back</a>
             <button class="btn btn-secondary btn-sm" onclick="ChecklistPage.exportCSV()">📥 CSV</button>
             <?php if (!$readOnly): ?>
