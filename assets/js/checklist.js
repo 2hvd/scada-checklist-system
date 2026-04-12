@@ -42,35 +42,41 @@ const ChecklistPage = {
         let html = '';
 
         sections.forEach(section => {
+            const extraHeads = this.supportMode
+                ? '<th class="col-decision">Support Decision</th><th class="col-comment">Support Comment</th>'
+                : '';
+            const commentHead = !this.readOnly
+                ? '<th class="col-comment">Comment</th>'
+                : '';
+
             html += `
                 <div class="checklist-section">
                     <div class="checklist-section-header">${escapeHtml(section.label)}</div>
+                    <table class="checklist-table">
+                        <thead>
+                            <tr>
+                                <th class="col-number">#</th>
+                                <th>Item</th>
+                                <th class="col-status">Status</th>
+                                ${commentHead}
+                                ${extraHeads}
+                            </tr>
+                        </thead>
+                        <tbody>
             `;
             section.items.forEach((item, idx) => {
                 const num = idx + 1;
                 const disabled = this.readOnly ? 'disabled' : '';
-                html += `
-                    <div class="checklist-item${this.supportMode ? ' checklist-item--support' : ''}" data-key="${escapeHtml(item.key)}">
-                        <div class="item-number">${num}</div>
-                        <div class="item-label">${escapeHtml(item.label)}</div>
-                        ${this.readOnly
-                            ? `<div class="item-user-status">${getChecklistStatusBadge(item.status)}</div>`
-                            : `<select class="item-status-select status-${item.status}" 
-                                data-key="${escapeHtml(item.key)}" 
-                                onchange="ChecklistPage.updateStatus('${escapeHtml(item.key)}', this.value, this)"
-                                ${disabled}>
-                                    <option value="empty"   ${item.status==='empty'   ?'selected':''}>— Select —</option>
-                                    <option value="done"    ${item.status==='done'    ?'selected':''}>Done</option>
-                                    <option value="na"      ${item.status==='na'      ?'selected':''}>N/A</option>
-                                    <option value="not_yet" ${item.status==='not_yet' ?'selected':''}>Not Yet</option>
-                                    <option value="still"   ${item.status==='still'   ?'selected':''}>Still</option>
-                               </select>
-                               <textarea class="user-comment-textarea"
-                                         data-key="${escapeHtml(item.key)}"
-                                         rows="2"
-                                         placeholder="Add comment..."></textarea>`
-                        }
-                        ${this.supportMode ? `
+                const commentCell = !this.readOnly
+                    ? `<td class="col-comment">
+                           <textarea class="user-comment-textarea"
+                                     data-key="${escapeHtml(item.key)}"
+                                     rows="2"
+                                     placeholder="Add comment..."></textarea>
+                       </td>`
+                    : '';
+                const supportCells = this.supportMode ? `
+                    <td class="col-decision">
                         <select class="item-status-select support-decision"
                                 data-item-key="${escapeHtml(item.key)}"
                                 data-swo-id="${this.swoId}">
@@ -80,16 +86,40 @@ const ChecklistPage = {
                             <option value="still">Still</option>
                             <option value="not_yet">Not Yet</option>
                         </select>
+                    </td>
+                    <td class="col-comment">
                         <textarea class="form-control support-comment"
                                   data-item-key="${escapeHtml(item.key)}"
                                   data-swo-id="${this.swoId}"
                                   rows="2"
                                   placeholder="Add comments..."></textarea>
-                        ` : ''}
-                    </div>
+                    </td>` : '';
+
+                html += `
+                    <tr class="checklist-item${this.supportMode ? ' checklist-item--support' : ''}" data-key="${escapeHtml(item.key)}">
+                        <td class="col-number"><div class="item-number">${num}</div></td>
+                        <td class="item-label">${escapeHtml(item.label)}</td>
+                        <td class="col-status">
+                            ${this.readOnly
+                                ? `<div class="item-user-status">${getChecklistStatusBadge(item.status)}</div>`
+                                : `<select class="item-status-select status-${item.status}"
+                                       data-key="${escapeHtml(item.key)}"
+                                       onchange="ChecklistPage.updateStatus('${escapeHtml(item.key)}', this.value, this)"
+                                       ${disabled}>
+                                       <option value="empty"   ${item.status==='empty'   ?'selected':''}>— Select —</option>
+                                       <option value="done"    ${item.status==='done'    ?'selected':''}>Done</option>
+                                       <option value="na"      ${item.status==='na'      ?'selected':''}>N/A</option>
+                                       <option value="not_yet" ${item.status==='not_yet' ?'selected':''}>Not Yet</option>
+                                       <option value="still"   ${item.status==='still'   ?'selected':''}>Still</option>
+                                   </select>`
+                            }
+                        </td>
+                        ${commentCell}
+                        ${supportCells}
+                    </tr>
                 `;
             });
-            html += '</div>';
+            html += `</tbody></table></div>`;
         });
         container.innerHTML = html;
     },
