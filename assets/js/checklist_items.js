@@ -8,12 +8,13 @@ const ChecklistItems = {
         const tbody   = document.getElementById('ciTableBody');
         const section = document.getElementById('ciSectionFilter')?.value || '';
         const search  = document.getElementById('ciSearchFilter')?.value  || '';
+        const status  = document.getElementById('ciStatusFilter')?.value  || 'all';
 
         if (!tbody) return;
         tbody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>';
 
         try {
-            const data = await API.get('/checklist/get_items_list.php', { section, search });
+            const data = await API.get('/checklist/get_items_list.php', { section, search, status });
             if (!data || !data.success) {
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Failed to load items.</td></tr>';
                 return;
@@ -65,7 +66,6 @@ const ChecklistItems = {
 
             const toggleLabel  = item.is_active == 1 ? '⏸ Deactivate' : '▶ Activate';
             const toggleClass  = item.is_active == 1 ? 'btn-warning' : 'btn-success';
-            const newActive    = item.is_active == 1 ? 0 : 1;
 
             return `
             <tr>
@@ -83,8 +83,7 @@ const ChecklistItems = {
                             data-key="${escapeHtml(item.item_key)}"
                             data-desc="${escapeHtml(item.description)}">✏️ Edit</button>
                         <button class="btn ${toggleClass} btn-sm ci-toggle-btn"
-                            data-id="${escapeHtml(item.id)}"
-                            data-active="${newActive}">${toggleLabel}</button>
+                            data-id="${escapeHtml(item.id)}">${toggleLabel}</button>
                         <button class="btn btn-danger btn-sm ci-delete-btn"
                             data-id="${escapeHtml(item.id)}"
                             data-key="${escapeHtml(item.item_key)}">🗑 Delete</button>
@@ -105,7 +104,7 @@ const ChecklistItems = {
         });
         tbody.querySelectorAll('.ci-toggle-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                ChecklistItems.toggleStatus(btn.dataset.id, btn.dataset.active);
+                ChecklistItems.toggleStatus(btn.dataset.id);
             });
         });
         tbody.querySelectorAll('.ci-delete-btn').forEach(btn => {
@@ -212,12 +211,11 @@ async submitAdd() {
         }
     },
 
-    async toggleStatus(item_id, is_active) {
-        const action = parseInt(is_active) ? 'activate' : 'deactivate';
-        const confirmed = await confirmDialog(`Are you sure you want to ${action} this item?\n\nNote: Existing SWO checklists will NOT be affected.`);
+    async toggleStatus(item_id) {
+        const confirmed = await confirmDialog(`Are you sure you want to toggle the status of this item?\n\nNote: Existing SWO checklists will NOT be affected.`);
         if (!confirmed) return;
 
-        const data = await API.post('/checklist/toggle_item_status.php', { item_id, is_active });
+        const data = await API.post('/checklist/toggle_item_status.php', { item_id });
         if (data && data.success) {
             showSuccess(data.message || 'Status updated');
             this.load();
@@ -256,7 +254,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const sectionFilter = document.getElementById('ciSectionFilter');
+    const statusFilter  = document.getElementById('ciStatusFilter');
     const searchFilter  = document.getElementById('ciSearchFilter');
     if (sectionFilter) sectionFilter.addEventListener('change', () => ChecklistItems.load());
+    if (statusFilter)  statusFilter.addEventListener('change',  () => ChecklistItems.load());
     if (searchFilter)  searchFilter.addEventListener('input',  () => ChecklistItems.load());
 });

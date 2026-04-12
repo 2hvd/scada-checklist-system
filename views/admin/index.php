@@ -139,6 +139,11 @@ require_once __DIR__ . '/../components/sidebar.php';
                                 <option value="during_commissioning">During Commissioning</option>
                                 <option value="after_commissioning">After Commissioning</option>
                             </select>
+                            <select id="ciStatusFilter" class="form-control" style="width:auto;">
+                                <option value="all">All Items</option>
+                                <option value="active">Active Only</option>
+                                <option value="inactive">Inactive Only</option>
+                            </select>
                             <input type="text" id="ciSearchFilter" class="form-control" placeholder="🔍 Search description…" style="width:220px;">
                             <button class="btn btn-primary btn-sm" onclick="ChecklistItems.openAddModal()">+ Add Item</button>
                             <button class="btn btn-secondary btn-sm" onclick="ChecklistItems.load()">🔄 Refresh</button>
