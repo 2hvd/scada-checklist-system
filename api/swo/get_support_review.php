@@ -34,8 +34,8 @@ if (!$swo) {
     jsonResponse(false, 'SWO not found or not in a reviewable state');
 }
 
-// Load checklist items with user statuses
-$checklistItems = getChecklistItemsFromDB($conn);
+// Load checklist items with user statuses (include saved items even if deactivated)
+$checklistItems = getChecklistItemsForSWO($conn, $swo_id);
 
 $stmt = $conn->prepare(
     "SELECT item_key, status FROM checklist_status WHERE swo_id = ?"
