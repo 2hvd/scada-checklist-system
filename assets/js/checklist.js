@@ -71,7 +71,7 @@ const ChecklistPage = {
                     ? `<td class="col-comment">
                            <textarea class="user-comment-textarea"
                                      data-key="${escapeHtml(item.key)}"
-                                     rows="2"
+                                     rows="3"
                                      placeholder="Add comment..."></textarea>
                        </td>`
                     : '';

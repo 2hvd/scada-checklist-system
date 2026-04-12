@@ -3,3 +3,23 @@
   align-items: center;
   gap: 16px;
 }
+
+.user-comment-textarea {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 80px;
+    color: var(--text);
+    transition: border-color var(--transition);
+    box-sizing: border-box;
+}
+
+.user-comment-textarea:focus {
+    outline: none;
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 0 2px rgba(46,134,222,.15);
+}
