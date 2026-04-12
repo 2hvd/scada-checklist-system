@@ -75,14 +75,15 @@ require_once __DIR__ . '/../components/sidebar.php';
                                 <tr>
                                     <th>SWO Number</th>
                                     <th>Station</th>
-                                    <th>Type</th>
                                     <th>Status</th>
-                                    <th>Assigned To</th>
                                     <th>Created</th>
+                                    <th>Sent to User</th>
+                                    <th>User Started</th>
+                                    <th>User Submitted</th>
                                 </tr>
                             </thead>
                             <tbody id="mySwoTableBody">
-                                <tr><td colspan="6" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
+                                <tr><td colspan="7" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
                             </tbody>
                         </table>
                     </div>

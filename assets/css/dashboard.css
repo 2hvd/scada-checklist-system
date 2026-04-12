@@ -513,3 +513,52 @@
     resize: none;
     height: 60px;
 }
+
+/* ========== Timeline Tables ========== */
+.swo-timeline-table,
+.swo-complete-timeline-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.swo-timeline-table th,
+.swo-complete-timeline-table th {
+    background: #34495e;
+    color: white;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.swo-timeline-table td,
+.swo-complete-timeline-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #ecf0f1;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.swo-timeline-table tbody tr:hover,
+.swo-complete-timeline-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge-completed {
+    background: #d4edda;
+    color: #155724;
+}
