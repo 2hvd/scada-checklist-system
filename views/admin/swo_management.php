@@ -33,23 +33,26 @@ require_once __DIR__ . '/../components/sidebar.php';
                     </select>
                 </div>
             </div>
-            <div class="table-wrapper">
-                <table>
+            <div class="table-wrapper" style="overflow-x:auto;">
+                <table class="swo-management-table">
                     <thead>
                         <tr>
-                            <th>SWO Number</th>
+                            <th>SWO #</th>
                             <th>Station</th>
                             <th>Type</th>
                             <th>KCOR</th>
                             <th>Status</th>
-                            <th>Created By</th>
-                            <th>Assigned To</th>
                             <th>Created</th>
+                            <th>Assigned To</th>
+                            <th>Assigned Date</th>
+                            <th>User Submitted</th>
+                            <th>Support Review</th>
+                            <th>Control Review</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="swoTableBody">
-                        <tr><td colspan="9" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
+                        <tr><td colspan="12" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -122,7 +125,46 @@ function toggleSidebar() {
 
 async function loadSWOs() {
     const filter = document.getElementById('statusFilter').value;
-    AdminDashboard.loadSWOTable(filter);
+    const tbody = document.getElementById('swoTableBody');
+    tbody.innerHTML = '<tr><td colspan="12" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>';
+
+    try {
+        const params = filter ? '?status=' + encodeURIComponent(filter) : '';
+        const resp = await fetch('/scada-checklist-system/api/admin/get_swo_management_list.php' + params);
+        const data = await resp.json();
+
+        if (!data || !data.success) {
+            tbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted">Failed to load SWOs.</td></tr>';
+            return;
+        }
+
+        const swos = data.data || [];
+        if (!swos.length) {
+            tbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted">No SWOs found.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = swos.map(s => `
+            <tr>
+                <td><strong>${escapeHtml(s.swo_number)}</strong></td>
+                <td>${escapeHtml(s.station_name)}</td>
+                <td>${escapeHtml(s.swo_type)}</td>
+                <td>${escapeHtml(s.kcor || '—')}</td>
+                <td>${getStatusBadge(s.status)}</td>
+                <td>${s.created_at ? formatDateShort(s.created_at) : '—'}</td>
+                <td>${escapeHtml(s.assigned_to || '—')}</td>
+                <td>${s.assigned_at ? formatDateShort(s.assigned_at) : '—'}</td>
+                <td>${s.submitted_at ? formatDateShort(s.submitted_at) : '—'}</td>
+                <td>${s.support_reviewed_at ? formatDateShort(s.support_reviewed_at) : '—'}</td>
+                <td>${s.control_reviewed_at ? formatDateShort(s.control_reviewed_at) : '—'}</td>
+                <td>
+                    <button class="btn btn-secondary btn-sm" onclick="AdminDashboard.viewSWO(${s.id})">View</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="12" class="text-center text-danger">Error loading SWOs.</td></tr>';
+    }
 }
 
 async function submitReject() {
@@ -134,7 +176,7 @@ async function submitAssign() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    AdminDashboard.loadSWOTable();
+    loadSWOs();
     // Load users for assign modal
     fetch('/scada-checklist-system/api/dashboard/admin_stats.php')
         .then(r => r.json())
