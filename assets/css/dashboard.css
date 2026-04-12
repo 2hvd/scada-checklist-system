@@ -1,6 +1,5 @@
 .checklist-item {
-    display: table-row;
-    /* Other related styles for checklist items */
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
-
-/* Update related CSS rules if necessary */
