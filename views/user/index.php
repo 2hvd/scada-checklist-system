@@ -153,6 +153,9 @@ function renderSWOCards(swos, container) {
                 ${!isEditable && canOpenChecklist ? `
                     <a href="/scada-checklist-system/views/user/checklist.php?swo_id=${swo.id}"
                        class="btn btn-secondary btn-sm">👁 View Checklist</a>` : ''}
+                ${(swo.status === 'In Progress' && swo.rejection_reason) || swo.status === 'Returned from Control' ? `
+                    <a href="/scada-checklist-system/views/user/view_feedback.php?swo_id=${swo.id}"
+                       class="btn btn-warning btn-sm">💬 View Feedback</a>` : ''}
                 ${swo.status === 'In Progress' && (counts.empty || 0) === 0 ? `
                     <button class="btn btn-success btn-sm" onclick="submitChecklist(${swo.id})">📤 Submit</button>` : ''}
             </div>

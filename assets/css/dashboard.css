@@ -562,3 +562,84 @@
     background: #d4edda;
     color: #155724;
 }
+
+/* ========== SWO Management & Feedback Tables ========== */
+.swo-management-table,
+.swo-submitted-table,
+.swo-pending-table,
+.feedback-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 4px;
+}
+
+.swo-management-table thead,
+.swo-submitted-table thead,
+.swo-pending-table thead,
+.feedback-table thead {
+    background: #34495e;
+    color: white;
+}
+
+.swo-management-table th,
+.swo-submitted-table th,
+.swo-pending-table th,
+.feedback-table th {
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.swo-management-table td,
+.swo-submitted-table td,
+.swo-pending-table td,
+.feedback-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #ecf0f1;
+    font-size: 13px;
+    vertical-align: top;
+}
+
+.swo-management-table tbody tr:hover,
+.swo-submitted-table tbody tr:hover,
+.swo-pending-table tbody tr:hover,
+.feedback-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.feedback-comment,
+.feedback-alert {
+    background: #fff3cd;
+    color: #856404;
+    padding: 8px 10px;
+    border-left: 3px solid #ffc107;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+/* ========== Status Badge Extensions ========== */
+.badge-in-progress {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.badge-returned-from-control {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.badge-rejected-by-support {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.badge-pending-control-review {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge-pending-support-review {
+    background: #cce5ff;
+    color: #004085;
+}

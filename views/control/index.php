@@ -38,29 +38,7 @@ require_once __DIR__ . '/../components/sidebar.php';
 
             <!-- Pending Reviews Tab -->
             <div class="tab-content active" id="tab-pending">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Submissions Awaiting Control Review</h3>
-                        <button class="btn btn-secondary btn-sm" onclick="ControlDashboard.loadData()">🔄 Refresh</button>
-                    </div>
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>SWO Number</th>
-                                    <th>Station</th>
-                                    <th>Assigned To</th>
-                                    <th>Support Reviewer</th>
-                                    <th>Support Date</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="controlPendingTableBody">
-                                <tr><td colspan="6" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                <?php include __DIR__ . '/pending_swos.php'; ?>
             </div>
 
             <!-- Completed Tab -->

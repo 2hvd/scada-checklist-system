@@ -33,6 +33,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                     <span class="nav-badge" id="submissionsBadge" style="display:none">0</span>
                 </button>
                 <button class="tab-btn" data-tab="tab-myswos">📁 My SWOs</button>
+                <button class="tab-btn" data-tab="tab-submitted" onclick="loadSubmittedSWOs()">📤 Submitted SWOs</button>
             </div>
 
             <!-- Pending Reviews Tab -->
@@ -88,6 +89,11 @@ require_once __DIR__ . '/../components/sidebar.php';
                         </table>
                     </div>
                 </div>
+            </div>
+
+            <!-- Submitted SWOs -->
+            <div class="tab-content" id="tab-submitted">
+                <?php include __DIR__ . '/submitted_swos.php'; ?>
             </div>
         </div>
     </div>

@@ -31,7 +31,7 @@ const ControlDashboard = {
         const tbody = document.getElementById('controlPendingTableBody');
         if (!tbody) return;
         if (!swos.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No pending submissions.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No pending submissions.</td></tr>';
             return;
         }
         tbody.innerHTML = swos.map(s => `
@@ -40,7 +40,9 @@ const ControlDashboard = {
                 <td>${escapeHtml(s.station_name)}</td>
                 <td>${escapeHtml(s.assigned_to_name || '—')}</td>
                 <td>${escapeHtml(s.support_reviewer_name || '—')}</td>
-                <td>${formatDate(s.support_reviewed_at)}</td>
+                <td>${getStatusBadge(s.status)}</td>
+                <td>${formatDateShort(s.support_reviewed_at)}</td>
+                <td>${s.control_reviewed_at ? formatDateShort(s.control_reviewed_at) : '—'}</td>
                 <td>
                     <a class="btn btn-primary btn-sm"
                        href="/scada-checklist-system/views/control/review_swo.php?swo_id=${s.id}">
