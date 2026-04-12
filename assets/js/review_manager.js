@@ -229,6 +229,16 @@ const ReviewManager = {
 
     async accept() {
         if (this.role !== 'support') return;
+
+        // Validate all items have a decision
+        const decisions = document.querySelectorAll('.review-decision-select');
+        for (const dropdown of decisions) {
+            if (!dropdown.value || dropdown.value.trim() === '') {
+                showError('All items must have a decision before accepting');
+                return;
+            }
+        }
+
         const confirmed = await confirmDialog('Accept this submission and send to Control for final approval?');
         if (!confirmed) return;
 
@@ -275,6 +285,16 @@ const ReviewManager = {
 
     async approve() {
         if (this.role !== 'control') return;
+
+        // Validate all items have a decision
+        const decisions = document.querySelectorAll('.review-decision-select');
+        for (const dropdown of decisions) {
+            if (!dropdown.value || dropdown.value.trim() === '') {
+                showError('All items must have a decision before approving');
+                return;
+            }
+        }
+
         const confirmed = await confirmDialog('Approve this submission? It will be marked as Completed.');
         if (!confirmed) return;
 

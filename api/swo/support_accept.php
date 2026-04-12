@@ -43,6 +43,28 @@ if (!in_array($swo['status'], ['Pending Support Review', 'Returned from Control'
     jsonResponse(false, 'SWO is not pending support review');
 }
 
+// Validate ALL items have a support decision before accepting
+$allItems = getAllItemKeysFromDB($conn);
+$totalItems = count($allItems);
+if ($totalItems > 0) {
+    $placeholders = implode(',', array_fill(0, $totalItems, '?'));
+    $checkStmt = $conn->prepare(
+        "SELECT COUNT(*) as cnt FROM support_item_reviews
+         WHERE swo_id = ? AND item_key IN ($placeholders)
+         AND support_decision IS NOT NULL AND support_decision != ''"
+    );
+    $types = 'i' . str_repeat('s', $totalItems);
+    $params = array_merge([$swo_id], $allItems);
+    $checkStmt->bind_param($types, ...$params);
+    $checkStmt->execute();
+    $checkResult = $checkStmt->get_result()->fetch_assoc();
+    $checkStmt->close();
+    if ((int)$checkResult['cnt'] < $totalItems) {
+        $conn->close();
+        jsonResponse(false, 'All items must have a decision before accepting');
+    }
+}
+
 // Update SWO status to Pending Control Review
 $stmt = $conn->prepare(
     "UPDATE swo_list SET status = 'Pending Control Review',

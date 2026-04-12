@@ -302,17 +302,18 @@ const SupportDashboard = {
         const tbody = document.getElementById('mySwoTableBody');
         if (!tbody) return;
         if (!swos.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No SWOs created yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No SWOs created yet.</td></tr>';
             return;
         }
         tbody.innerHTML = swos.map(s => `
             <tr>
                 <td><strong>${escapeHtml(s.swo_number)}</strong></td>
                 <td>${escapeHtml(s.station_name)}</td>
-                <td>${escapeHtml(s.swo_type)}</td>
                 <td>${getStatusBadge(s.status)}</td>
-                <td>${escapeHtml(s.assigned_to_name || '—')}</td>
                 <td>${formatDateShort(s.created_at)}</td>
+                <td>${s.assigned_at ? formatDateShort(s.assigned_at) : '—'}</td>
+                <td>${s.started_at ? formatDateShort(s.started_at) : '—'}</td>
+                <td>${s.submitted_at ? formatDateShort(s.submitted_at) : '—'}</td>
             </tr>
         `).join('');
     },

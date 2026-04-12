@@ -82,22 +82,6 @@ require_once __DIR__ . '/../components/sidebar.php';
         <div id="checklistContainer">
             <div class="loading-overlay"><div class="loading-spinner"></div></div>
         </div>
-
-        <!-- Comments -->
-        <div class="card comments-section">
-            <div class="card-header">
-                <h3 class="card-title">Comments</h3>
-            </div>
-            <div id="commentsContainer">
-                <div class="loading-overlay"><div class="loading-spinner"></div></div>
-            </div>
-            <form id="commentForm" style="margin-top:16px;">
-                <div class="comment-form">
-                    <textarea class="form-control" placeholder="Add a comment..." required></textarea>
-                    <button type="submit" class="btn btn-primary">Send</button>
-                </div>
-            </form>
-        </div>
     </div>
 </div>
 

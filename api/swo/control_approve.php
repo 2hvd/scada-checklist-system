@@ -43,6 +43,28 @@ if ($swo['status'] !== 'Pending Control Review') {
     jsonResponse(false, 'SWO is not pending control review');
 }
 
+// Validate ALL items have a control decision before approving
+$allItems = getAllItemKeysFromDB($conn);
+$totalItems = count($allItems);
+if ($totalItems > 0) {
+    $placeholders = implode(',', array_fill(0, $totalItems, '?'));
+    $checkStmt = $conn->prepare(
+        "SELECT COUNT(*) as cnt FROM control_item_reviews
+         WHERE swo_id = ? AND item_key IN ($placeholders)
+         AND control_decision IS NOT NULL AND control_decision != ''"
+    );
+    $types = 'i' . str_repeat('s', $totalItems);
+    $params = array_merge([$swo_id], $allItems);
+    $checkStmt->bind_param($types, ...$params);
+    $checkStmt->execute();
+    $checkResult = $checkStmt->get_result()->fetch_assoc();
+    $checkStmt->close();
+    if ((int)$checkResult['cnt'] < $totalItems) {
+        $conn->close();
+        jsonResponse(false, 'All items must have a decision before approving');
+    }
+}
+
 // Update SWO status to Completed
 $stmt = $conn->prepare(
     "UPDATE swo_list SET status = 'Completed',
