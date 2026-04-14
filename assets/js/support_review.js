@@ -231,6 +231,30 @@ const SupportReview = {
         }
     },
 
+    async saveAllItemReviews() {
+        // Cancel any pending debounced saves
+        Object.keys(this.saveTimers).forEach(k => clearTimeout(this.saveTimers[k]));
+        this.saveTimers = {};
+
+        const rows = document.querySelectorAll('#reviewContent tr[data-item-key]');
+        const saves = [];
+        rows.forEach(row => {
+            const itemKey = row.dataset.itemKey;
+            if (!itemKey) return;
+            const decision = row.querySelector('.support-decision-select')?.value ?? '';
+            const comment  = row.querySelector('.support-comment-textarea')?.value ?? '';
+            saves.push(
+                API.post('/swo/support_item_review.php', {
+                    swo_id:           this.swoId,
+                    item_key:         itemKey,
+                    support_decision: decision,
+                    support_comment:  comment,
+                }).catch(err => console.error('Failed to save item review for', itemKey, err))
+            );
+        });
+        await Promise.all(saves);
+    },
+
     async rejectAndSendToUser() {
         const comments = document.getElementById('overallCommentsTextarea')?.value?.trim() ?? '';
         if (!comments) {
@@ -245,6 +269,10 @@ const SupportReview = {
         if (btn) btn.disabled = true;
 
         try {
+            // Persist all item-level comments/decisions before changing the SWO status,
+            // so the user can see them in the Feedback page after rejection.
+            await this.saveAllItemReviews();
+
             const data = await API.post('/swo/support_reject.php', {
                 swo_id:   this.swoId,
                 comments: comments,
