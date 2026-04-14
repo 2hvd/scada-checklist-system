@@ -19,6 +19,11 @@ if (!$input) {
 $swo_id   = intval($input['swo_id'] ?? 0);
 $comments = sanitizeInput($input['comments'] ?? '');
 
+// Ensure rejection_reason is never stored empty so the user sees the Support Comment column
+if (empty($comments)) {
+    $comments = 'Reviewed by support';
+}
+
 if (!$swo_id) {
     jsonResponse(false, 'SWO ID is required');
 }
