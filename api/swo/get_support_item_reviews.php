@@ -15,9 +15,14 @@ if (!$swo_id) {
 $conn = getDBConnection();
 
 $stmt = $conn->prepare(
-    "SELECT item_key, support_decision, support_comment
-     FROM support_item_reviews
-     WHERE swo_id = ?"
+    "SELECT sir.item_key, sir.support_decision, sir.support_comment,
+            uic.comment AS user_comment
+     FROM support_item_reviews sir
+     LEFT JOIN user_item_comments uic
+           ON uic.swo_id    = sir.swo_id
+          AND uic.item_key  = sir.item_key
+          AND uic.user_id   = (SELECT assigned_to FROM swo_list WHERE id = sir.swo_id)
+     WHERE sir.swo_id = ?"
 );
 $stmt->bind_param('i', $swo_id);
 $stmt->execute();

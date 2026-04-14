@@ -57,6 +57,7 @@ const SupportReview = {
                             <th>#</th>
                             <th>Item</th>
                             <th class="col-status">User Status</th>
+                            <th class="user-col-readonly">User Comment</th>
                             <th class="col-decision">Support Decision</th>
                             <th class="col-comment">Support Comment</th>
                         </tr>
@@ -67,6 +68,9 @@ const SupportReview = {
                             <td>${idx + 1}</td>
                             <td>${escapeHtml(item.label)}</td>
                             <td class="col-status">${getChecklistStatusBadge(item.status)}</td>
+                            <td class="user-col-readonly">
+                                <span class="user-comment-readonly">${escapeHtml(item.user_comment || '—')}</span>
+                            </td>
                             <td class="col-decision">
                                 <select class="review-decision-select support-decision-select"
                                         data-item-key="${escapeHtml(item.key)}">
