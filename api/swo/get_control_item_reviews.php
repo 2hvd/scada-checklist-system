@@ -15,14 +15,9 @@ if (!$swo_id) {
 $conn = getDBConnection();
 
 $stmt = $conn->prepare(
-    "SELECT cir.item_key, cir.control_decision, cir.control_comment,
-            uic.comment AS user_comment
-     FROM control_item_reviews cir
-     LEFT JOIN user_item_comments uic
-           ON uic.swo_id    = cir.swo_id
-          AND uic.item_key  = cir.item_key
-          AND uic.user_id   = (SELECT assigned_to FROM swo_list WHERE id = cir.swo_id)
-     WHERE cir.swo_id = ?"
+    "SELECT item_key, control_decision, control_comment
+     FROM control_item_reviews
+     WHERE swo_id = ?"
 );
 $stmt->bind_param('i', $swo_id);
 $stmt->execute();
