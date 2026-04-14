@@ -17,12 +17,27 @@ $stmt->bind_param('ii', $swo_id, $_SESSION['user_id']);
 $stmt->execute();
 $swo = $stmt->get_result()->fetch_assoc();
 $stmt->close();
-$conn->close();
 
 if (!$swo) {
+    $conn->close();
     header('Location: /scada-checklist-system/views/user/index.php');
     exit;
 }
+
+// Determine whether the Support Comment column should be shown:
+// true if rejection_reason is set OR if there are saved support item reviews
+$hasSupportReviews = !empty($swo['rejection_reason']);
+if (!$hasSupportReviews) {
+    $checkStmt = $conn->prepare("SELECT 1 FROM support_item_reviews WHERE swo_id = ? LIMIT 1");
+    if ($checkStmt) {
+        $checkStmt->bind_param('i', $swo_id);
+        $checkStmt->execute();
+        $hasSupportReviews = $checkStmt->get_result()->num_rows > 0;
+        $checkStmt->close();
+    }
+}
+
+$conn->close();
 
 $readOnly = !in_array($swo['status'], ['In Progress']);
 require_once __DIR__ . '/../components/header.php';
@@ -100,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <?php echo $swo_id; ?>,
         <?php echo $readOnly ? 'true' : 'false'; ?>,
         <?php echo json_encode($swo['status']); ?>,
-        <?php echo !empty($swo['rejection_reason']) ? 'true' : 'false'; ?>
+        <?php echo $hasSupportReviews ? 'true' : 'false'; ?>
     );
 });
 </script>
