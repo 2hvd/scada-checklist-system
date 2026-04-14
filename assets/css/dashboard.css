@@ -466,22 +466,30 @@
     text-align: left;
     border-bottom: 2px solid #2c3e50;
     white-space: nowrap;
+    overflow: hidden;
 }
 .checklist-table td {
     padding: 10px 14px;
     border-bottom: 1px solid var(--border);
     vertical-align: top;
+    overflow: hidden;
+}
+/* Ensure <tr class="checklist-item"> renders as a proper table row,
+   overriding the flex display that the .checklist-item rule applies. */
+.checklist-table tbody tr.checklist-item,
+.checklist-table tbody tr.checklist-item--support {
+    display: table-row;
 }
 .checklist-table tbody tr:last-child td { border-bottom: none; }
 .checklist-table tbody tr:hover { background: #f8f9ff; }
 .checklist-table .col-number {
-    width: 44px;
+    width: 50px;
     text-align: center;
 }
 .checklist-table .col-status { width: 150px; }
-.checklist-table .col-comment { width: 35%; }
-.checklist-table .col-decision { width: 140px; }
-.checklist-table .item-label { font-size: 14px; word-break: break-word; }
+.checklist-table .col-comment { width: 30%; }
+.checklist-table .col-decision { width: 150px; }
+.checklist-table .item-label { font-size: 14px; word-break: break-word; overflow-wrap: break-word; }
 
 /* ========== Save Indicator (checklist page) ========== */
 .save-indicator {
