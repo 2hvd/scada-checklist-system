@@ -3,6 +3,7 @@
 const ReviewManager = {
     swoId: null,
     role: null,      // 'user', 'support', 'control'
+    swoStatus: null,
     saveTimers: {},
 
     async init(swoId, role) {
@@ -42,6 +43,8 @@ const ReviewManager = {
         const counts   = data.counts   || {};
         const progress = data.progress || 0;
 
+        this.swoStatus = swo.status;
+
         // Header title
         const titleEl = document.getElementById('reviewTitle');
         if (titleEl) titleEl.textContent = 'Review: ' + swo.swo_number;
@@ -78,6 +81,7 @@ const ReviewManager = {
                             <th scope="col" class="col-status">User Status</th>
                             ${this.role !== 'user' ? '<th scope="col" class="col-comment user-col-readonly">User Comment</th>' : ''}
                             ${this.role === 'control' ? '<th scope="col" class="col-status">Support Decision</th><th scope="col" class="col-comment support-col-readonly">Support Comment</th>' : ''}
+                            ${this.role === 'support' && this.swoStatus === 'Returned from Control' ? '<th scope="col" class="col-comment control-col-readonly">Control Comment</th>' : ''}
                             ${this.role !== 'user' ? '<th scope="col" class="col-decision">Decision</th>' : ''}
                             <th scope="col" class="col-comment">Comment</th>
                         </tr>
@@ -114,6 +118,11 @@ const ReviewManager = {
                 <span class="support-comment-readonly">${escapeHtml(item.support_comment || '—')}</span>
             </td>` : '';
 
+        const controlFeedbackHtml = this.role === 'support' && this.swoStatus === 'Returned from Control' ? `
+            <td class="col-comment control-col-readonly">
+                <span class="control-comment-readonly">${escapeHtml(item.control_comment || '—')}</span>
+            </td>` : '';
+
         return `
             <tr data-item-key="${escapeHtml(item.key)}">
                 <td>${num}</td>
@@ -121,6 +130,7 @@ const ReviewManager = {
                 <td class="col-status">${getChecklistStatusBadge(item.status)}</td>
                 ${userCommentColHtml}
                 ${supportColsHtml}
+                ${controlFeedbackHtml}
                 ${decisionHtml}
                 <td class="col-comment">
                     <textarea class="review-comment-textarea"

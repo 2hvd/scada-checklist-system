@@ -96,6 +96,11 @@ function toggleSidebar() {
     document.getElementById('sidebarOverlay').classList.toggle('active');
 }
 document.addEventListener('DOMContentLoaded', function() {
-    ChecklistPage.init(<?php echo $swo_id; ?>, <?php echo $readOnly ? 'true' : 'false'; ?>);
+    ChecklistPage.init(
+        <?php echo $swo_id; ?>,
+        <?php echo $readOnly ? 'true' : 'false'; ?>,
+        <?php echo json_encode($swo['status']); ?>,
+        <?php echo !empty($swo['rejection_reason']) ? 'true' : 'false'; ?>
+    );
 });
 </script>

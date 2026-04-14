@@ -79,6 +79,21 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
+// Load control item reviews (read-only for support when SWO was returned from Control)
+$controlComments = [];
+if ($swo['status'] === 'Returned from Control') {
+    $stmt = $conn->prepare(
+        "SELECT item_key, control_comment FROM control_item_reviews WHERE swo_id = ?"
+    );
+    $stmt->bind_param('i', $swo_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $controlComments[$row['item_key']] = $row['control_comment'] ?? '';
+    }
+    $stmt->close();
+}
+
 $conn->close();
 
 // Build structured sections
@@ -93,12 +108,13 @@ foreach ($checklistItems as $secKey => $section) {
         $review     = $itemReviews[$itemKey] ?? ['decision' => '', 'comment' => ''];
 
         $sectionData['items'][] = [
-            'key'          => $itemKey,
-            'label'        => $itemLabel,
-            'status'       => $userStatus,
-            'user_comment' => $userComments[$itemKey] ?? '',
-            'decision'     => $review['decision'],
-            'comment'      => $review['comment'],
+            'key'             => $itemKey,
+            'label'           => $itemLabel,
+            'status'          => $userStatus,
+            'user_comment'    => $userComments[$itemKey] ?? '',
+            'decision'        => $review['decision'],
+            'comment'         => $review['comment'],
+            'control_comment' => $controlComments[$itemKey] ?? '',
         ];
 
         $totalItems++;
