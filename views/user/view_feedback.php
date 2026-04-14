@@ -84,7 +84,7 @@ async function loadFeedback() {
         if (swo.status === 'In Progress' && swo.rejection_reason) {
             alertEl.style.display = 'block';
             alertEl.className = 'alert alert-warning';
-            alertEl.innerHTML = `<strong>⚠️ Rejected by Support</strong><p style="margin:4px 0 0">Please review the comments below and make the necessary changes before resubmitting.</p>`;
+            alertEl.innerHTML = `<strong>⚠️ Rejected by Support</strong><p style="margin:4px 0 0">${escapeHtml(swo.rejection_reason)}</p><p style="margin:4px 0 0">Please review the item-level comments below and make the necessary changes before resubmitting.</p>`;
         } else if (swo.status === 'Returned from Control') {
             alertEl.style.display = 'block';
             alertEl.className = 'alert alert-warning';
