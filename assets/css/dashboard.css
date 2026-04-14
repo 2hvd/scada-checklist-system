@@ -450,6 +450,19 @@
     word-break: break-word;
 }
 
+/* ========== Reviewer Comment (read-only feedback in checklist table) ========== */
+.reviewer-comment-readonly {
+    display: block;
+    font-size: 12px;
+    color: #856404;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: #fff3cd;
+    border-left: 3px solid #ffc107;
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+
 /* ========== Checklist Table (user checklist with column headers) ========== */
 .checklist-table {
     width: 100%;

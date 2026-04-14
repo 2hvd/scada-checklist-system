@@ -4,11 +4,15 @@ const ChecklistPage = {
     swoId: null,
     readOnly: false,
     supportMode: false,
+    swoStatus: '',
+    hasRejectionReason: false,
     _savedTimer: null,
 
-    async init(swoId, readOnly = false) {
+    async init(swoId, readOnly = false, swoStatus = '', hasRejectionReason = false) {
         this.swoId = swoId;
         this.readOnly = readOnly;
+        this.swoStatus = swoStatus;
+        this.hasRejectionReason = hasRejectionReason;
         await this.loadChecklist();
         if (!readOnly) {
             this.bindCommentAutoSave();
@@ -31,6 +35,7 @@ const ChecklistPage = {
 
             this.renderChecklist(data.data, container);
             this.updateProgress(data.data.progress, data.data.counts);
+            await this.loadExtraComments();
         } catch (err) {
             container.innerHTML = '<div class="alert alert-danger">Error loading checklist.</div>';
         }
@@ -40,10 +45,19 @@ const ChecklistPage = {
         const sections = data.sections || [];
         let html = '';
 
+        const showSupportComment = this.swoStatus === 'In Progress' && this.hasRejectionReason;
+        const showControlComment = this.swoStatus === 'Returned from Control';
+
         sections.forEach(section => {
             const extraHeads = this.supportMode
                 ? '<th class="col-decision">Support Decision</th><th class="col-comment">Support Comment</th>'
                 : '';
+
+            const feedbackHead = showSupportComment
+                ? '<th class="col-comment">Support Comment</th>'
+                : showControlComment
+                    ? '<th class="col-comment">Control Comment</th>'
+                    : '';
 
             html += `
                 <div class="checklist-section">
@@ -56,6 +70,7 @@ const ChecklistPage = {
                                 <th class="col-status">Status</th>
                                 <th class="col-comment">Comment</th>
                                 ${extraHeads}
+                                ${feedbackHead}
                             </tr>
                         </thead>
                         <tbody>
@@ -95,6 +110,10 @@ const ChecklistPage = {
                                   placeholder="Add comments..."></textarea>
                     </td>` : '';
 
+                const feedbackCell = (showSupportComment || showControlComment)
+                    ? `<td class="col-comment reviewer-comment-cell" data-key="${escapeHtml(item.key)}"><span class="text-muted">—</span></td>`
+                    : '';
+
                 html += `
                     <tr class="checklist-item${this.supportMode ? ' checklist-item--support' : ''}" data-key="${escapeHtml(item.key)}">
                         <td class="col-number"><div class="item-number">${num}</div></td>
@@ -116,6 +135,7 @@ const ChecklistPage = {
                         </td>
                         ${commentCell}
                         ${supportCells}
+                        ${feedbackCell}
                     </tr>
                 `;
             });
@@ -282,6 +302,43 @@ const ChecklistPage = {
             }
         } catch (err) {
             console.error('Failed to load user item comments:', err);
+        }
+    },
+
+    async loadExtraComments() {
+        const showSupportComment = this.swoStatus === 'In Progress' && this.hasRejectionReason;
+        const showControlComment = this.swoStatus === 'Returned from Control';
+
+        if (!showSupportComment && !showControlComment) return;
+
+        try {
+            if (showSupportComment) {
+                const data = await API.get('/swo/get_support_item_reviews.php', { swo_id: this.swoId });
+                if (data && data.success) {
+                    (data.data || []).forEach(r => {
+                        const cell = document.querySelector(`.reviewer-comment-cell[data-key="${CSS.escape(r.item_key)}"]`);
+                        if (cell) {
+                            cell.innerHTML = r.support_comment
+                                ? `<span class="reviewer-comment-readonly">${escapeHtml(r.support_comment)}</span>`
+                                : '<span class="text-muted">—</span>';
+                        }
+                    });
+                }
+            } else if (showControlComment) {
+                const data = await API.get('/swo/get_control_item_reviews.php', { swo_id: this.swoId });
+                if (data && data.success) {
+                    (data.data || []).forEach(r => {
+                        const cell = document.querySelector(`.reviewer-comment-cell[data-key="${CSS.escape(r.item_key)}"]`);
+                        if (cell) {
+                            cell.innerHTML = r.control_comment
+                                ? `<span class="reviewer-comment-readonly">${escapeHtml(r.control_comment)}</span>`
+                                : '<span class="text-muted">—</span>';
+                        }
+                    });
+                }
+            }
+        } catch (err) {
+            console.error('Failed to load extra comments:', err);
         }
     },
 
