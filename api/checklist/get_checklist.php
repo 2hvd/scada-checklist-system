@@ -29,21 +29,26 @@ if (!$swo) {
 
 $assigned_id = $swo['assigned_to'];
 
-// Always load ALL active items from checklist_items, left-joined with this SWO's saved statuses
+// Always load ALL active items from checklist_items, left-joined with this SWO's saved statuses and user comments
 $stmt = $conn->prepare(
     "SELECT ci.section, ci.section_number, ci.item_key, ci.description,
             COALESCE(cs.status, 'empty') AS status,
-            cs.updated_at AS status_updated_at
+            cs.updated_at AS status_updated_at,
+            uic.comment AS user_comment
      FROM checklist_items ci
      LEFT JOIN checklist_status cs
            ON cs.item_key = ci.item_key
           AND cs.swo_id   = ?
           AND cs.user_id  = ?
+     LEFT JOIN user_item_comments uic
+           ON uic.item_key = ci.item_key
+          AND uic.swo_id   = ?
+          AND uic.user_id  = ?
      WHERE (ci.is_active = 1 AND ci.is_deleted = 0)
         OR (cs.id IS NOT NULL)
      ORDER BY ci.section, ci.section_number"
 );
-$stmt->bind_param('ii', $swo_id, $assigned_id);
+$stmt->bind_param('iiii', $swo_id, $assigned_id, $swo_id, $assigned_id);
 $stmt->execute();
 $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
@@ -85,10 +90,11 @@ foreach ($grouped as $section_key => $sectionRows) {
     foreach ($sectionRows as $row) {
         $st = $row['status'];
         $items[] = [
-            'key'        => $row['item_key'],
-            'label'      => $row['description'],
-            'status'     => $st,
-            'updated_at' => $row['status_updated_at'],
+            'key'          => $row['item_key'],
+            'label'        => $row['description'],
+            'status'       => $st,
+            'user_comment' => $row['user_comment'] ?? '',
+            'updated_at'   => $row['status_updated_at'],
         ];
         $total++;
         if ($st === 'done')        $done++;

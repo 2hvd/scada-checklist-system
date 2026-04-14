@@ -62,6 +62,7 @@ const ControlReviewPage = {
                             <th>#</th>
                             <th>Item</th>
                             <th class="col-status">User Status</th>
+                            <th class="user-col-readonly">User Comment</th>
                             <th class="col-status">Support Decision</th>
                             <th class="col-comment support-col-readonly">Support Comment</th>
                             <th class="col-decision">Control Decision</th>
@@ -74,6 +75,9 @@ const ControlReviewPage = {
                             <td>${idx + 1}</td>
                             <td>${escapeHtml(item.label)}</td>
                             <td class="col-status">${getChecklistStatusBadge(item.status)}</td>
+                            <td class="user-col-readonly">
+                                <span class="user-comment-readonly">${escapeHtml(item.user_comment || '—')}</span>
+                            </td>
                             <td class="col-status">${item.support_decision ? getChecklistStatusBadge(item.support_decision) : '<span class="text-muted">—</span>'}</td>
                             <td class="support-col-readonly">
                                 <span class="support-comment-readonly">${escapeHtml(item.support_comment || '—')}</span>

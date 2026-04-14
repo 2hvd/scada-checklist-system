@@ -11,7 +11,6 @@ const ChecklistPage = {
         this.readOnly = readOnly;
         await this.loadChecklist();
         if (!readOnly) {
-            await this.loadUserItemComments();
             this.bindCommentAutoSave();
         }
         await this.loadComments();
@@ -45,9 +44,6 @@ const ChecklistPage = {
             const extraHeads = this.supportMode
                 ? '<th class="col-decision">Support Decision</th><th class="col-comment">Support Comment</th>'
                 : '';
-            const commentHead = !this.readOnly
-                ? '<th class="col-comment">Comment</th>'
-                : '';
 
             html += `
                 <div class="checklist-section">
@@ -58,7 +54,7 @@ const ChecklistPage = {
                                 <th class="col-number">#</th>
                                 <th>Item</th>
                                 <th class="col-status">Status</th>
-                                ${commentHead}
+                                <th class="col-comment">Comment</th>
                                 ${extraHeads}
                             </tr>
                         </thead>
@@ -67,14 +63,18 @@ const ChecklistPage = {
             section.items.forEach((item, idx) => {
                 const num = idx + 1;
                 const disabled = this.readOnly ? 'disabled' : '';
-                const commentCell = !this.readOnly
+                const commentCell = this.readOnly
                     ? `<td class="col-comment">
+                           ${item.user_comment
+                               ? `<span class="user-comment-readonly">${escapeHtml(item.user_comment)}</span>`
+                               : '<span class="text-muted">—</span>'}
+                       </td>`
+                    : `<td class="col-comment">
                            <textarea class="user-comment-textarea"
                                      data-key="${escapeHtml(item.key)}"
                                      rows="2"
-                                     placeholder="Add comment..."></textarea>
-                       </td>`
-                    : '';
+                                     placeholder="Add comment...">${escapeHtml(item.user_comment || '')}</textarea>
+                       </td>`;
                 const supportCells = this.supportMode ? `
                     <td class="col-decision">
                         <select class="item-status-select support-decision"

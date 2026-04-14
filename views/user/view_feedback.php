@@ -141,6 +141,10 @@ async function loadFeedback() {
                         <td style="text-align:center">${rowNum}</td>
                         <td>${escapeHtml(item.label)}</td>
                         <td>${getChecklistStatusBadge(item.status)}</td>
+                        <td>${item.user_comment
+                            ? `<span class="user-comment-readonly">${escapeHtml(item.user_comment)}</span>`
+                            : '<span class="text-muted">—</span>'
+                        }</td>
                         <td>${feedbackComment
                             ? `<div class="feedback-alert"><strong>Feedback:</strong> ${escapeHtml(feedbackComment)}</div>`
                             : '<span class="text-muted">—</span>'
@@ -161,6 +165,7 @@ async function loadFeedback() {
                                     <th style="width:40px">#</th>
                                     <th>Item</th>
                                     <th style="width:110px">Your Status</th>
+                                    <th>Your Comment</th>
                                     <th>Reviewer Feedback</th>
                                 </tr>
                             </thead>

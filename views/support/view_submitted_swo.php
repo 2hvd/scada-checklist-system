@@ -126,6 +126,10 @@ async function loadSWOView() {
                         <td style="text-align:center">${rowNum}</td>
                         <td>${escapeHtml(item.label)}</td>
                         <td>${getChecklistStatusBadge(item.status)}</td>
+                        <td>${item.user_comment
+                            ? `<span class="user-comment-readonly">${escapeHtml(item.user_comment)}</span>`
+                            : '<span class="text-muted">—</span>'
+                        }</td>
                         <td>${sr.support_decision ? getChecklistStatusBadge(sr.support_decision) : '<span class="text-muted">—</span>'}</td>
                         <td style="font-size:13px">${escapeHtml(sr.support_comment || '—')}</td>
                         <td>${cr.control_decision ? getChecklistStatusBadge(cr.control_decision) : '<span class="text-muted">—</span>'}</td>
@@ -149,6 +153,7 @@ async function loadSWOView() {
                                     <th style="width:40px">#</th>
                                     <th>Item</th>
                                     <th style="width:110px">User Status</th>
+                                    <th>User Comment</th>
                                     <th style="width:110px">Your Decision</th>
                                     <th>Your Comment</th>
                                     <th style="width:110px">Control Decision</th>
