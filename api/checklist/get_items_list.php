@@ -36,7 +36,7 @@ if ($statusFilter === 'active') {
     $whereClauses[] = 'ci.is_active = 0';
 }
 if ($swoTypeFilter > 0) {
-    $whereClauses[] = 'ci.swo_type_id = ?';
+    $whereClauses[] = '(ci.swo_type_id = ? OR ci.swo_type_id IS NULL)';
     $params[]       = $swoTypeFilter;
     $types         .= 'i';
 }
@@ -114,12 +114,24 @@ foreach ($items as $item) {
 }
 
 // Statistics
-$statsRes = $conn->query(
-    "SELECT section, COUNT(*) AS total, SUM(is_active) AS active_count
-       FROM checklist_items
-      WHERE is_deleted = 0
-      GROUP BY section"
-);
+$statsSql = "SELECT section, COUNT(*) AS total, SUM(is_active) AS active_count
+               FROM checklist_items
+              WHERE is_deleted = 0";
+$statsParams = [];
+$statsTypes = '';
+if ($swoTypeFilter > 0) {
+    $statsSql .= " AND (swo_type_id = ? OR swo_type_id IS NULL)";
+    $statsParams[] = $swoTypeFilter;
+    $statsTypes .= 'i';
+}
+$statsSql .= " GROUP BY section";
+
+$statsStmt = $conn->prepare($statsSql);
+if ($statsTypes !== '') {
+    $statsStmt->bind_param($statsTypes, ...$statsParams);
+}
+$statsStmt->execute();
+$statsRes = $statsStmt->get_result();
 $stats = [];
 while ($row = $statsRes->fetch_assoc()) {
     $stats[$row['section']] = [
@@ -129,32 +141,54 @@ while ($row = $statsRes->fetch_assoc()) {
         'label'  => $sectionLabels[$row['section']] ?? $row['section'],
     ];
 }
+$statsStmt->close();
 
 $totalItems  = array_sum(array_column($stats, 'total'));
 $activeItems = array_sum(array_column($stats, 'active'));
 
 // Get parent items list for the add modal
 $parentItems = [];
-$parentRes = $conn->query(
-    "SELECT ci.id, ci.description, ci.item_key, ci.section, ci.section_number, ci.swo_type_id, st.name AS swo_type_name
-       FROM checklist_items ci
-       LEFT JOIN swo_types st ON st.id = ci.swo_type_id
-      WHERE ci.is_deleted = 0 AND ci.is_active = 1 AND ci.parent_item_id IS NULL
-      ORDER BY ci.swo_type_id, ci.section, ci.section_number"
-);
+$parentSql = "SELECT ci.id, ci.description, ci.item_key, ci.section, ci.section_number, ci.swo_type_id, st.name AS swo_type_name
+                FROM checklist_items ci
+                LEFT JOIN swo_types st ON st.id = ci.swo_type_id
+               WHERE ci.is_deleted = 0 AND ci.is_active = 1 AND ci.parent_item_id IS NULL";
+$parentParams = [];
+$parentTypes = '';
+if ($swoTypeFilter > 0) {
+    $parentSql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
+    $parentParams[] = $swoTypeFilter;
+    $parentTypes .= 'i';
+}
+$parentSql .= " ORDER BY ci.swo_type_id, ci.section, ci.section_number";
+$parentStmt = $conn->prepare($parentSql);
+if ($parentTypes !== '') {
+    $parentStmt->bind_param($parentTypes, ...$parentParams);
+}
+$parentStmt->execute();
+$parentRes = $parentStmt->get_result();
 while ($row = $parentRes->fetch_assoc()) {
     $row['section_label'] = $sectionLabels[$row['section']] ?? ucwords(str_replace('_', ' ', $row['section']));
     $parentItems[] = $row;
 }
+$parentStmt->close();
 
 // Max section number per (section, swo_type_id) for top-level items
 $maxPerType = [];
-$maxStmt = $conn->prepare(
-    "SELECT section, swo_type_id, MAX(section_number) AS max_number
-       FROM checklist_items
-      WHERE is_deleted = 0 AND parent_item_id IS NULL
-      GROUP BY section, swo_type_id"
-);
+$maxSql = "SELECT section, swo_type_id, MAX(section_number) AS max_number
+             FROM checklist_items
+            WHERE is_deleted = 0 AND parent_item_id IS NULL";
+$maxParams = [];
+$maxTypes = '';
+if ($swoTypeFilter > 0) {
+    $maxSql .= " AND (swo_type_id = ? OR swo_type_id IS NULL)";
+    $maxParams[] = $swoTypeFilter;
+    $maxTypes .= 'i';
+}
+$maxSql .= " GROUP BY section, swo_type_id";
+$maxStmt = $conn->prepare($maxSql);
+if ($maxTypes !== '') {
+    $maxStmt->bind_param($maxTypes, ...$maxParams);
+}
 $maxStmt->execute();
 $maxRes = $maxStmt->get_result();
 while ($row = $maxRes->fetch_assoc()) {
