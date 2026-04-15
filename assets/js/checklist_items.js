@@ -2,6 +2,7 @@
 
 const ChecklistItems = {
     _items: [],
+    _parentItems: [],
     _sectionCounts: {},   // {section: maxNumber} cached per load
 
     async load() {
@@ -12,7 +13,7 @@ const ChecklistItems = {
         const swo_type_id = document.getElementById('ciSwoTypeFilter')?.value || '';
 
         if (!tbody) return;
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>';
 
         try {
             const params = { section, search, status };
@@ -20,15 +21,16 @@ const ChecklistItems = {
 
             const data = await API.get('/checklist/get_items_list.php', params);
             if (!data || !data.success) {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Failed to load items.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Failed to load items.</td></tr>';
                 return;
             }
 
             this._items = data.data.items || [];
+            this._parentItems = data.data.parent_items || [];
             this._updateStats(data.data);
             this._renderTable(this._items, tbody);
         } catch (err) {
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Connection error.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Connection error.</td></tr>';
         }
     },
 
@@ -59,7 +61,7 @@ const ChecklistItems = {
 
     _renderTable(items, tbody) {
         if (!items.length) {
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No checklist items found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">No checklist items found.</td></tr>';
             return;
         }
 
@@ -71,8 +73,13 @@ const ChecklistItems = {
             const toggleLabel  = item.is_active == 1 ? '⏸ Deactivate' : '▶ Activate';
             const toggleClass  = item.is_active == 1 ? 'btn-warning' : 'btn-success';
 
-            // Hierarchy indentation
-            const indent = item.parent_item_id ? 'style="padding-left:30px;"' : '';
+            // Hierarchy: indent description and add ↳ prefix for child items
+            const isChild = !!item.parent_item_id;
+            const childPrefix = isChild ? '<span style="color:#aaa;margin-right:4px;">↳</span>' : '';
+            const descStyle = isChild
+                ? 'max-width:280px;padding-left:20px;'
+                : 'max-width:280px;';
+
             const parentBadge = (item.sub_items_count > 0)
                 ? ' <span class="badge" style="background:#3498db;color:#fff;font-size:10px;">Parent</span>'
                 : '';
@@ -86,12 +93,18 @@ const ChecklistItems = {
                 ? `disabled title="Cannot edit — used in ${usageCount} SWO(s)"`
                 : '';
 
+            const swoTypeName = item.swo_type_name && item.swo_type_name !== '—' ? item.swo_type_name : null;
+            const swoTypeBadge = swoTypeName
+                ? `<span class="badge" style="background:#9b59b6;color:#fff;">${escapeHtml(swoTypeName)}</span>`
+                : '<span class="text-muted">—</span>';
+
             return `
             <tr>
                 <td>${escapeHtml(item.section_label)}</td>
-                <td ${indent}>${escapeHtml(item.section_number)}</td>
-                <td style="max-width:280px;">${escapeHtml(item.description)}</td>
+                <td>${escapeHtml(String(item.section_number))}</td>
+                <td style="${descStyle}">${childPrefix}${escapeHtml(item.description)}</td>
                 <td><code style="font-size:11px;background:#f4f4f4;padding:2px 5px;border-radius:3px;">${escapeHtml(item.item_key)}</code></td>
+                <td>${swoTypeBadge}</td>
                 <td>${activeBadge}${parentBadge}</td>
                 <td>${escapeHtml(item.created_by_name || '—')}</td>
                 <td style="white-space:nowrap;">${formatDateShort(item.created_at)}</td>
@@ -138,6 +151,7 @@ const ChecklistItems = {
     openAddModal() {
         const el = (id) => document.getElementById(id);
         el('ciAddSection').value     = '';
+        el('ciAddSection').disabled  = false;
         el('ciAddNumber').value      = '';
         el('ciAddDescription').value = '';
         if (el('ciAddSwoType'))    el('ciAddSwoType').value    = '';
@@ -162,13 +176,40 @@ const ChecklistItems = {
             return;
         }
 
-        // Filter parent items: top-level items matching the selected SWO type (or with no type)
-        const matching = this._items.filter(i =>
-            !i.parent_item_id &&
-            (String(i.swo_type_id) === String(swo_type_id) || !i.swo_type_id)
+        // Use _parentItems (from API) if available, otherwise fall back to filtering _items
+        const source = this._parentItems.length
+            ? this._parentItems
+            : this._items.filter(i => !i.parent_item_id);
+
+        const matching = source.filter(i =>
+            String(i.swo_type_id) === String(swo_type_id) || !i.swo_type_id
         );
         parentSelect.innerHTML = '<option value="">-- No Parent (Top-level Item) --</option>' +
-            matching.map(i => `<option value="${i.id}">${escapeHtml(i.section_label + ' #' + i.section_number + ' — ' + i.description)}</option>`).join('');
+            matching.map(i => `<option value="${i.id}">${escapeHtml(i.section_label || i.section)} #${escapeHtml(String(i.section_number))} — ${escapeHtml(i.description)}</option>`).join('');
+    },
+
+    onParentItemChange() {
+        const parentEl  = document.getElementById('ciAddParentItem');
+        const sectionEl = document.getElementById('ciAddSection');
+        if (!parentEl || !sectionEl) return;
+
+        const parent_id = parseInt(parentEl.value) || 0;
+        if (!parent_id) {
+            // No parent selected — re-enable manual section selection
+            sectionEl.disabled = false;
+            return;
+        }
+
+        // Find the parent item to auto-set the section
+        const source = this._parentItems.length
+            ? this._parentItems
+            : this._items.filter(i => !i.parent_item_id);
+        const parent = source.find(i => String(i.id) === String(parent_id));
+        if (parent && parent.section) {
+            sectionEl.value    = parent.section;
+            sectionEl.disabled = true; // Lock to match parent section
+            this.suggestNumber();
+        }
     },
 
     // في checklist_items.js - تحديث submitAdd function:

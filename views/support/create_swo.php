@@ -40,11 +40,6 @@ require_once __DIR__ . '/../components/sidebar.php';
                         <label for="swo_type">SWO Type *</label>
                         <select id="swo_type" class="form-control" required>
                             <option value="">-- Select Type --</option>
-                            <option value="Configuration">Configuration</option>
-                            <option value="Commissioning">Commissioning</option>
-                            <option value="Maintenance">Maintenance</option>
-                            <option value="Upgrade">Upgrade</option>
-                            <option value="Troubleshooting">Troubleshooting</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -80,9 +75,9 @@ async function submitSWO(action) {
     const form = document.getElementById('createSwoForm');
     const swo_number = document.getElementById('swo_number').value.trim();
     const station_name = document.getElementById('station_name').value.trim();
-    const swo_type = document.getElementById('swo_type').value;
+    const swo_type_id = parseInt(document.getElementById('swo_type').value) || 0;
 
-    if (!swo_number || !station_name || !swo_type) {
+    if (!swo_number || !station_name || !swo_type_id) {
         showError('Please fill in all required fields.');
         return;
     }
@@ -90,7 +85,7 @@ async function submitSWO(action) {
     const payload = {
         swo_number,
         station_name,
-        swo_type,
+        swo_type_id,
         kcor: document.getElementById('kcor').value.trim(),
         description: document.getElementById('description').value.trim(),
         action
@@ -113,4 +108,18 @@ async function submitSWO(action) {
         btns.forEach(b => b.disabled = false);
     }
 }
+
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const data = await API.get('/swo/get_swo_types.php');
+        if (data && data.success) {
+            const select = document.getElementById('swo_type');
+            const types = data.data || [];
+            select.innerHTML = '<option value="">-- Select Type --</option>' +
+                types.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('');
+        }
+    } catch (err) {
+        console.error('Failed to load SWO types:', err);
+    }
+});
 </script>

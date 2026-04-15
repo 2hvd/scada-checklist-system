@@ -161,6 +161,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                                     <th>#</th>
                                     <th>Description</th>
                                     <th>Key</th>
+                                    <th>SWO Type</th>
                                     <th>Status</th>
                                     <th>Created By</th>
                                     <th>Created</th>
@@ -169,7 +170,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                                 </tr>
                             </thead>
                             <tbody id="ciTableBody">
-                                <tr><td colspan="9" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
+                                <tr><td colspan="10" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -234,7 +235,7 @@ require_once __DIR__ . '/../components/sidebar.php';
         </div>
         <div class="form-group">
             <label>Parent Item <small style="color:#999;">(Optional - leave empty for top-level item)</small></label>
-            <select id="ciAddParentItem" class="form-control">
+            <select id="ciAddParentItem" class="form-control" onchange="ChecklistItems.onParentItemChange()">
                 <option value="">-- No Parent (Top-level Item) --</option>
             </select>
         </div>
