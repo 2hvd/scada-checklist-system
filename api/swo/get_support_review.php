@@ -42,7 +42,7 @@ $itemSql = "SELECT ci.id, ci.section, ci.section_number, ci.item_key, ci.descrip
 if ($swo_type_id !== null) {
     $itemSql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
 }
-$itemSql .= " ORDER BY ci.section, ci.parent_item_id IS NOT NULL, ci.parent_item_id, ci.section_number";
+$itemSql .= " ORDER BY ci.section, CASE WHEN ci.parent_item_id IS NULL THEN 0 ELSE 1 END, ci.parent_item_id, ci.section_number";
 if ($swo_type_id !== null) {
     $itemStmt = $conn->prepare($itemSql);
     $itemStmt->bind_param('i', $swo_type_id);

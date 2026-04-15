@@ -125,7 +125,7 @@ const ChecklistPage = {
                                 : `<select class="item-status-select status-${item.status}"
                                        data-key="${escapeHtml(item.key)}"
                                        data-parent-key="${escapeHtml(item.parent_key || '')}"
-                                       data-is-parent="${item.is_parent ? '1' : '0'}"
+                                        data-is-parent="${item.is_parent ? '1' : '0'}"
                                         onchange="ChecklistPage.updateStatus('${escapeHtml(item.key)}', this.value, this)"
                                         ${disabled}>
                                        <option value="empty"   ${item.status==='empty'   ?'selected':''}>— Select —</option>

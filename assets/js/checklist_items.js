@@ -196,6 +196,10 @@ const ChecklistItems = {
     },
 
     onSwoTypeChange() {
+        this.refreshParentListAndNumber();
+    },
+
+    refreshParentListAndNumber() {
         const swo_type_id = document.getElementById('ciAddSwoType')?.value;
         const section = document.getElementById('ciAddSection')?.value;
         const parentSelect = document.getElementById('ciAddParentItem');
@@ -399,5 +403,5 @@ document.addEventListener('DOMContentLoaded', function() {
     if (swoTypeFilter) swoTypeFilter.addEventListener('change', () => ChecklistItems.load());
 
     const addSection = document.getElementById('ciAddSection');
-    if (addSection) addSection.addEventListener('change', () => ChecklistItems.onSwoTypeChange());
+    if (addSection) addSection.addEventListener('change', () => ChecklistItems.refreshParentListAndNumber());
 });

@@ -136,8 +136,10 @@ $item_key = $swo_type_id !== null ? ($baseKey . '_t' . $swo_type_id) : $baseKey;
 // Ensure key uniqueness even for legacy collisions
 $keyCandidate = $item_key;
 $suffix = 1;
+// Cap fallback key attempts to avoid excessive DB loops on unexpected key collisions.
+$maxSuffixAttempts = 100;
 $keyChk = $conn->prepare("SELECT id FROM checklist_items WHERE item_key = ?");
-while (true) {
+while ($suffix <= $maxSuffixAttempts) {
     $keyChk->bind_param('s', $keyCandidate);
     $keyChk->execute();
     $exists = $keyChk->get_result()->fetch_assoc();
@@ -148,6 +150,11 @@ while (true) {
     $keyCandidate = $item_key . '_' . $suffix;
 }
 $keyChk->close();
+$maxAttemptsExceeded = ($suffix > $maxSuffixAttempts);
+if ($maxAttemptsExceeded) {
+    $conn->close();
+    jsonResponse(false, 'Unable to generate unique item key. Please try another number.');
+}
 $item_key = $keyCandidate;
 
 // Build dynamic query for nullable fields
