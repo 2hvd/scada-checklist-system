@@ -93,7 +93,7 @@ if (!empty($subItems) && $support_decision !== null && $support_decision !== '')
              reviewed_by      = VALUES(reviewed_by),
              reviewed_at      = CURRENT_TIMESTAMP"
     );
-    $cascadeComment = "Auto-set from parent: {$item_key}";
+    $cascadeComment = '';
     foreach ($subItems as $sub) {
         $cascadeStmt->bind_param('isssi', $swo_id, $sub['item_key'], $support_decision, $cascadeComment, $support_id);
         $cascadeStmt->execute();
