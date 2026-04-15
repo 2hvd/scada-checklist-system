@@ -11,12 +11,12 @@ const ChecklistItems = {
         const status  = document.getElementById('ciStatusFilter')?.value  || 'all';
 
         if (!tbody) return;
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>';
 
         try {
             const data = await API.get('/checklist/get_items_list.php', { section, search, status });
             if (!data || !data.success) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Failed to load items.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Failed to load items.</td></tr>';
                 return;
             }
 
@@ -24,7 +24,7 @@ const ChecklistItems = {
             this._updateStats(data.data);
             this._renderTable(this._items, tbody);
         } catch (err) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Connection error.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Connection error.</td></tr>';
         }
     },
 
@@ -55,7 +55,7 @@ const ChecklistItems = {
 
     _renderTable(items, tbody) {
         if (!items.length) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No checklist items found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No checklist items found.</td></tr>';
             return;
         }
 
@@ -67,6 +67,15 @@ const ChecklistItems = {
             const toggleLabel  = item.is_active == 1 ? '⏸ Deactivate' : '▶ Activate';
             const toggleClass  = item.is_active == 1 ? 'btn-warning' : 'btn-success';
 
+            const usageCount = parseInt(item.usage_count) || 0;
+            const usageBadge = usageCount > 0
+                ? `<span class="badge" style="background:#f39c12;color:#fff" title="Used in ${usageCount} SWO(s)">⚠️ ${usageCount} SWO${usageCount > 1 ? 's' : ''}</span>`
+                : '<span class="text-muted">—</span>';
+
+            const editDisabled = usageCount > 0
+                ? `disabled title="Cannot edit — used in ${usageCount} SWO(s)"`
+                : '';
+
             return `
             <tr>
                 <td>${escapeHtml(item.section_label)}</td>
@@ -76,12 +85,14 @@ const ChecklistItems = {
                 <td>${activeBadge}</td>
                 <td>${escapeHtml(item.created_by_name || '—')}</td>
                 <td style="white-space:nowrap;">${formatDateShort(item.created_at)}</td>
+                <td>${usageBadge}</td>
                 <td>
                     <div style="display:flex;gap:5px;flex-wrap:wrap;">
                         <button class="btn btn-secondary btn-sm ci-edit-btn"
                             data-id="${escapeHtml(item.id)}"
                             data-key="${escapeHtml(item.item_key)}"
-                            data-desc="${escapeHtml(item.description)}">✏️ Edit</button>
+                            data-desc="${escapeHtml(item.description)}"
+                            ${editDisabled}>✏️ Edit</button>
                         <button class="btn ${toggleClass} btn-sm ci-toggle-btn"
                             data-id="${escapeHtml(item.id)}">${toggleLabel}</button>
                         <button class="btn btn-danger btn-sm ci-delete-btn"
@@ -225,11 +236,28 @@ async submitAdd() {
     },
 
     async deleteItem(item_id, item_key) {
-        const confirmed = await confirmDialog(
-            `Delete checklist item "${item_key}"?\n\n` +
-            `• If used in existing SWOs: will be soft-deleted (hidden from new SWOs but old data preserved)\n` +
-            `• If never used: will be permanently deleted`
-        );
+        let msg;
+        try {
+            const usage = await API.get('/checklist/check_item_usage.php', { item_id });
+            if (usage && usage.success && usage.data && usage.data.count > 0) {
+                msg = `⚠️ This item is used in ${usage.data.count} SWO(s).\n\n` +
+                      `This will be SOFT-DELETED:\n` +
+                      `• Existing SWOs can still access their data\n` +
+                      `• New SWOs won't see this item\n` +
+                      `• The item can be reactivated later\n\n` +
+                      `Continue?`;
+            } else {
+                msg = `Delete checklist item "${item_key}" permanently?\n\n` +
+                      `This item is not used in any SWO,\n` +
+                      `so it will be permanently removed.`;
+            }
+        } catch (e) {
+            msg = `Delete checklist item "${item_key}"?\n\n` +
+                  `• If used in existing SWOs: will be soft-deleted\n` +
+                  `• If never used: will be permanently deleted`;
+        }
+
+        const confirmed = await confirmDialog(msg);
         if (!confirmed) return;
 
         const data = await API.post('/checklist/delete_item.php', { item_id });

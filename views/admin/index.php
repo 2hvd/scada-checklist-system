@@ -160,11 +160,12 @@ require_once __DIR__ . '/../components/sidebar.php';
                                     <th>Status</th>
                                     <th>Created By</th>
                                     <th>Created</th>
+                                    <th>Used In</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="ciTableBody">
-                                <tr><td colspan="8" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
+                                <tr><td colspan="9" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
                             </tbody>
                         </table>
                     </div>

@@ -43,10 +43,14 @@ if ($search !== '') {
 $where = implode(' AND ', $whereClauses);
 
 $sql = "SELECT ci.id, ci.section, ci.section_number, ci.description, ci.item_key,
-               ci.is_active, ci.created_at, u.username AS created_by_name
+               ci.is_active, ci.created_at, u.username AS created_by_name,
+               COUNT(DISTINCT cs.swo_id) AS usage_count
           FROM checklist_items ci
           LEFT JOIN users u ON u.id = ci.created_by
+          LEFT JOIN checklist_status cs ON ci.item_key = cs.item_key
          WHERE {$where}
+         GROUP BY ci.id, ci.section, ci.section_number, ci.description, ci.item_key,
+                  ci.is_active, ci.created_at, u.id
          ORDER BY ci.section, ci.section_number";
 
 $stmt = $conn->prepare($sql);
@@ -59,6 +63,7 @@ $res = $stmt->get_result();
 $items = [];
 while ($row = $res->fetch_assoc()) {
     $row['section_label'] = $sectionLabels[$row['section']] ?? ucwords(str_replace('_', ' ', $row['section']));
+    $row['usage_count'] = intval($row['usage_count']);
     $items[] = $row;
 }
 $stmt->close();

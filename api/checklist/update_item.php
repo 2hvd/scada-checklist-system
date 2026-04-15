@@ -41,6 +41,19 @@ if (!$item) {
     jsonResponse(false, 'Checklist item not found');
 }
 
+// Check if this item is used in any SWOs — block editing if so
+$usageChk = $conn->prepare("SELECT COUNT(DISTINCT swo_id) AS count FROM checklist_status WHERE item_key = ?");
+$usageChk->bind_param('s', $item['item_key']);
+$usageChk->execute();
+$usage = $usageChk->get_result()->fetch_assoc();
+$usageChk->close();
+
+$usage_count = intval($usage['count'] ?? 0);
+if ($usage_count > 0) {
+    $conn->close();
+    jsonResponse(false, "Cannot edit item — it is used in $usage_count SWO(s). Create a new item instead.");
+}
+
 $stmt = $conn->prepare("UPDATE checklist_items SET description = ? WHERE id = ?");
 $stmt->bind_param('si', $description, $item_id);
 
