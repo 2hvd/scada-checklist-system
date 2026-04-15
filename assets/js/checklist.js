@@ -6,13 +6,15 @@ const ChecklistPage = {
     supportMode: false,
     swoStatus: '',
     hasRejectionReason: false,
+    swoTypeId: null,
     _savedTimer: null,
 
-    async init(swoId, readOnly = false, swoStatus = '', hasRejectionReason = false) {
+    async init(swoId, readOnly = false, swoStatus = '', hasRejectionReason = false, swoTypeId = null) {
         this.swoId = swoId;
         this.readOnly = readOnly;
         this.swoStatus = swoStatus;
         this.hasRejectionReason = hasRejectionReason;
+        this.swoTypeId = swoTypeId;
         await this.loadChecklist();
         if (!readOnly) {
             this.bindCommentAutoSave();
@@ -27,7 +29,11 @@ const ChecklistPage = {
         container.innerHTML = '<div class="loading-overlay"><div class="loading-spinner"></div></div>';
 
         try {
-            const data = await API.get('/checklist/get_checklist.php', {swo_id: this.swoId});
+            const params = {swo_id: this.swoId};
+            if (this.swoTypeId) {
+                params.swo_type_id = this.swoTypeId;
+            }
+            const data = await API.get('/checklist/get_checklist.php', params);
             if (!data || !data.success) {
                 container.innerHTML = '<div class="alert alert-danger">Failed to load checklist.</div>';
                 return;
@@ -218,7 +224,11 @@ const ChecklistPage = {
     },
 
     async refreshProgress() {
-        const data = await API.get('/checklist/get_checklist.php', {swo_id: this.swoId});
+        const params = {swo_id: this.swoId};
+        if (this.swoTypeId) {
+            params.swo_type_id = this.swoTypeId;
+        }
+        const data = await API.get('/checklist/get_checklist.php', params);
         if (data && data.success) {
             this.updateProgress(data.data.progress, data.data.counts);
         }

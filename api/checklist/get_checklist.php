@@ -29,6 +29,10 @@ if (!$swo) {
 
 $assigned_id  = $swo['assigned_to'];
 $swo_type_id  = $swo['swo_type_id'] ? intval($swo['swo_type_id']) : null;
+$requested_swo_type_id = intval($_GET['swo_type_id'] ?? 0);
+if ($swo_type_id === null && $requested_swo_type_id > 0) {
+    $swo_type_id = $requested_swo_type_id;
+}
 
 // Load items filtered by SWO type if set, including hierarchy
 // Items with no swo_type_id (null) are shown for all SWO types (backward compatible)

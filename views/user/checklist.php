@@ -12,7 +12,7 @@ if (!$swo_id) {
 // Verify assignment
 require_once __DIR__ . '/../../config/db_config.php';
 $conn = getDBConnection();
-$stmt = $conn->prepare("SELECT swo_number, station_name, swo_type, kcor, status, rejection_reason FROM swo_list WHERE id = ? AND assigned_to = ?");
+$stmt = $conn->prepare("SELECT swo_number, station_name, swo_type, swo_type_id, kcor, status, rejection_reason FROM swo_list WHERE id = ? AND assigned_to = ?");
 $stmt->bind_param('ii', $swo_id, $_SESSION['user_id']);
 $stmt->execute();
 $swo = $stmt->get_result()->fetch_assoc();
@@ -115,7 +115,8 @@ document.addEventListener('DOMContentLoaded', function() {
         <?php echo $swo_id; ?>,
         <?php echo $readOnly ? 'true' : 'false'; ?>,
         <?php echo json_encode($swo['status']); ?>,
-        <?php echo $hasSupportReviews ? 'true' : 'false'; ?>
+        <?php echo $hasSupportReviews ? 'true' : 'false'; ?>,
+        <?php echo !empty($swo['swo_type_id']) ? intval($swo['swo_type_id']) : 'null'; ?>
     );
 });
 </script>
