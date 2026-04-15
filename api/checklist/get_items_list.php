@@ -111,13 +111,14 @@ $activeItems = array_sum(array_column($stats, 'active'));
 // Get parent items list for the add modal
 $parentItems = [];
 $parentRes = $conn->query(
-    "SELECT ci.id, ci.description, ci.item_key, ci.section, ci.swo_type_id, st.name AS swo_type_name
+    "SELECT ci.id, ci.description, ci.item_key, ci.section, ci.section_number, ci.swo_type_id, st.name AS swo_type_name
        FROM checklist_items ci
        LEFT JOIN swo_types st ON st.id = ci.swo_type_id
       WHERE ci.is_deleted = 0 AND ci.is_active = 1 AND ci.parent_item_id IS NULL
       ORDER BY ci.swo_type_id, ci.section, ci.section_number"
 );
 while ($row = $parentRes->fetch_assoc()) {
+    $row['section_label'] = $sectionLabels[$row['section']] ?? ucwords(str_replace('_', ' ', $row['section']));
     $parentItems[] = $row;
 }
 
