@@ -95,10 +95,14 @@ const ReviewManager = {
     },
 
     renderRow(item, num) {
+        const parsedNumber = this.getDisplayNumber(item);
+        const isChild = !!item.parent_item_id;
         const decisionHtml = this.role !== 'user' ? `
             <td class="col-decision">
                 <select class="review-decision-select"
-                        data-item-key="${escapeHtml(item.key)}">
+                        data-item-key="${escapeHtml(item.key)}"
+                        data-parent-key="${escapeHtml(item.parent_key || '')}"
+                        data-is-parent="${item.is_parent ? '1' : '0'}">
                     <option value="">—</option>
                     <option value="done"    ${item.decision === 'done'    ? 'selected' : ''}>Done</option>
                     <option value="na"      ${item.decision === 'na'      ? 'selected' : ''}>N/A</option>
@@ -125,8 +129,8 @@ const ReviewManager = {
 
         return `
             <tr data-item-key="${escapeHtml(item.key)}">
-                <td>${num}</td>
-                <td>${escapeHtml(item.label)}</td>
+                <td>${escapeHtml(parsedNumber || String(num))}</td>
+                <td>${isChild ? '<span style="color:#aaa;margin-right:4px;">↳</span>' : ''}${escapeHtml(item.label)}</td>
                 <td class="col-status">${getChecklistStatusBadge(item.status)}</td>
                 ${userCommentColHtml}
                 ${supportColsHtml}
@@ -149,6 +153,7 @@ const ReviewManager = {
         if (this.role !== 'user') {
             content.addEventListener('change', (e) => {
                 if (e.target.classList.contains('review-decision-select')) {
+                    this.syncHierarchyDecision(e.target);
                     const itemKey = e.target.dataset.itemKey;
                     this.scheduleItemSave(itemKey);
                 }
@@ -162,6 +167,36 @@ const ReviewManager = {
                 this.scheduleItemSave(itemKey);
             }
         }, true);
+    },
+
+    syncHierarchyDecision(selectEl) {
+        if (!selectEl) return;
+        const isParent = selectEl.dataset.isParent === '1';
+        const itemKey = selectEl.dataset.itemKey;
+        const selected = selectEl.value;
+
+        if (isParent && selected) {
+            document.querySelectorAll(`.review-decision-select[data-parent-key="${CSS.escape(itemKey)}"]`).forEach(childSelect => {
+                childSelect.value = selected;
+                this.scheduleItemSave(childSelect.dataset.itemKey);
+            });
+        }
+
+        const parentKey = selectEl.dataset.parentKey;
+        if (parentKey && !selected) {
+            const parentSelect = document.querySelector(`.review-decision-select[data-item-key="${CSS.escape(parentKey)}"]`);
+            if (parentSelect && parentSelect.value) {
+                parentSelect.value = '';
+                this.scheduleItemSave(parentKey);
+            }
+        }
+    },
+
+    getDisplayNumber(item) {
+        if (!item || !item.key) return '';
+        const m = String(item.key).match(/_(\d+)(?:_(\d+))?(?:_t\d+)?$/);
+        if (!m) return '';
+        return m[2] ? `${parseInt(m[1], 10)}.${parseInt(m[2], 10)}` : String(parseInt(m[1], 10));
     },
 
     scheduleItemSave(itemKey) {
