@@ -67,6 +67,37 @@ if (!$stmt->execute()) {
     jsonResponse(false, 'Failed to save review');
 }
 $stmt->close();
+
+// Check if this is a parent item — if so, cascade the decision to all sub-items
+$parentChk = $conn->prepare(
+    "SELECT ci_child.item_key
+       FROM checklist_items ci_parent
+       JOIN checklist_items ci_child ON ci_child.parent_item_id = ci_parent.id AND ci_child.is_deleted = 0
+      WHERE ci_parent.item_key = ?"
+);
+$parentChk->bind_param('s', $item_key);
+$parentChk->execute();
+$subItems = $parentChk->get_result()->fetch_all(MYSQLI_ASSOC);
+$parentChk->close();
+
+if (!empty($subItems) && $decision !== '' && $decision !== null) {
+    $cascadeStmt = $conn->prepare(
+        "INSERT INTO control_item_reviews (swo_id, item_key, control_decision, control_comment, reviewed_by)
+         VALUES (?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+             control_decision = VALUES(control_decision),
+             control_comment  = VALUES(control_comment),
+             reviewed_by      = VALUES(reviewed_by),
+             reviewed_at      = CURRENT_TIMESTAMP"
+    );
+    $cascadeComment = "Auto-set from parent: {$item_key}";
+    foreach ($subItems as $sub) {
+        $cascadeStmt->bind_param('isssi', $swo_id, $sub['item_key'], $decision, $cascadeComment, $user_id);
+        $cascadeStmt->execute();
+    }
+    $cascadeStmt->close();
+}
+
 $conn->close();
 
 jsonResponse(true, 'Review saved');

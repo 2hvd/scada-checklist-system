@@ -139,22 +139,37 @@ function getAllItemKeys() {
 /**
  * Load active checklist items from DB, structured like getChecklistItems().
  * Falls back to hardcoded list if the table doesn't exist or is empty.
+ * Optionally filter by swo_type_id.
  */
-function getChecklistItemsFromDB($conn) {
+function getChecklistItemsFromDB($conn, $swo_type_id = null) {
     $sectionLabels = [
         'during_config'       => 'During Configuration',
         'during_commissioning'=> 'During Commissioning',
         'after_commissioning' => 'After Commissioning',
     ];
 
-    $result = $conn->query(
-        "SELECT section, section_number, item_key, description
-           FROM checklist_items
-          WHERE is_active = 1 AND is_deleted = 0
-          ORDER BY section, section_number"
-    );
+    if ($swo_type_id !== null) {
+        $stmt = $conn->prepare(
+            "SELECT id, section, section_number, item_key, description, parent_item_id
+               FROM checklist_items
+              WHERE is_active = 1 AND is_deleted = 0
+                AND (swo_type_id = ? OR swo_type_id IS NULL)
+              ORDER BY section, parent_item_id IS NOT NULL, parent_item_id, section_number"
+        );
+        $stmt->bind_param('i', $swo_type_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    } else {
+        $result = $conn->query(
+            "SELECT id, section, section_number, item_key, description, parent_item_id
+               FROM checklist_items
+              WHERE is_active = 1 AND is_deleted = 0
+              ORDER BY section, parent_item_id IS NOT NULL, parent_item_id, section_number"
+        );
+    }
 
     if (!$result || $result->num_rows === 0) {
+        if (isset($stmt)) $stmt->close();
         return getChecklistItems();
     }
 
@@ -169,6 +184,7 @@ function getChecklistItemsFromDB($conn) {
         }
         $structured[$sec]['items'][$row['item_key']] = $row['description'];
     }
+    if (isset($stmt)) $stmt->close();
 
     return $structured ?: getChecklistItems();
 }
@@ -177,6 +193,7 @@ function getChecklistItemsFromDB($conn) {
  * Load checklist items for a specific SWO:
  * returns all active items PLUS any items that already have saved data
  * in checklist_status for this SWO (even if since deactivated).
+ * Filters by the SWO's swo_type_id if set.
  * Falls back to getChecklistItemsFromDB() if no rows are found.
  */
 function getChecklistItemsForSWO($conn, $swo_id) {
@@ -186,22 +203,43 @@ function getChecklistItemsForSWO($conn, $swo_id) {
         'after_commissioning'  => 'After Commissioning',
     ];
 
-    $stmt = $conn->prepare(
-        "SELECT ci.section, ci.section_number, ci.item_key, ci.description
-           FROM checklist_items ci
-           LEFT JOIN checklist_status cs ON ci.item_key = cs.item_key AND cs.swo_id = ?
-          WHERE (ci.is_active = 1 AND ci.is_deleted = 0)
-             OR (cs.id IS NOT NULL)
-          GROUP BY ci.section, ci.section_number, ci.item_key, ci.description
-          ORDER BY ci.section, ci.section_number"
-    );
-    $stmt->bind_param('i', $swo_id);
+    // Get the SWO's type
+    $typeStmt = $conn->prepare("SELECT swo_type_id FROM swo_list WHERE id = ?");
+    $typeStmt->bind_param('i', $swo_id);
+    $typeStmt->execute();
+    $swoData = $typeStmt->get_result()->fetch_assoc();
+    $typeStmt->close();
+    $swo_type_id = $swoData ? ($swoData['swo_type_id'] ? intval($swoData['swo_type_id']) : null) : null;
+
+    if ($swo_type_id !== null) {
+        $stmt = $conn->prepare(
+            "SELECT ci.id, ci.section, ci.section_number, ci.item_key, ci.description, ci.parent_item_id
+               FROM checklist_items ci
+               LEFT JOIN checklist_status cs ON ci.item_key = cs.item_key AND cs.swo_id = ?
+              WHERE ((ci.is_active = 1 AND ci.is_deleted = 0 AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL))
+                 OR (cs.id IS NOT NULL))
+              GROUP BY ci.id, ci.section, ci.section_number, ci.item_key, ci.description, ci.parent_item_id
+              ORDER BY ci.section, ci.parent_item_id IS NOT NULL, ci.parent_item_id, ci.section_number"
+        );
+        $stmt->bind_param('ii', $swo_id, $swo_type_id);
+    } else {
+        $stmt = $conn->prepare(
+            "SELECT ci.id, ci.section, ci.section_number, ci.item_key, ci.description, ci.parent_item_id
+               FROM checklist_items ci
+               LEFT JOIN checklist_status cs ON ci.item_key = cs.item_key AND cs.swo_id = ?
+              WHERE (ci.is_active = 1 AND ci.is_deleted = 0)
+                 OR (cs.id IS NOT NULL)
+              GROUP BY ci.id, ci.section, ci.section_number, ci.item_key, ci.description, ci.parent_item_id
+              ORDER BY ci.section, ci.parent_item_id IS NOT NULL, ci.parent_item_id, ci.section_number"
+        );
+        $stmt->bind_param('i', $swo_id);
+    }
     $stmt->execute();
     $result = $stmt->get_result();
 
     if (!$result || $result->num_rows === 0) {
         $stmt->close();
-        return getChecklistItemsFromDB($conn);
+        return getChecklistItemsFromDB($conn, $swo_type_id);
     }
 
     $structured = [];
