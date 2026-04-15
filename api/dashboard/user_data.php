@@ -24,21 +24,68 @@ $result = $stmt->get_result();
 $swos = [];
 
 while ($swo = $result->fetch_assoc()) {
-    // Get checklist progress
-    $csStmt = $conn->prepare(
-        "SELECT status, COUNT(*) as cnt FROM checklist_status 
-         WHERE swo_id = ? AND user_id = ? GROUP BY status"
-    );
-    $csStmt->bind_param('ii', $swo['id'], $user_id);
-    $csStmt->execute();
-    $csResult = $csStmt->get_result();
-    $counts = ['done'=>0,'na'=>0,'not_yet'=>0,'still'=>0,'empty'=>0];
-    while ($row = $csResult->fetch_assoc()) {
-        $counts[$row['status']] = intval($row['cnt']);
+    // Get applicable checklist items (count only effective/leaf items)
+    $swoTypeId = !empty($swo['swo_type_id']) ? intval($swo['swo_type_id']) : null;
+    if ($swoTypeId !== null) {
+        $itemStmt = $conn->prepare(
+            "SELECT id, item_key, parent_item_id
+             FROM checklist_items
+             WHERE is_active = 1 AND is_deleted = 0
+               AND (swo_type_id = ? OR swo_type_id IS NULL)"
+        );
+        $itemStmt->bind_param('i', $swoTypeId);
+    } else {
+        $itemStmt = $conn->prepare(
+            "SELECT id, item_key, parent_item_id
+             FROM checklist_items
+             WHERE is_active = 1 AND is_deleted = 0"
+        );
     }
-    $csStmt->close();
+    $itemStmt->execute();
+    $itemRows = $itemStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $itemStmt->close();
 
-    $total = array_sum($counts);
+    $hasChildren = [];
+    foreach ($itemRows as $row) {
+        if ($row['parent_item_id'] !== null) {
+            $hasChildren[intval($row['parent_item_id'])] = true;
+        }
+    }
+
+    $leafKeys = [];
+    foreach ($itemRows as $row) {
+        $itemId = intval($row['id']);
+        if (!isset($hasChildren[$itemId])) {
+            $leafKeys[$row['item_key']] = true;
+        }
+    }
+
+    $counts = ['done' => 0, 'na' => 0, 'not_yet' => 0, 'still' => 0, 'empty' => count($leafKeys)];
+    $total = count($leafKeys);
+
+    if ($total > 0) {
+        $csStmt = $conn->prepare(
+            "SELECT item_key, status
+             FROM checklist_status
+             WHERE swo_id = ? AND user_id = ?"
+        );
+        $csStmt->bind_param('ii', $swo['id'], $user_id);
+        $csStmt->execute();
+        $csResult = $csStmt->get_result();
+        while ($row = $csResult->fetch_assoc()) {
+            $itemKey = $row['item_key'];
+            $status = $row['status'];
+            if (!isset($leafKeys[$itemKey])) {
+                continue;
+            }
+            if ($status === 'done' || $status === 'na' || $status === 'not_yet' || $status === 'still') {
+                $counts[$status]++;
+                $counts['empty'] = max(0, $counts['empty'] - 1);
+            }
+        }
+        $csStmt->close();
+    }
+
     $completed = $counts['done'] + $counts['na'];
     $progress = $total > 0 ? round($completed / $total * 100, 1) : 0;
 
