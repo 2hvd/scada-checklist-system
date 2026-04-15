@@ -60,10 +60,11 @@ while ($swo = $result->fetch_assoc()) {
         }
     }
 
-    $counts = ['done' => 0, 'na' => 0, 'not_yet' => 0, 'still' => 0, 'empty' => count($leafKeys)];
+    $counts = ['done' => 0, 'na' => 0, 'not_yet' => 0, 'still' => 0, 'empty' => 0];
     $total = count($leafKeys);
 
     if ($total > 0) {
+        $filledCount = 0;
         $csStmt = $conn->prepare(
             "SELECT item_key, status
              FROM checklist_status
@@ -80,10 +81,11 @@ while ($swo = $result->fetch_assoc()) {
             }
             if ($status === 'done' || $status === 'na' || $status === 'not_yet' || $status === 'still') {
                 $counts[$status]++;
-                $counts['empty'] = max(0, $counts['empty'] - 1);
+                $filledCount++;
             }
         }
         $csStmt->close();
+        $counts['empty'] = max(0, $total - $filledCount);
     }
 
     $completed = $counts['done'] + $counts['na'];
