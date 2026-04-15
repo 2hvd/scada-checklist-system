@@ -27,7 +27,7 @@ $conn = getDBConnection();
 $user_id = $_SESSION['user_id'];
 
 // Verify SWO state
-$stmt = $conn->prepare("SELECT id, status FROM swo_list WHERE id = ?");
+$stmt = $conn->prepare("SELECT id, status, swo_type_id FROM swo_list WHERE id = ?");
 $stmt->bind_param('i', $swo_id);
 $stmt->execute();
 $swo = $stmt->get_result()->fetch_assoc();
@@ -43,26 +43,30 @@ if (!in_array($swo['status'], ['Pending Support Review', 'Returned from Control'
     jsonResponse(false, 'SWO is not pending support review');
 }
 
-// Validate ALL items have a support decision before accepting
-$allItems = getAllItemKeysFromDB($conn);
-$totalItems = count($allItems);
-if ($totalItems > 0) {
-    $placeholders = implode(',', array_fill(0, $totalItems, '?'));
-    $checkStmt = $conn->prepare(
-        "SELECT COUNT(*) as cnt FROM support_item_reviews
-         WHERE swo_id = ? AND item_key IN ($placeholders)
-         AND support_decision IS NOT NULL AND support_decision != ''"
-    );
-    $types = 'i' . str_repeat('s', $totalItems);
-    $params = array_merge([$swo_id], $allItems);
-    $checkStmt->bind_param($types, ...$params);
-    $checkStmt->execute();
-    $checkResult = $checkStmt->get_result()->fetch_assoc();
-    $checkStmt->close();
-    if ((int)$checkResult['cnt'] < $totalItems) {
-        $conn->close();
-        jsonResponse(false, 'All items must have a decision before accepting');
-    }
+// Validate ALL checklist items for this SWO have a support decision before accepting
+$swo_type_id = !empty($swo['swo_type_id']) ? intval($swo['swo_type_id']) : null;
+$checkSql = "SELECT COUNT(ci.item_key) AS total_items,
+                    SUM(CASE WHEN sir.support_decision IS NOT NULL AND sir.support_decision != '' THEN 1 ELSE 0 END) AS decided_items
+             FROM checklist_items ci
+             LEFT JOIN support_item_reviews sir ON sir.swo_id = ? AND sir.item_key = ci.item_key
+             WHERE ci.is_active = 1 AND ci.is_deleted = 0";
+if ($swo_type_id !== null) {
+    $checkSql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
+}
+$checkStmt = $conn->prepare($checkSql);
+if ($swo_type_id !== null) {
+    $checkStmt->bind_param('ii', $swo_id, $swo_type_id);
+} else {
+    $checkStmt->bind_param('i', $swo_id);
+}
+$checkStmt->execute();
+$checkResult = $checkStmt->get_result()->fetch_assoc();
+$checkStmt->close();
+$totalItems = intval($checkResult['total_items'] ?? 0);
+$decidedItems = intval($checkResult['decided_items'] ?? 0);
+if ($totalItems > 0 && $decidedItems < $totalItems) {
+    $conn->close();
+    jsonResponse(false, 'All items must have a decision before accepting');
 }
 
 // Update SWO status to Pending Control Review
