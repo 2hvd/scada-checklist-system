@@ -56,9 +56,10 @@ $sql = "SELECT ci.id, ci.section, ci.section_number, ci.item_key, ci.description
 $bind_types = 'iiii';
 $bind_values = [$swo_id, $assigned_id, $swo_id, $assigned_id];
 
-// Filter by SWO type: show items matching the SWO type OR items with no type (universal)
+// Filter by SWO type: strictly show only matching type + universal (NULL) items.
+// Do not include mismatched typed items just because they have checklist_status rows.
 if ($swo_type_id !== null) {
-    $sql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL OR cs.id IS NOT NULL)";
+    $sql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
     $bind_types .= 'i';
     $bind_values[] = $swo_type_id;
 }
