@@ -44,6 +44,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                 <button class="tab-btn" data-tab="tab-swo">📋 SWO Management</button>
                 <button class="tab-btn" data-tab="tab-activity">🕐 Recent Activity</button>
                 <button class="tab-btn" data-tab="tab-checklist-items">📝 Manage Checklist Items</button>
+                <button class="tab-btn" data-tab="tab-swo-types">📌 Manage SWO Types</button>
                 <button class="tab-btn" data-tab="tab-timeline">📊 SWO Timeline</button>
             </div>
 
@@ -140,9 +141,12 @@ require_once __DIR__ . '/../components/sidebar.php';
                                 <option value="after_commissioning">After Commissioning</option>
                             </select>
                             <select id="ciStatusFilter" class="form-control" style="width:auto;">
+                                <option value="all">All Items</option>
                                 <option value="active">Active Only</option>
                                 <option value="inactive">Inactive Only</option>
-                                <option value="all">All Items</option>
+                            </select>
+                            <select id="ciSwoTypeFilter" class="form-control" style="width:auto;">
+                                <option value="">All Types</option>
                             </select>
                             <input type="text" id="ciSearchFilter" class="form-control" placeholder="🔍 Search description…" style="width:220px;">
                             <button class="btn btn-primary btn-sm" onclick="ChecklistItems.openAddModal()">+ Add Item</button>
@@ -172,6 +176,32 @@ require_once __DIR__ . '/../components/sidebar.php';
                 </div>
             </div>
 
+            <!-- Tab: Manage SWO Types -->
+            <div class="tab-content" id="tab-swo-types">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">SWO Types</h3>
+                        <button class="btn btn-primary btn-sm" onclick="SWOTypes.openAddModal()">+ Add Type</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="swoTypesTableBody">
+                                <tr><td colspan="5" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- Tab: SWO Timeline -->
             <div class="tab-content" id="tab-timeline">
                 <?php include __DIR__ . '/swo_timeline.php'; ?>
@@ -194,6 +224,18 @@ require_once __DIR__ . '/../components/sidebar.php';
                 <option value="during_config">During Configuration</option>
                 <option value="during_commissioning">During Commissioning</option>
                 <option value="after_commissioning">After Commissioning</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>SWO Type <small style="color:#999;">(Optional)</small></label>
+            <select id="ciAddSwoType" class="form-control" onchange="ChecklistItems.onSwoTypeChange()">
+                <option value="">-- Select SWO Type --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Parent Item <small style="color:#999;">(Optional - leave empty for top-level item)</small></label>
+            <select id="ciAddParentItem" class="form-control">
+                <option value="">-- No Parent (Top-level Item) --</option>
             </select>
         </div>
         <div class="form-group">
@@ -288,12 +330,58 @@ require_once __DIR__ . '/../components/sidebar.php';
     </div>
 </div>
 
+<!-- Add SWO Type Modal -->
+<div class="modal-overlay" id="addSwoTypeModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">Add SWO Type</span>
+            <button class="modal-close" onclick="closeModal('addSwoTypeModal')">×</button>
+        </div>
+        <div class="form-group">
+            <label>Name *</label>
+            <input type="text" id="swoTypeAddName" class="form-control" placeholder="e.g., S/S, Power Plant" maxlength="100">
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <textarea id="swoTypeAddDescription" class="form-control" rows="3" placeholder="Optional description…"></textarea>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('addSwoTypeModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="SWOTypes.submitAdd()">Add Type</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit SWO Type Modal -->
+<div class="modal-overlay" id="editSwoTypeModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">Edit SWO Type</span>
+            <button class="modal-close" onclick="closeModal('editSwoTypeModal')">×</button>
+        </div>
+        <input type="hidden" id="swoTypeEditId">
+        <div class="form-group">
+            <label>Name *</label>
+            <input type="text" id="swoTypeEditName" class="form-control" maxlength="100">
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <textarea id="swoTypeEditDescription" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('editSwoTypeModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="SWOTypes.submitEdit()">Update Type</button>
+        </div>
+    </div>
+</div>
+
 <?php require_once __DIR__ . '/../components/footer.php'; ?>
 <script src="/scada-checklist-system/assets/js/utils.js"></script>
 <script src="/scada-checklist-system/assets/js/notifications.js"></script>
 <script src="/scada-checklist-system/assets/js/api.js"></script>
 <script src="/scada-checklist-system/assets/js/dashboard.js"></script>
 <script src="/scada-checklist-system/assets/js/checklist_items.js"></script>
+<script src="/scada-checklist-system/assets/js/swo_types.js"></script>
 <script>
 document.body.dataset.page = 'admin';
 function toggleSidebar() {
