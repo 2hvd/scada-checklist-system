@@ -22,10 +22,10 @@ if (!$swo_id) {
 }
 
 $conn = getDBConnection();
-$user_id = $_SESSION['user_id'];
+$user_id = (int) $_SESSION['user_id'];
 
 // Verify SWO assignment
-$stmt = $conn->prepare("SELECT id, status, assigned_to FROM swo_list WHERE id = ?");
+$stmt = $conn->prepare("SELECT id, status, assigned_to, swo_type_id FROM swo_list WHERE id = ?");
 $stmt->bind_param('i', $swo_id);
 $stmt->execute();
 $swo = $stmt->get_result()->fetch_assoc();
@@ -43,11 +43,30 @@ if ($swo['status'] !== 'In Progress') {
     $conn->close();
     jsonResponse(false, 'Only In Progress SWOs can be submitted');
 }
-$stmt = $conn->prepare(
-    "SELECT COUNT(*) as empty_count FROM checklist_status 
-     WHERE swo_id = ? AND user_id = ? AND status = 'empty'"
-);
-$stmt->bind_param('ii', $swo_id, $user_id);
+$swo_type_id = $swo['swo_type_id'] !== null ? intval($swo['swo_type_id']) : null;
+
+// Submit validation must follow checklist visibility rules by SWO type
+// so hidden items from other types do not block submission.
+$sql = "SELECT COUNT(*) AS empty_count
+        FROM checklist_items ci
+        LEFT JOIN checklist_status cs
+               ON cs.item_key = ci.item_key
+              AND cs.swo_id = ?
+              AND cs.user_id = ?
+        WHERE ci.is_active = 1
+          AND ci.is_deleted = 0
+          AND COALESCE(cs.status, 'empty') = 'empty'";
+
+if ($swo_type_id !== null) {
+    $sql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('iii', $swo_id, $user_id, $swo_type_id);
+} else {
+    $sql .= " AND ci.swo_type_id IS NULL";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('ii', $swo_id, $user_id);
+}
+
 $stmt->execute();
 $row = $stmt->get_result()->fetch_assoc();
 $stmt->close();
