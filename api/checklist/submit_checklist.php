@@ -22,7 +22,7 @@ if (!$swo_id) {
 }
 
 $conn = getDBConnection();
-$user_id = intval($_SESSION['user_id'] ?? 0);
+$user_id = (int) $_SESSION['user_id'];
 
 // Verify SWO assignment
 $stmt = $conn->prepare("SELECT id, status, assigned_to, swo_type_id FROM swo_list WHERE id = ?");
