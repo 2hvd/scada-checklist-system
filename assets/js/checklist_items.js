@@ -9,12 +9,16 @@ const ChecklistItems = {
         const section = document.getElementById('ciSectionFilter')?.value || '';
         const search  = document.getElementById('ciSearchFilter')?.value  || '';
         const status  = document.getElementById('ciStatusFilter')?.value  || 'all';
+        const swo_type_id = document.getElementById('ciSwoTypeFilter')?.value || '';
 
         if (!tbody) return;
         tbody.innerHTML = '<tr><td colspan="9" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>';
 
         try {
-            const data = await API.get('/checklist/get_items_list.php', { section, search, status });
+            const params = { section, search, status };
+            if (swo_type_id) params.swo_type_id = swo_type_id;
+
+            const data = await API.get('/checklist/get_items_list.php', params);
             if (!data || !data.success) {
                 tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Failed to load items.</td></tr>';
                 return;
@@ -67,6 +71,12 @@ const ChecklistItems = {
             const toggleLabel  = item.is_active == 1 ? '⏸ Deactivate' : '▶ Activate';
             const toggleClass  = item.is_active == 1 ? 'btn-warning' : 'btn-success';
 
+            // Hierarchy indentation
+            const indent = item.parent_item_id ? 'style="padding-left:30px;"' : '';
+            const parentBadge = (item.sub_items_count > 0)
+                ? ' <span class="badge" style="background:#3498db;color:#fff;font-size:10px;">Parent</span>'
+                : '';
+
             const usageCount = parseInt(item.usage_count) || 0;
             const usageBadge = usageCount > 0
                 ? `<span class="badge" style="background:#f39c12;color:#fff" title="Used in ${usageCount} SWO(s)">⚠️ ${usageCount} SWO${usageCount > 1 ? 's' : ''}</span>`
@@ -79,10 +89,10 @@ const ChecklistItems = {
             return `
             <tr>
                 <td>${escapeHtml(item.section_label)}</td>
-                <td>${escapeHtml(item.section_number)}</td>
+                <td ${indent}>${escapeHtml(item.section_number)}</td>
                 <td style="max-width:280px;">${escapeHtml(item.description)}</td>
                 <td><code style="font-size:11px;background:#f4f4f4;padding:2px 5px;border-radius:3px;">${escapeHtml(item.item_key)}</code></td>
-                <td>${activeBadge}</td>
+                <td>${activeBadge}${parentBadge}</td>
                 <td>${escapeHtml(item.created_by_name || '—')}</td>
                 <td style="white-space:nowrap;">${formatDateShort(item.created_at)}</td>
                 <td>${usageBadge}</td>
@@ -130,6 +140,8 @@ const ChecklistItems = {
         el('ciAddSection').value     = '';
         el('ciAddNumber').value      = '';
         el('ciAddDescription').value = '';
+        if (el('ciAddSwoType'))    el('ciAddSwoType').value    = '';
+        if (el('ciAddParentItem')) el('ciAddParentItem').innerHTML = '<option value="">-- No Parent (Top-level Item) --</option>';
         openModal('addChecklistItemModal');
     },
 
@@ -140,24 +152,39 @@ const ChecklistItems = {
         document.getElementById('ciAddNumber').value = max + 1;
     },
 
+    onSwoTypeChange() {
+        const swo_type_id = document.getElementById('ciAddSwoType')?.value;
+        const parentSelect = document.getElementById('ciAddParentItem');
+        if (!parentSelect) return;
+
+        if (!swo_type_id) {
+            parentSelect.innerHTML = '<option value="">-- No Parent (Top-level Item) --</option>';
+            return;
+        }
+
+        // Filter parent items: top-level items matching the selected SWO type (or with no type)
+        const matching = this._items.filter(i =>
+            !i.parent_item_id &&
+            (String(i.swo_type_id) === String(swo_type_id) || !i.swo_type_id)
+        );
+        parentSelect.innerHTML = '<option value="">-- No Parent (Top-level Item) --</option>' +
+            matching.map(i => `<option value="${i.id}">${escapeHtml(i.section_label + ' #' + i.section_number + ' — ' + i.description)}</option>`).join('');
+    },
+
     // في checklist_items.js - تحديث submitAdd function:
 
 async submitAdd() {
     const sectionEl   = document.getElementById('ciAddSection');
     const numberEl    = document.getElementById('ciAddNumber');
     const descEl      = document.getElementById('ciAddDescription');
+    const swoTypeEl   = document.getElementById('ciAddSwoType');
+    const parentEl    = document.getElementById('ciAddParentItem');
     
     const section     = (sectionEl.value || '').trim();
     const sectionNum  = parseInt(numberEl.value) || 0;
     const description = (descEl.value || '').trim();
-
-    console.log('BEFORE SUBMIT:', { 
-        section, 
-        sectionNum, 
-        description,
-        inputValue: numberEl.value,
-        inputType: typeof numberEl.value
-    });
+    const swo_type_id = swoTypeEl ? (parseInt(swoTypeEl.value) || 0) : 0;
+    const parent_item_id = parentEl ? (parseInt(parentEl.value) || 0) : 0;
 
     if (!section) { 
         showWarning('Please select a section.'); 
@@ -178,8 +205,8 @@ async submitAdd() {
             section_number: sectionNum, 
             description: description
         };
-        
-        console.log('SENDING TO API:', payload);
+        if (swo_type_id) payload.swo_type_id = swo_type_id;
+        if (parent_item_id) payload.parent_item_id = parent_item_id;
         
         const data = await API.post('/checklist/add_item.php', payload);
         
@@ -188,6 +215,8 @@ async submitAdd() {
             sectionEl.value = '';
             numberEl.value = '';
             descEl.value = '';
+            if (swoTypeEl)  swoTypeEl.value = '';
+            if (parentEl)   parentEl.value = '';
             closeModal('addChecklistItemModal');
             setTimeout(() => this.load(), 500);
         } else {
@@ -195,7 +224,6 @@ async submitAdd() {
         }
     } catch (err) {
         showError('Error: ' + err.message);
-        console.error('API Error:', err);
     }
 },
 
@@ -284,7 +312,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const sectionFilter = document.getElementById('ciSectionFilter');
     const statusFilter  = document.getElementById('ciStatusFilter');
     const searchFilter  = document.getElementById('ciSearchFilter');
+    const swoTypeFilter = document.getElementById('ciSwoTypeFilter');
     if (sectionFilter) sectionFilter.addEventListener('change', () => ChecklistItems.load());
     if (statusFilter)  statusFilter.addEventListener('change',  () => ChecklistItems.load());
     if (searchFilter)  searchFilter.addEventListener('input',  () => ChecklistItems.load());
+    if (swoTypeFilter) swoTypeFilter.addEventListener('change', () => ChecklistItems.load());
 });
