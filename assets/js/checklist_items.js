@@ -4,6 +4,7 @@ const ChecklistItems = {
     _items: [],
     _parentItems: [],
     _sectionCounts: {},   // {section: maxNumber} cached per load
+    _suggestReqId: 0,
 
     async load() {
         const tbody   = document.getElementById('ciTableBody');
@@ -159,20 +160,50 @@ const ChecklistItems = {
         openModal('addChecklistItemModal');
     },
 
-    suggestNumber() {
-        const section = document.getElementById('ciAddSection').value;
-        if (!section) return;
-        const max = this._sectionCounts[section] || 0;
-        document.getElementById('ciAddNumber').value = max + 1;
+    async suggestNumber() {
+        const sectionEl = document.getElementById('ciAddSection');
+        const numberEl = document.getElementById('ciAddNumber');
+        const swoTypeEl = document.getElementById('ciAddSwoType');
+        const parentEl = document.getElementById('ciAddParentItem');
+        if (!sectionEl || !numberEl) return;
+
+        const section = sectionEl.value;
+        if (!section) {
+            numberEl.value = '';
+            return;
+        }
+
+        const params = { section };
+        const swo_type_id = parseInt(swoTypeEl?.value || '') || 0;
+        const parent_item_id = parseInt(parentEl?.value || '') || 0;
+        if (swo_type_id) params.swo_type_id = swo_type_id;
+        if (parent_item_id) params.parent_item_id = parent_item_id;
+
+        const reqId = ++this._suggestReqId;
+        try {
+            const data = await API.get('/checklist/suggest_number.php', params);
+            if (reqId !== this._suggestReqId) return;
+            if (data && data.success && data.data) {
+                numberEl.value = data.data.suggested_number || '';
+            } else {
+                const max = this._sectionCounts[section] || 0;
+                numberEl.value = max + 1;
+            }
+        } catch (err) {
+            const max = this._sectionCounts[section] || 0;
+            numberEl.value = max + 1;
+        }
     },
 
     onSwoTypeChange() {
         const swo_type_id = document.getElementById('ciAddSwoType')?.value;
+        const section = document.getElementById('ciAddSection')?.value;
         const parentSelect = document.getElementById('ciAddParentItem');
         if (!parentSelect) return;
 
         if (!swo_type_id) {
             parentSelect.innerHTML = '<option value="">-- No Parent (Top-level Item) --</option>';
+            this.suggestNumber();
             return;
         }
 
@@ -181,22 +212,27 @@ const ChecklistItems = {
             ? this._parentItems
             : this._items.filter(i => !i.parent_item_id);
 
-        const matching = source.filter(i =>
-            String(i.swo_type_id) === String(swo_type_id) || !i.swo_type_id
-        );
+        const matching = source.filter(i => {
+            const sameType = String(i.swo_type_id) === String(swo_type_id);
+            const sameSection = !section || i.section === section;
+            return sameType && sameSection;
+        });
         parentSelect.innerHTML = '<option value="">-- No Parent (Top-level Item) --</option>' +
             matching.map(i => `<option value="${i.id}">${escapeHtml(i.section_label || i.section)} #${escapeHtml(String(i.section_number))} — ${escapeHtml(i.description)}</option>`).join('');
+        this.suggestNumber();
     },
 
     onParentItemChange() {
         const parentEl  = document.getElementById('ciAddParentItem');
         const sectionEl = document.getElementById('ciAddSection');
+        const typeEl = document.getElementById('ciAddSwoType');
         if (!parentEl || !sectionEl) return;
 
         const parent_id = parseInt(parentEl.value) || 0;
         if (!parent_id) {
             // No parent selected — re-enable manual section selection
             sectionEl.disabled = false;
+            this.suggestNumber();
             return;
         }
 
@@ -208,8 +244,11 @@ const ChecklistItems = {
         if (parent && parent.section) {
             sectionEl.value    = parent.section;
             sectionEl.disabled = true; // Lock to match parent section
-            this.suggestNumber();
+            if (typeEl && parent.swo_type_id) {
+                typeEl.value = String(parent.swo_type_id);
+            }
         }
+        this.suggestNumber();
     },
 
     // في checklist_items.js - تحديث submitAdd function:
@@ -358,4 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (statusFilter)  statusFilter.addEventListener('change',  () => ChecklistItems.load());
     if (searchFilter)  searchFilter.addEventListener('input',  () => ChecklistItems.load());
     if (swoTypeFilter) swoTypeFilter.addEventListener('change', () => ChecklistItems.load());
+
+    const addSection = document.getElementById('ciAddSection');
+    if (addSection) addSection.addEventListener('change', () => ChecklistItems.onSwoTypeChange());
 });

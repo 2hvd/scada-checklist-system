@@ -51,7 +51,7 @@ if ($swo_type_id !== null) {
 
 // Validate parent_item_id if provided
 if ($parent_item_id !== null) {
-    $chk = $conn->prepare("SELECT id, swo_type_id, section FROM checklist_items WHERE id = ? AND is_deleted = 0 AND parent_item_id IS NULL");
+    $chk = $conn->prepare("SELECT id, swo_type_id, section, section_number FROM checklist_items WHERE id = ? AND is_deleted = 0 AND parent_item_id IS NULL");
     $chk->bind_param('i', $parent_item_id);
     $chk->execute();
     $parent = $chk->get_result()->fetch_assoc();
@@ -62,10 +62,16 @@ if ($parent_item_id !== null) {
         jsonResponse(false, 'Invalid parent item (must be a top-level item)');
     }
 
+    $parentTypeId = $parent['swo_type_id'] !== null ? intval($parent['swo_type_id']) : null;
+
     // Sub-item must have the same swo_type_id as the parent
-    if ($swo_type_id !== null && $parent['swo_type_id'] !== null && intval($parent['swo_type_id']) !== $swo_type_id) {
+    if ($swo_type_id !== null && $parentTypeId !== $swo_type_id) {
         $conn->close();
         jsonResponse(false, 'Sub-item must have the same SWO type as the parent item');
+    }
+    // If not provided, inherit parent's type
+    if ($swo_type_id === null) {
+        $swo_type_id = $parentTypeId;
     }
 
     // Sub-item must be in the same section as parent
@@ -75,52 +81,74 @@ if ($parent_item_id !== null) {
     }
 }
 
-// Generate item_key based on hierarchy
+// Prevent duplicate numbering in the same context
 if ($parent_item_id !== null) {
-    // Sub-item key: section_parentNumber_subNumber
-    $parentChk = $conn->prepare("SELECT section_number FROM checklist_items WHERE id = ?");
-    $parentChk->bind_param('i', $parent_item_id);
-    $parentChk->execute();
-    $parentData = $parentChk->get_result()->fetch_assoc();
-    $parentChk->close();
-
-    $item_key = $section . '_' . $parentData['section_number'] . '_' . $section_number;
+    $dup = $conn->prepare(
+        "SELECT id
+           FROM checklist_items
+          WHERE is_deleted = 0
+            AND parent_item_id = ?
+            AND section_number = ?"
+    );
+    $dup->bind_param('ii', $parent_item_id, $section_number);
 } else {
-    $item_key = $section . '_' . $section_number;
+    if ($swo_type_id !== null) {
+        $dup = $conn->prepare(
+            "SELECT id
+               FROM checklist_items
+              WHERE is_deleted = 0
+                AND parent_item_id IS NULL
+                AND section = ?
+                AND section_number = ?
+                AND swo_type_id = ?"
+        );
+        $dup->bind_param('sii', $section, $section_number, $swo_type_id);
+    } else {
+        $dup = $conn->prepare(
+            "SELECT id
+               FROM checklist_items
+              WHERE is_deleted = 0
+                AND parent_item_id IS NULL
+                AND section = ?
+                AND section_number = ?
+                AND swo_type_id IS NULL"
+        );
+        $dup->bind_param('si', $section, $section_number);
+    }
 }
-
-// Prevent duplicate item_key
-$chk = $conn->prepare("SELECT id FROM checklist_items WHERE item_key = ?");
-$chk->bind_param('s', $item_key);
-$chk->execute();
-$existing = $chk->get_result()->fetch_assoc();
-$chk->close();
+$dup->execute();
+$existing = $dup->get_result()->fetch_assoc();
+$dup->close();
 
 if ($existing) {
     $conn->close();
-    jsonResponse(false, "Item key '{$item_key}' already exists. Choose a different number.");
+    jsonResponse(false, 'This number is already used in the selected context. Choose a different number.');
 }
 
-$stmt = $conn->prepare(
-    "INSERT INTO checklist_items (section, section_number, description, item_key, swo_type_id, parent_item_id, is_active, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, 1, ?)"
-);
-$stmt->bind_param('sissiis',
-    $section,
-    $section_number,
-    $description,
-    $item_key,
-    $swo_type_id,
-    $parent_item_id,
-    $user_id
-);
+// Generate item_key based on hierarchy + SWO type context
+if ($parent_item_id !== null) {
+    $baseKey = $section . '_' . intval($parent['section_number']) . '_' . $section_number;
+} else {
+    $baseKey = $section . '_' . $section_number;
+}
+$item_key = $swo_type_id !== null ? ($baseKey . '_t' . $swo_type_id) : $baseKey;
 
-// Handle nullable integer binding properly
-$types_str = 'siss';
-$bind_params = [$section, $section_number, $description, $item_key];
-
-// Close previous statement and rebuild with proper null handling
-$stmt->close();
+// Ensure key uniqueness even for legacy collisions
+$keyCandidate = $item_key;
+$suffix = 1;
+$keyChk = $conn->prepare("SELECT id FROM checklist_items WHERE item_key = ?");
+while (true) {
+    $keyChk->bind_param('s', $keyCandidate);
+    $keyChk->execute();
+    $exists = $keyChk->get_result()->fetch_assoc();
+    if (!$exists) {
+        break;
+    }
+    $suffix++;
+    $keyCandidate = $item_key . '_' . $suffix;
+}
+$keyChk->close();
+$item_key = $keyCandidate;
 
 // Build dynamic query for nullable fields
 $sql = "INSERT INTO checklist_items (section, section_number, description, item_key, swo_type_id, parent_item_id, is_active, created_by)

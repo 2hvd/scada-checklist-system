@@ -88,6 +88,31 @@ while ($row = $res->fetch_assoc()) {
 }
 $stmt->close();
 
+// Build hierarchical map (section -> swo_type_id -> parents/children)
+$hierarchical = [];
+$childrenByParent = [];
+foreach ($items as $item) {
+    if ($item['parent_item_id'] !== null) {
+        $childrenByParent[$item['parent_item_id']][] = $item;
+    }
+}
+foreach ($items as $item) {
+    if ($item['parent_item_id'] !== null) {
+        continue;
+    }
+    $sectionKey = $item['section'];
+    $typeKey = ($item['swo_type_id'] === null || $item['swo_type_id'] === '') ? 'null' : strval($item['swo_type_id']);
+    if (!isset($hierarchical[$sectionKey])) {
+        $hierarchical[$sectionKey] = [];
+    }
+    if (!isset($hierarchical[$sectionKey][$typeKey])) {
+        $hierarchical[$sectionKey][$typeKey] = [];
+    }
+    $parent = $item;
+    $parent['children'] = $childrenByParent[$item['id']] ?? [];
+    $hierarchical[$sectionKey][$typeKey][] = $parent;
+}
+
 // Statistics
 $statsRes = $conn->query(
     "SELECT section, COUNT(*) AS total, SUM(is_active) AS active_count
@@ -122,11 +147,32 @@ while ($row = $parentRes->fetch_assoc()) {
     $parentItems[] = $row;
 }
 
+// Max section number per (section, swo_type_id) for top-level items
+$maxPerType = [];
+$maxStmt = $conn->prepare(
+    "SELECT section, swo_type_id, MAX(section_number) AS max_number
+       FROM checklist_items
+      WHERE is_deleted = 0 AND parent_item_id IS NULL
+      GROUP BY section, swo_type_id"
+);
+$maxStmt->execute();
+$maxRes = $maxStmt->get_result();
+while ($row = $maxRes->fetch_assoc()) {
+    $maxPerType[] = [
+        'section' => $row['section'],
+        'swo_type_id' => $row['swo_type_id'] !== null ? intval($row['swo_type_id']) : null,
+        'max_number' => intval($row['max_number'] ?? 0),
+    ];
+}
+$maxStmt->close();
+
 $conn->close();
 jsonResponse(true, 'Items retrieved', [
     'items'        => $items,
+    'hierarchical' => $hierarchical,
     'total_items'  => $totalItems,
     'active_items' => $activeItems,
     'by_section'   => array_values($stats),
     'parent_items' => $parentItems,
+    'max_number_per_type' => $maxPerType,
 ]);

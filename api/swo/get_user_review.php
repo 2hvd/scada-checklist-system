@@ -17,7 +17,7 @@ $user_id = $_SESSION['user_id'];
 
 // Load SWO details — must be assigned to this user
 $stmt = $conn->prepare(
-    "SELECT id, swo_number, station_name, swo_type, kcor, status,
+    "SELECT id, swo_number, station_name, swo_type, swo_type_id, kcor, status,
             submitted_at, rejection_reason
      FROM swo_list
      WHERE id = ? AND assigned_to = ?"
@@ -32,8 +32,30 @@ if (!$swo) {
     jsonResponse(false, 'SWO not found or not assigned to you');
 }
 
-// Load checklist items
-$checklistItems = getChecklistItemsFromDB($conn);
+// Load checklist items in SWO type context with hierarchy
+$swo_type_id = !empty($swo['swo_type_id']) ? intval($swo['swo_type_id']) : null;
+$itemSql = "SELECT ci.id, ci.section, ci.section_number, ci.item_key, ci.description, ci.parent_item_id
+              FROM checklist_items ci
+             WHERE ci.is_deleted = 0
+               AND ci.is_active = 1";
+if ($swo_type_id !== null) {
+    $itemSql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
+}
+$itemSql .= " ORDER BY ci.section, ci.parent_item_id IS NOT NULL, ci.parent_item_id, ci.section_number";
+
+if ($swo_type_id !== null) {
+    $itemStmt = $conn->prepare($itemSql);
+    $itemStmt->bind_param('i', $swo_type_id);
+} else {
+    $itemStmt = $conn->prepare($itemSql);
+}
+$itemStmt->execute();
+$itemsRes = $itemStmt->get_result();
+$itemRows = [];
+while ($row = $itemsRes->fetch_assoc()) {
+    $itemRows[] = $row;
+}
+$itemStmt->close();
 
 // Load user's checklist statuses
 $stmt = $conn->prepare(
@@ -68,28 +90,77 @@ $sections  = [];
 $totalItems = 0;
 $doneCount = $naCount = $stillCount = $notYetCount = $emptyCount = 0;
 
-foreach ($checklistItems as $secKey => $section) {
-    $sectionData = ['label' => $section['label'], 'items' => []];
-    foreach ($section['items'] as $itemKey => $itemLabel) {
-        $userStatus = $userStatuses[$itemKey] ?? 'empty';
-        $comment    = $userComments[$itemKey]  ?? '';
+$sectionLabels = [
+    'during_config' => 'During Configuration',
+    'during_commissioning' => 'During Commissioning',
+    'after_commissioning' => 'After Commissioning',
+];
+$bySection = [];
+foreach ($itemRows as $row) {
+    if (!isset($bySection[$row['section']])) {
+        $bySection[$row['section']] = [];
+    }
+    $bySection[$row['section']][] = $row;
+}
+foreach ($bySection as $secKey => $rows) {
+    $sectionData = ['label' => $sectionLabels[$secKey] ?? ucwords(str_replace('_', ' ', $secKey)), 'items' => []];
 
-        $sectionData['items'][] = [
-            'key'     => $itemKey,
-            'label'   => $itemLabel,
-            'status'  => $userStatus,
-            'comment' => $comment,
-        ];
-
-        $totalItems++;
-        switch ($userStatus) {
-            case 'done':    $doneCount++;    break;
-            case 'na':      $naCount++;      break;
-            case 'still':   $stillCount++;   break;
-            case 'not_yet': $notYetCount++;  break;
-            default:        $emptyCount++;   break;
+    $parents = [];
+    $children = [];
+    foreach ($rows as $row) {
+        if ($row['parent_item_id'] === null) {
+            $parents[] = $row;
+        } else {
+            $children[$row['parent_item_id']][] = $row;
         }
     }
+
+    foreach ($parents as $parent) {
+        $parentStatus = $userStatuses[$parent['item_key']] ?? 'empty';
+        $sectionData['items'][] = [
+            'key' => $parent['item_key'],
+            'label' => $parent['description'],
+            'status' => $parentStatus,
+            'comment' => $userComments[$parent['item_key']] ?? '',
+            'is_parent' => isset($children[$parent['id']]),
+            'parent_item_id' => null,
+            'item_id' => intval($parent['id']),
+        ];
+
+        if (!isset($children[$parent['id']])) {
+            $totalItems++;
+            switch ($parentStatus) {
+                case 'done':    $doneCount++;    break;
+                case 'na':      $naCount++;      break;
+                case 'still':   $stillCount++;   break;
+                case 'not_yet': $notYetCount++;  break;
+                default:        $emptyCount++;   break;
+            }
+        }
+
+        foreach ($children[$parent['id']] ?? [] as $child) {
+            $childStatus = $userStatuses[$child['item_key']] ?? 'empty';
+            $sectionData['items'][] = [
+                'key' => $child['item_key'],
+                'label' => $child['description'],
+                'status' => $childStatus,
+                'comment' => $userComments[$child['item_key']] ?? '',
+                'is_parent' => false,
+                'parent_item_id' => intval($parent['id']),
+                'parent_key' => $parent['item_key'],
+                'item_id' => intval($child['id']),
+            ];
+            $totalItems++;
+            switch ($childStatus) {
+                case 'done':    $doneCount++;    break;
+                case 'na':      $naCount++;      break;
+                case 'still':   $stillCount++;   break;
+                case 'not_yet': $notYetCount++;  break;
+                default:        $emptyCount++;   break;
+            }
+        }
+    }
+
     $sections[] = $sectionData;
 }
 

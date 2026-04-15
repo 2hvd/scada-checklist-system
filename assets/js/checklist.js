@@ -76,8 +76,9 @@ const ChecklistPage = {
                         <tbody>
             `;
             section.items.forEach((item, idx) => {
-                const num = idx + 1;
+                const num = this.getDisplayNumber(item) || (idx + 1);
                 const disabled = this.readOnly ? 'disabled' : '';
+                const isChild = !!item.parent_item_id;
                 const commentCell = this.readOnly
                     ? `<td class="col-comment">
                            ${item.user_comment
@@ -117,14 +118,16 @@ const ChecklistPage = {
                 html += `
                     <tr class="checklist-item${this.supportMode ? ' checklist-item--support' : ''}" data-key="${escapeHtml(item.key)}">
                         <td class="col-number"><div class="item-number">${num}</div></td>
-                        <td class="item-label">${escapeHtml(item.label)}</td>
+                        <td class="item-label">${isChild ? '<span style="color:#aaa;margin-right:4px;">↳</span>' : ''}${escapeHtml(item.label)}</td>
                         <td class="col-status">
                             ${this.readOnly
                                 ? `<div class="item-user-status">${getChecklistStatusBadge(item.status)}</div>`
                                 : `<select class="item-status-select status-${item.status}"
                                        data-key="${escapeHtml(item.key)}"
-                                       onchange="ChecklistPage.updateStatus('${escapeHtml(item.key)}', this.value, this)"
-                                       ${disabled}>
+                                       data-parent-key="${escapeHtml(item.parent_key || '')}"
+                                       data-is-parent="${item.is_parent ? '1' : '0'}"
+                                        onchange="ChecklistPage.updateStatus('${escapeHtml(item.key)}', this.value, this)"
+                                        ${disabled}>
                                        <option value="empty"   ${item.status==='empty'   ?'selected':''}>— Select —</option>
                                        <option value="done"    ${item.status==='done'    ?'selected':''}>Done</option>
                                        <option value="na"      ${item.status==='na'      ?'selected':''}>N/A</option>
@@ -158,6 +161,7 @@ const ChecklistPage = {
 
             if (data && data.success) {
                 selectEl.className = `item-status-select status-${newStatus}`;
+                await this.syncHierarchyStatus(selectEl, newStatus);
                 await this.refreshProgress();
             } else {
                 showError(data?.message || 'Failed to update status');
@@ -169,6 +173,48 @@ const ChecklistPage = {
         } finally {
             selectEl.disabled = false;
         }
+    },
+
+    async syncHierarchyStatus(selectEl, newStatus) {
+        if (!selectEl) return;
+        const isParent = selectEl.dataset.isParent === '1';
+        const itemKey = selectEl.dataset.key;
+
+        if (isParent && newStatus && newStatus !== 'empty') {
+            const childSelects = document.querySelectorAll(`.item-status-select[data-parent-key="${CSS.escape(itemKey)}"]`);
+            for (const child of childSelects) {
+                if (child.value !== newStatus) {
+                    child.value = newStatus;
+                    child.className = `item-status-select status-${newStatus}`;
+                    await API.post('/checklist/update_status.php', {
+                        swo_id: this.swoId,
+                        item_key: child.dataset.key,
+                        status: newStatus,
+                    });
+                }
+            }
+        }
+
+        const parentKey = selectEl.dataset.parentKey;
+        if (parentKey && (!newStatus || newStatus === 'empty')) {
+            const parentSelect = document.querySelector(`.item-status-select[data-key="${CSS.escape(parentKey)}"]`);
+            if (parentSelect && parentSelect.value !== 'empty') {
+                parentSelect.value = 'empty';
+                parentSelect.className = 'item-status-select status-empty';
+                await API.post('/checklist/update_status.php', {
+                    swo_id: this.swoId,
+                    item_key: parentKey,
+                    status: 'empty',
+                });
+            }
+        }
+    },
+
+    getDisplayNumber(item) {
+        if (!item || !item.key) return '';
+        const m = String(item.key).match(/_(\d+)(?:_(\d+))?(?:_t\d+)?$/);
+        if (!m) return '';
+        return m[2] ? `${parseInt(m[1], 10)}.${parseInt(m[2], 10)}` : String(parseInt(m[1], 10));
     },
 
     async refreshProgress() {
