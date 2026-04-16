@@ -24,11 +24,11 @@ $stmt = $conn->prepare(
      FROM swo_list s
       LEFT JOIN users ua ON s.assigned_to      = ua.id
       LEFT JOIN users us ON s.support_reviewer_id = us.id
-      WHERE s.id = ?
-        AND (
-            s.status = 'Pending Control Review'
-            OR (s.status = 'Completed' AND s.control_reviewer_id = ?)
-        )"
+     WHERE s.id = ?
+       AND (
+           s.status = 'Pending Control Review'
+           OR (s.status = 'Completed' AND s.control_reviewer_id = ?)
+       )"
 );
 $stmt->bind_param('ii', $swo_id, $user_id);
 $stmt->execute();

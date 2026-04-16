@@ -115,23 +115,7 @@ const ReviewManager = {
         const statusHtml = hasChildProgress
             ? `<span class="badge" style="background:#3498db;color:#fff;">${escapeHtml(String(item.child_completion_pct ?? 0))}% (${escapeHtml(String(item.child_completed_count || 0))}/${escapeHtml(String(item.child_total_count || 0))})</span>`
             : getChecklistStatusBadge(item.status);
-        const decisionHtml = this.role !== 'user'
-            ? (this.readOnly
-                ? `<td class="col-decision">${item.decision ? getChecklistStatusBadge(item.decision) : '<span class="text-muted">—</span>'}</td>`
-                : `
-            <td class="col-decision">
-                <select class="review-decision-select"
-                        data-item-key="${escapeHtml(item.key)}"
-                        data-parent-key="${escapeHtml(item.parent_key || '')}"
-                        data-is-parent="${item.is_parent ? '1' : '0'}">
-                    <option value="">—</option>
-                    <option value="done"    ${item.decision === 'done'    ? 'selected' : ''}>Done</option>
-                    <option value="na"      ${item.decision === 'na'      ? 'selected' : ''}>N/A</option>
-                    <option value="still"   ${item.decision === 'still'   ? 'selected' : ''}>Still</option>
-                    <option value="not_yet" ${item.decision === 'not_yet' ? 'selected' : ''}>Not Yet</option>
-                </select>
-            </td>`)
-            : '';
+        const decisionHtml = this.buildDecisionCell(item);
 
         const userCommentColHtml = this.role !== 'user' ? `
             <td class="col-comment user-col-readonly">
@@ -191,6 +175,28 @@ const ReviewManager = {
                 this.scheduleItemSave(itemKey);
             }
         }, true);
+    },
+
+    buildDecisionCell(item) {
+        if (this.role === 'user') return '';
+
+        if (this.readOnly) {
+            return `<td class="col-decision">${item.decision ? getChecklistStatusBadge(item.decision) : '<span class="text-muted">—</span>'}</td>`;
+        }
+
+        return `
+            <td class="col-decision">
+                <select class="review-decision-select"
+                        data-item-key="${escapeHtml(item.key)}"
+                        data-parent-key="${escapeHtml(item.parent_key || '')}"
+                        data-is-parent="${item.is_parent ? '1' : '0'}">
+                    <option value="">—</option>
+                    <option value="done"    ${item.decision === 'done'    ? 'selected' : ''}>Done</option>
+                    <option value="na"      ${item.decision === 'na'      ? 'selected' : ''}>N/A</option>
+                    <option value="still"   ${item.decision === 'still'   ? 'selected' : ''}>Still</option>
+                    <option value="not_yet" ${item.decision === 'not_yet' ? 'selected' : ''}>Not Yet</option>
+                </select>
+            </td>`;
     },
 
     syncHierarchyDecision(selectEl) {
