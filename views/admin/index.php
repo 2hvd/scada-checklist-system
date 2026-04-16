@@ -33,7 +33,7 @@ require_once __DIR__ . '/../components/sidebar.php';
             </div>
             <div class="stat-card border-info">
                 <div class="stat-value" id="statSubmitted">—</div>
-                <div class="stat-label">Submitted</div>
+                <div class="stat-label">Pending Support Review</div>
             </div>
         </div>
 
@@ -68,6 +68,9 @@ require_once __DIR__ . '/../components/sidebar.php';
                                 <option value="Pending">Pending</option>
                                 <option value="Registered">Registered</option>
                                 <option value="In Progress">In Progress</option>
+                                <option value="Pending Support Review">Pending Support Review</option>
+                                <option value="Pending Control Review">Pending Control Review</option>
+                                <option value="Returned from Control">Returned from Control</option>
                                 <option value="Submitted">Submitted</option>
                                 <option value="Completed">Completed</option>
                                 <option value="Closed">Closed</option>

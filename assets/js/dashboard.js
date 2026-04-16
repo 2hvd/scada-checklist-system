@@ -24,12 +24,12 @@ const AdminDashboard = {
             const totalSwos = Object.values(sc).reduce((a, b) => a + b, 0);
             const pending = sc['Pending'] || 0;
             const inProgress = sc['In Progress'] || 0;
-            const submitted = sc['Submitted'] || 0;
+            const pendingReview = (sc['Pending Support Review'] || 0) + (sc['Submitted'] || 0);
 
             document.getElementById('statTotal').textContent = totalSwos;
             document.getElementById('statPending').textContent = pending;
             document.getElementById('statInProgress').textContent = inProgress;
-            document.getElementById('statSubmitted').textContent = submitted;
+            document.getElementById('statSubmitted').textContent = pendingReview;
 
             // Update pending badge
             const badge = document.getElementById('pendingBadge');
@@ -74,8 +74,8 @@ const AdminDashboard = {
                         <div class="lbl">In Progress</div>
                     </div>
                     <div class="user-card-stat">
-                        <div class="val">${u.submitted}</div>
-                        <div class="lbl">Submitted</div>
+                        <div class="val">${u.pending_review ?? u.submitted ?? 0}</div>
+                        <div class="lbl">Pending Review</div>
                     </div>
                 </div>
                 ${renderProgressBar(u.completion_pct)}

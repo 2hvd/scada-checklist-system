@@ -24,7 +24,7 @@ $userStmt = $conn->prepare(
         COUNT(DISTINCT s.id) AS total_assigned,
         SUM(CASE WHEN s.status = 'Completed' OR s.status = 'Closed' THEN 1 ELSE 0 END) AS completed,
         SUM(CASE WHEN s.status = 'In Progress' THEN 1 ELSE 0 END) AS in_progress,
-        SUM(CASE WHEN s.status = 'Submitted' THEN 1 ELSE 0 END) AS submitted
+        SUM(CASE WHEN s.status IN ('Pending Support Review', 'Submitted') THEN 1 ELSE 0 END) AS pending_review
     FROM users u
     LEFT JOIN swo_list s ON s.assigned_to = u.id
     WHERE u.role = 'user' AND u.active = 1
@@ -51,6 +51,7 @@ while ($user = $userResult->fetch_assoc()) {
 
     $user['total_items'] = intval($progress['total']);
     $user['completed_items'] = intval($progress['completed_items']);
+    $user['submitted'] = intval($user['pending_review']);
     $user['completion_pct'] = $user['total_items'] > 0
         ? round($user['completed_items'] / $user['total_items'] * 100, 1)
         : 0;
