@@ -16,7 +16,10 @@ function tableExists($conn, $tableName) {
 
 function scalarOrDefault($conn, $sql, $default = '0') {
     $res = $conn->query($sql);
-    if (!$res) return (string)$default;
+    if (!$res) {
+        error_log('check_session realtime query failed: ' . $conn->error);
+        return (string)$default;
+    }
     $row = $res->fetch_row();
     return isset($row[0]) && $row[0] !== null ? (string)$row[0] : (string)$default;
 }

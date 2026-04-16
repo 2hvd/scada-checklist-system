@@ -14,6 +14,7 @@
     }
 
     const POLL_INTERVAL_MS = readPositiveNumber(body.dataset.autoRefreshMs, 5000, 'data-auto-refresh-ms');
+    // Short guard to avoid refreshing exactly while a click/typing action is being processed.
     const MIN_IDLE_MS = readPositiveNumber(body.dataset.autoRefreshIdleMs, 1200, 'data-auto-refresh-idle-ms');
     let lastInteractionAt = Date.now();
     let lastVersion = null;
@@ -82,7 +83,7 @@
                 window.location.reload();
             }
         } catch (err) {
-            // network hiccups are ignored; the next poll will retry
+            console.warn('Realtime refresh poll failed; retrying on next interval.', err);
         } finally {
             inFlight = false;
         }
