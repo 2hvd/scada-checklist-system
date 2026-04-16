@@ -6,7 +6,10 @@ require_once __DIR__ . '/../../config/functions.php';
 
 function tableExists($conn, $tableName) {
     $stmt = $conn->prepare("SHOW TABLES LIKE ?");
-    if (!$stmt) return false;
+    if (!$stmt) {
+        error_log('check_session tableExists prepare failed: ' . $conn->error);
+        return false;
+    }
     $stmt->bind_param('s', $tableName);
     $stmt->execute();
     $exists = $stmt->get_result()->num_rows > 0;
