@@ -17,7 +17,7 @@ require_once __DIR__ . '/../components/sidebar.php';
 <link rel="stylesheet" href="/scada-checklist-system/assets/css/review_page.css">
 
 <div class="main-content">
-    <div class="topbar">
+    <div class="topbar checklist-topbar">
         <div style="display:flex;align-items:center;gap:12px;">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="topbar-title" id="reviewTitle">Loading…</h1>

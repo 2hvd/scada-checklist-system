@@ -136,7 +136,7 @@
     flex-direction: column;
 }
 .topbar {
-    background: var(--primary-blue);
+    background: var(--white);
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     padding: 14px 24px;
     display: flex;
@@ -149,8 +149,17 @@
 .topbar-title {
     font-size: 18px;
     font-weight: 700;
-    color: var(--white);
+    color: var(--primary-blue);
     margin: 0;
+}
+.topbar.checklist-topbar {
+    background: var(--primary-blue);
+}
+.topbar.checklist-topbar .topbar-title {
+    color: var(--white);
+}
+.topbar.checklist-topbar .sidebar-toggle {
+    color: var(--white);
 }
 .topbar-actions {
     display: flex;
