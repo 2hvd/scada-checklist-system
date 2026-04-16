@@ -18,6 +18,11 @@ function formatDateShort(dateStr) {
 }
 
 function getStatusBadge(status) {
+    const cls = getStatusBadgeClass(status);
+    return `<span class="badge ${cls}">${escapeHtml(status)}</span>`;
+}
+
+function getStatusBadgeClass(status) {
     const statusMap = {
         'Draft':                    'badge-draft',
         'Pending':                  'badge-pending',
@@ -30,8 +35,7 @@ function getStatusBadge(status) {
         'Completed':                'badge-completed',
         'Closed':                   'badge-closed',
     };
-    const cls = statusMap[status] || 'badge-draft';
-    return `<span class="badge ${cls}">${escapeHtml(status)}</span>`;
+    return statusMap[status] || 'badge-draft';
 }
 
 function getChecklistStatusBadge(status) {
@@ -99,6 +103,13 @@ function renderProgressBar(pct, showText = true) {
         </div>
         ${showText ? `<div class="progress-text">${pct}% complete</div>` : ''}
     `;
+}
+
+function getDashboardRefreshMs(defaultMs = 10000) {
+    const raw = document.body?.dataset?.dashboardRefreshMs;
+    if (raw == null || raw === '') return defaultMs;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : defaultMs;
 }
 
 function openModal(id) {

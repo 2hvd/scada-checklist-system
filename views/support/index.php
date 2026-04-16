@@ -157,5 +157,12 @@ function toggleSidebar() {
 document.addEventListener('DOMContentLoaded', function() {
     initTabs('mainTabs');
     SupportDashboard.init();
+
+    const AUTO_REFRESH_MS = getDashboardRefreshMs(10000);
+    setInterval(() => {
+        if (document.hidden) return;
+        if (document.querySelector('.modal-overlay.active')) return;
+        SupportDashboard.loadData();
+    }, AUTO_REFRESH_MS);
 });
 </script>

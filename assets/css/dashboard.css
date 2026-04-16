@@ -152,6 +152,15 @@
     color: var(--primary-blue);
     margin: 0;
 }
+.topbar.checklist-topbar {
+    background: var(--primary-blue);
+}
+.topbar.checklist-topbar .topbar-title {
+    color: var(--white);
+}
+.topbar.checklist-topbar .sidebar-toggle {
+    color: var(--white);
+}
 .topbar-actions {
     display: flex;
     align-items: center;
@@ -470,14 +479,14 @@
     table-layout: fixed;
 }
 .checklist-table thead {
-    background: #34495e;
+    background: var(--primary-blue);
     color: #fff;
     font-weight: 600;
 }
 .checklist-table th {
     padding: 10px 14px;
     text-align: left;
-    border-bottom: 2px solid #2c3e50;
+    border-bottom: 2px solid #16314d;
     white-space: nowrap;
     overflow: hidden;
 }

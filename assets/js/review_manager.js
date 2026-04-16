@@ -58,7 +58,10 @@ const ReviewManager = {
         if (stationEl) stationEl.textContent = swo.station_name;
 
         const statusWrap = document.getElementById('reviewStatusWrap');
-        if (statusWrap) statusWrap.innerHTML = getStatusBadge(swo.status);
+        if (statusWrap) {
+            statusWrap.className = `badge ${getStatusBadgeClass(swo.status)}`;
+            statusWrap.textContent = swo.status;
+        }
 
         // Progress
         const progressColor = progress >= 80 ? '#27ae60' : (progress >= 50 ? '#f39c12' : '#e74c3c');

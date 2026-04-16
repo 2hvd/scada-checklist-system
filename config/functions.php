@@ -68,17 +68,6 @@ function checkSessionTimeout() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    $timeout = 15 * 60; // 15 minutes
-    if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $timeout) {
-        session_unset();
-        session_destroy();
-        if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
-            jsonResponse(false, 'Session expired. Please login again.');
-        } else {
-            header('Location: /scada-checklist-system/index.php?timeout=1');
-            exit;
-        }
-    }
     $_SESSION['last_activity'] = time();
 }
 

@@ -15,7 +15,6 @@ if (isset($_SESSION['user_id'])) {
     exit;
 }
 
-$timeout = isset($_GET['timeout']) ? true : false;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -115,15 +114,6 @@ $timeout = isset($_GET['timeout']) ? true : false;
             font-size: 14px;
             display: none;
         }
-        .timeout-msg {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffc107;
-            border-radius: 6px;
-            padding: 10px 14px;
-            margin-bottom: 16px;
-            font-size: 14px;
-        }
         .login-footer {
             text-align: center;
             margin-top: 24px;
@@ -139,10 +129,6 @@ $timeout = isset($_GET['timeout']) ? true : false;
             <h1>SCADA Checklist System</h1>
             <p>Secure Access Portal</p>
         </div>
-
-        <?php if ($timeout): ?>
-        <div class="timeout-msg">⚠️ Your session has expired. Please login again.</div>
-        <?php endif; ?>
 
         <div class="error-msg" id="errorMsg"></div>
 
