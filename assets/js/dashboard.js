@@ -24,7 +24,7 @@ const AdminDashboard = {
             const totalSwos = Object.values(sc).reduce((a, b) => a + b, 0);
             const pending = sc['Pending'] || 0;
             const inProgress = sc['In Progress'] || 0;
-            const submitted = sc['Submitted'] || 0;
+            const submitted = (sc['Pending Support Review'] || 0) + (sc['Submitted'] || 0);
 
             document.getElementById('statTotal').textContent = totalSwos;
             document.getElementById('statPending').textContent = pending;

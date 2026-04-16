@@ -24,7 +24,7 @@ $userStmt = $conn->prepare(
         COUNT(DISTINCT s.id) AS total_assigned,
         SUM(CASE WHEN s.status = 'Completed' OR s.status = 'Closed' THEN 1 ELSE 0 END) AS completed,
         SUM(CASE WHEN s.status = 'In Progress' THEN 1 ELSE 0 END) AS in_progress,
-        SUM(CASE WHEN s.status = 'Submitted' THEN 1 ELSE 0 END) AS submitted
+        SUM(CASE WHEN s.status IN ('Pending Support Review', 'Submitted') THEN 1 ELSE 0 END) AS submitted
     FROM users u
     LEFT JOIN swo_list s ON s.assigned_to = u.id
     WHERE u.role = 'user' AND u.active = 1
