@@ -1,4 +1,4 @@
-/* auto_refresh.js - Lightweight automatic page refresh */
+/* auto_refresh.js - Near real-time refresh watcher */
 (function () {
     const body = document.body;
     if (!body) return;
@@ -13,10 +13,12 @@
         return n;
     }
 
-    const AUTO_REFRESH_MS = readPositiveNumber(body.dataset.autoRefreshMs, 60000, 'data-auto-refresh-ms');
-    // Keep a short idle guard so we refresh only after the user stops interacting.
-    const MIN_IDLE_MS = readPositiveNumber(body.dataset.autoRefreshIdleMs, 10000, 'data-auto-refresh-idle-ms');
+    const POLL_INTERVAL_MS = readPositiveNumber(body.dataset.autoRefreshMs, 5000, 'data-auto-refresh-ms');
+    const MIN_IDLE_MS = readPositiveNumber(body.dataset.autoRefreshIdleMs, 1200, 'data-auto-refresh-idle-ms');
     let lastInteractionAt = Date.now();
+    let lastVersion = null;
+    let refreshPending = false;
+    let inFlight = false;
 
     const markInteraction = () => { lastInteractionAt = Date.now(); };
 
@@ -42,8 +44,50 @@
         return true;
     }
 
-    setInterval(() => {
-        if (!canRefreshNow()) return;
-        window.location.reload();
-    }, AUTO_REFRESH_MS);
+    async function checkForChanges() {
+        if (inFlight) return;
+        inFlight = true;
+        try {
+            const response = await fetch('/scada-checklist-system/api/auth/check_session.php', {
+                method: 'GET',
+                credentials: 'same-origin',
+                cache: 'no-store',
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!response.ok) {
+                window.location.href = '/scada-checklist-system/index.php';
+                return;
+            }
+
+            const data = await response.json();
+            if (!data?.success) {
+                window.location.href = '/scada-checklist-system/index.php';
+                return;
+            }
+
+            const version = data?.data?.realtime_version ?? null;
+            if (version == null) return;
+            if (lastVersion === null) {
+                lastVersion = version;
+                return;
+            }
+
+            if (version !== lastVersion) {
+                lastVersion = version;
+                refreshPending = true;
+            }
+
+            if (refreshPending && canRefreshNow()) {
+                refreshPending = false;
+                window.location.reload();
+            }
+        } catch (err) {
+            // network hiccups are ignored; the next poll will retry
+        } finally {
+            inFlight = false;
+        }
+    }
+
+    checkForChanges();
+    setInterval(checkForChanges, POLL_INTERVAL_MS);
 })();
