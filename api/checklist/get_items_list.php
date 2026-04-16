@@ -54,13 +54,20 @@ $sql = "SELECT ci.id, ci.section, ci.section_number, ci.description, ci.item_key
                st.name AS swo_type_name,
                parent.description AS parent_description,
                parent.item_key AS parent_item_key,
-               COUNT(DISTINCT cs.swo_id) AS usage_count,
+               COUNT(DISTINCT s.id) AS usage_count,
                (SELECT COUNT(*) FROM checklist_items sub WHERE sub.parent_item_id = ci.id AND sub.is_deleted = 0) AS sub_items_count
-          FROM checklist_items ci
-          LEFT JOIN users u ON u.id = ci.created_by
-          LEFT JOIN checklist_status cs ON ci.item_key = cs.item_key
-          LEFT JOIN swo_types st ON st.id = ci.swo_type_id
-          LEFT JOIN checklist_items parent ON parent.id = ci.parent_item_id
+           FROM checklist_items ci
+           LEFT JOIN users u ON u.id = ci.created_by
+           LEFT JOIN checklist_status cs ON ci.item_key = cs.item_key
+           LEFT JOIN swo_list s
+                  ON s.id = cs.swo_id
+                 AND (
+                      ci.swo_type_id IS NULL
+                      OR s.swo_type_id IS NULL
+                      OR s.swo_type_id = ci.swo_type_id
+                 )
+           LEFT JOIN swo_types st ON st.id = ci.swo_type_id
+           LEFT JOIN checklist_items parent ON parent.id = ci.parent_item_id
          WHERE {$where}
          GROUP BY ci.id, ci.section, ci.section_number, ci.description, ci.item_key,
                   ci.swo_type_id, ci.parent_item_id,

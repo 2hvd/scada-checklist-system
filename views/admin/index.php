@@ -415,12 +415,24 @@ const AdminTimeline = {
                     <td>${getStatusBadge(s.status)}</td>
                     <td>${s.created_at ? formatDateShort(s.created_at) : '—'}</td>
                     <td>${escapeHtml(s.created_by_name || '—')}</td>
-                    <td>${s.approved_at ? formatDateShort(s.approved_at) : '—'}</td>
+                    <td>
+                        ${s.approved_at ? formatDateShort(s.approved_at) : '—'}
+                        <div class="text-muted" style="font-size:11px;">${escapeHtml(s.approved_by_name || '—')}</div>
+                    </td>
                     <td>${escapeHtml(s.assigned_to_name || '—')}</td>
                     <td>${s.started_at ? formatDateShort(s.started_at) : '—'}</td>
-                    <td>${s.submitted_at ? formatDateShort(s.submitted_at) : '—'}</td>
-                    <td>${s.support_reviewed_at ? formatDateShort(s.support_reviewed_at) : '—'}</td>
-                    <td>${s.control_reviewed_at ? formatDateShort(s.control_reviewed_at) : '—'}</td>
+                    <td>
+                        ${s.submitted_at ? formatDateShort(s.submitted_at) : '—'}
+                        <div class="text-muted" style="font-size:11px;">${escapeHtml(s.assigned_to_name || '—')}</div>
+                    </td>
+                    <td>
+                        ${s.support_reviewed_at ? formatDateShort(s.support_reviewed_at) : '—'}
+                        <div class="text-muted" style="font-size:11px;">${escapeHtml(s.support_reviewer_name || '—')}</div>
+                    </td>
+                    <td>
+                        ${s.control_reviewed_at ? formatDateShort(s.control_reviewed_at) : '—'}
+                        <div class="text-muted" style="font-size:11px;">${escapeHtml(s.control_reviewer_name || '—')}</div>
+                    </td>
                     <td>
                         <button class="btn btn-sm btn-secondary" onclick="AdminDashboard.viewSWO(${s.id})">View</button>
                     </td>

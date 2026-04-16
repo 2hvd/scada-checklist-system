@@ -26,7 +26,7 @@ if (!$swo_id || !$user_id) {
 $conn = getDBConnection();
 
 // Verify SWO status
-$stmt = $conn->prepare("SELECT id, status FROM swo_list WHERE id = ?");
+$stmt = $conn->prepare("SELECT id, status, swo_type_id FROM swo_list WHERE id = ?");
 $stmt->bind_param('i', $swo_id);
 $stmt->execute();
 $swo = $stmt->get_result()->fetch_assoc();
@@ -67,8 +67,9 @@ if (!$stmt->execute()) {
 }
 $stmt->close();
 
-// Initialize checklist items for this user/SWO (use DB-based active items)
-$itemKeys = getAllItemKeysFromDB($conn);
+// Initialize checklist items for this user/SWO (only matching SWO type + universal items)
+$swo_type_id = !empty($swo['swo_type_id']) ? intval($swo['swo_type_id']) : null;
+$itemKeys = getAllItemKeysFromDB($conn, $swo_type_id);
 $insertStmt = $conn->prepare(
     "INSERT IGNORE INTO checklist_status (user_id, swo_id, item_key, status) VALUES (?,?,?,'empty')"
 );

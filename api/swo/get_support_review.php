@@ -149,6 +149,20 @@ foreach ($bySection as $secKey => $rows) {
         $parentKey = $parent['item_key'];
         $parentStatus = $userStatuses[$parentKey] ?? 'empty';
         $parentReview = $itemReviews[$parentKey] ?? ['decision' => '', 'comment' => ''];
+        $childRows = $children[$parent['id']] ?? [];
+        $hasChildren = !empty($childRows);
+
+        $childTotal = 0;
+        $childCompleted = 0;
+        foreach ($childRows as $child) {
+            $childKey = $child['item_key'];
+            $childStatus = $userStatuses[$childKey] ?? 'empty';
+            $childTotal++;
+            if ($childStatus === 'done' || $childStatus === 'na') {
+                $childCompleted++;
+            }
+        }
+        $childCompletionPct = $childTotal > 0 ? round(($childCompleted / $childTotal) * 100, 1) : null;
 
         $sectionData['items'][] = [
             'key'             => $parentKey,
@@ -158,12 +172,15 @@ foreach ($bySection as $secKey => $rows) {
             'decision'        => $parentReview['decision'],
             'comment'         => $parentReview['comment'],
             'control_comment' => $controlComments[$parentKey] ?? '',
-            'is_parent'       => isset($children[$parent['id']]),
+            'is_parent'       => $hasChildren,
             'parent_item_id'  => null,
             'item_id'         => intval($parent['id']),
+            'child_total_count' => $childTotal,
+            'child_completed_count' => $childCompleted,
+            'child_completion_pct' => $childCompletionPct,
         ];
 
-        if (!isset($children[$parent['id']])) {
+        if (!$hasChildren) {
             $totalItems++;
             switch ($parentStatus) {
                 case 'done':    $doneCount++;    break;
@@ -174,25 +191,9 @@ foreach ($bySection as $secKey => $rows) {
             }
         }
 
-        foreach ($children[$parent['id']] ?? [] as $child) {
+        foreach ($childRows as $child) {
             $childKey = $child['item_key'];
             $childStatus = $userStatuses[$childKey] ?? 'empty';
-            $childReview = $itemReviews[$childKey] ?? ['decision' => '', 'comment' => ''];
-
-            $sectionData['items'][] = [
-                'key'             => $childKey,
-                'label'           => $child['description'],
-                'status'          => $childStatus,
-                'user_comment'    => $userComments[$childKey] ?? '',
-                'decision'        => $childReview['decision'],
-                'comment'         => $childReview['comment'],
-                'control_comment' => $controlComments[$childKey] ?? '',
-                'is_parent'       => false,
-                'parent_item_id'  => intval($parent['id']),
-                'parent_key'      => $parentKey,
-                'item_id'         => intval($child['id']),
-            ];
-
             $totalItems++;
             switch ($childStatus) {
                 case 'done':    $doneCount++;    break;

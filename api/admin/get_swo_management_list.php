@@ -22,9 +22,15 @@ $sql = "SELECT
     s.submitted_at,
     s.support_reviewed_at,
     s.control_reviewed_at,
-    u_assigned.username AS assigned_to
+    u_created.username AS created_by_name,
+    u_assigned.username AS assigned_to,
+    u_support.username AS support_reviewer_name,
+    u_control.username AS control_reviewer_name
 FROM swo_list s
-LEFT JOIN users u_assigned ON s.assigned_to = u_assigned.id";
+LEFT JOIN users u_created ON s.created_by = u_created.id
+LEFT JOIN users u_assigned ON s.assigned_to = u_assigned.id
+LEFT JOIN users u_support ON s.support_reviewer_id = u_support.id
+LEFT JOIN users u_control ON s.control_reviewer_id = u_control.id";
 
 if ($status) {
     $sql .= " WHERE s.status = ?";

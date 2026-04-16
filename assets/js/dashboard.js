@@ -233,6 +233,8 @@ const AdminDashboard = {
                 <tr><td style="padding:6px;font-weight:600">Status</td><td>${getStatusBadge(s.status)}</td></tr>
                 <tr><td style="padding:6px;font-weight:600">Created By</td><td>${escapeHtml(s.created_by_name || '—')}</td></tr>
                 <tr><td style="padding:6px;font-weight:600">Assigned To</td><td>${escapeHtml(s.assigned_to_name || '—')}</td></tr>
+                <tr><td style="padding:6px;font-weight:600">Support Reviewer</td><td>${escapeHtml(s.support_reviewer_name || '—')}</td></tr>
+                <tr><td style="padding:6px;font-weight:600">Control Reviewer</td><td>${escapeHtml(s.control_reviewer_name || '—')}</td></tr>
                 <tr><td style="padding:6px;font-weight:600">Description</td><td>${escapeHtml(s.description || '—')}</td></tr>
                 <tr><td style="padding:6px;font-weight:600">Created</td><td>${formatDate(s.created_at)}</td></tr>
             </table>

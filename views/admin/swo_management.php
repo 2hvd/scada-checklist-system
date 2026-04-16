@@ -154,9 +154,18 @@ async function loadSWOs() {
                 <td>${s.created_at ? formatDateShort(s.created_at) : '—'}</td>
                 <td>${escapeHtml(s.assigned_to || '—')}</td>
                 <td>${s.assigned_at ? formatDateShort(s.assigned_at) : '—'}</td>
-                <td>${s.submitted_at ? formatDateShort(s.submitted_at) : '—'}</td>
-                <td>${s.support_reviewed_at ? formatDateShort(s.support_reviewed_at) : '—'}</td>
-                <td>${s.control_reviewed_at ? formatDateShort(s.control_reviewed_at) : '—'}</td>
+                <td>
+                    ${s.submitted_at ? formatDateShort(s.submitted_at) : '—'}
+                    <div class="text-muted" style="font-size:11px;">${escapeHtml(s.assigned_to || '—')}</div>
+                </td>
+                <td>
+                    ${s.support_reviewed_at ? formatDateShort(s.support_reviewed_at) : '—'}
+                    <div class="text-muted" style="font-size:11px;">${escapeHtml(s.support_reviewer_name || '—')}</div>
+                </td>
+                <td>
+                    ${s.control_reviewed_at ? formatDateShort(s.control_reviewed_at) : '—'}
+                    <div class="text-muted" style="font-size:11px;">${escapeHtml(s.control_reviewer_name || '—')}</div>
+                </td>
                 <td>
                     <button class="btn btn-secondary btn-sm" onclick="AdminDashboard.viewSWO(${s.id})">View</button>
                 </td>
