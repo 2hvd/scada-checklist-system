@@ -97,6 +97,12 @@ const ReviewManager = {
     renderRow(item, num) {
         const parsedNumber = this.getDisplayNumber(item);
         const isChild = !!item.parent_item_id;
+        const hasChildProgress = this.role === 'support'
+            && item.is_parent
+            && Number(item.child_total_count || 0) > 0;
+        const statusHtml = hasChildProgress
+            ? `<span class="badge" style="background:#3498db;color:#fff;">${escapeHtml(String(item.child_completion_pct ?? 0))}% (${escapeHtml(String(item.child_completed_count || 0))}/${escapeHtml(String(item.child_total_count || 0))})</span>`
+            : getChecklistStatusBadge(item.status);
         const decisionHtml = this.role !== 'user' ? `
             <td class="col-decision">
                 <select class="review-decision-select"
@@ -131,7 +137,7 @@ const ReviewManager = {
             <tr data-item-key="${escapeHtml(item.key)}">
                 <td>${escapeHtml(parsedNumber || String(num))}</td>
                 <td>${isChild ? '<span style="color:#aaa;margin-right:4px;">↳</span>' : ''}${escapeHtml(item.label)}</td>
-                <td class="col-status">${getChecklistStatusBadge(item.status)}</td>
+                <td class="col-status">${statusHtml}</td>
                 ${userCommentColHtml}
                 ${supportColsHtml}
                 ${controlFeedbackHtml}

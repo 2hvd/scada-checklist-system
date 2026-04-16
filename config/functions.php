@@ -261,16 +261,38 @@ function getChecklistItemsForSWO($conn, $swo_id) {
 /**
  * Return active item keys from DB, falling back to hardcoded.
  */
-function getAllItemKeysFromDB($conn) {
+function getAllItemKeysFromDB($conn, $swo_type_id = null) {
     $keys = [];
-    $result = $conn->query(
-        "SELECT item_key FROM checklist_items WHERE is_active = 1 AND is_deleted = 0 ORDER BY section, section_number"
-    );
+    if ($swo_type_id !== null) {
+        $stmt = $conn->prepare(
+            "SELECT item_key
+               FROM checklist_items
+              WHERE is_active = 1
+                AND is_deleted = 0
+                AND (swo_type_id = ? OR swo_type_id IS NULL)
+              ORDER BY section, section_number"
+        );
+        $stmt->bind_param('i', $swo_type_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    } else {
+        $result = $conn->query(
+            "SELECT item_key FROM checklist_items WHERE is_active = 1 AND is_deleted = 0 ORDER BY section, section_number"
+        );
+    }
+
     if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $keys[] = $row['item_key'];
         }
+        if (isset($stmt)) {
+            $stmt->close();
+        }
         return $keys;
+    }
+
+    if (isset($stmt)) {
+        $stmt->close();
     }
     return getAllItemKeys();
 }
