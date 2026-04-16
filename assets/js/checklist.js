@@ -66,9 +66,9 @@ const ChecklistPage = {
                     : '';
 
             html += `
-                <div class="checklist-section">
-                    <div class="checklist-section-header">${escapeHtml(section.label)}</div>
-                    <table class="checklist-table">
+                <div class="review-section">
+                    <div class="review-section-header">${escapeHtml(section.label)}</div>
+                    <table class="review-table">
                         <thead>
                             <tr>
                                 <th class="col-number">#</th>
@@ -122,7 +122,7 @@ const ChecklistPage = {
                     : '';
 
                 html += `
-                    <tr class="checklist-item${this.supportMode ? ' checklist-item--support' : ''}" data-key="${escapeHtml(item.key)}">
+                    <tr data-key="${escapeHtml(item.key)}">
                         <td class="col-number"><div class="item-number">${num}</div></td>
                         <td class="item-label">${isChild ? '<span style="color:#aaa;margin-right:4px;">↳</span>' : ''}${escapeHtml(item.label)}</td>
                         <td class="col-status">

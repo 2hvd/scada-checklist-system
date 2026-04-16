@@ -90,10 +90,6 @@ const ChecklistItems = {
                 ? `<span class="badge" style="background:#f39c12;color:#fff" title="Used in ${usageCount} SWO(s)">⚠️ ${usageCount} SWO${usageCount > 1 ? 's' : ''}</span>`
                 : '<span class="text-muted">—</span>';
 
-            const editDisabled = usageCount > 0
-                ? `disabled title="Cannot edit — used in ${usageCount} SWO(s)"`
-                : '';
-
             const swoTypeName = item.swo_type_name && item.swo_type_name !== '—' ? item.swo_type_name : null;
             const swoTypeBadge = swoTypeName
                 ? `<span class="badge" style="background:#9b59b6;color:#fff;">${escapeHtml(swoTypeName)}</span>`
@@ -112,11 +108,6 @@ const ChecklistItems = {
                 <td>${usageBadge}</td>
                 <td>
                     <div style="display:flex;gap:5px;flex-wrap:wrap;">
-                        <button class="btn btn-secondary btn-sm ci-edit-btn"
-                            data-id="${escapeHtml(item.id)}"
-                            data-key="${escapeHtml(item.item_key)}"
-                            data-desc="${escapeHtml(item.description)}"
-                            ${editDisabled}>✏️ Edit</button>
                         <button class="btn ${toggleClass} btn-sm ci-toggle-btn"
                             data-id="${escapeHtml(item.id)}">${toggleLabel}</button>
                         <button class="btn btn-danger btn-sm ci-delete-btn"
@@ -128,15 +119,6 @@ const ChecklistItems = {
         }).join('');
 
         // Attach event listeners via delegation
-        tbody.querySelectorAll('.ci-edit-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                ChecklistItems.openEditModal(
-                    btn.dataset.id,
-                    btn.dataset.key,
-                    btn.dataset.desc
-                );
-            });
-        });
         tbody.querySelectorAll('.ci-toggle-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 ChecklistItems.toggleStatus(btn.dataset.id);
@@ -310,29 +292,6 @@ async submitAdd() {
         showError('Error: ' + err.message);
     }
 },
-
-    openEditModal(id, key, description) {
-        document.getElementById('ciEditId').value          = id;
-        document.getElementById('ciEditKey').value         = key;
-        document.getElementById('ciEditDescription').value = description;
-        openModal('editChecklistItemModal');
-    },
-
-    async submitEdit() {
-        const item_id     = document.getElementById('ciEditId').value;
-        const description = document.getElementById('ciEditDescription').value.trim();
-
-        if (!description) { showWarning('Please enter a description.'); return; }
-
-        const data = await API.post('/checklist/update_item.php', { item_id, description });
-        if (data && data.success) {
-            showSuccess('Item updated successfully!');
-            closeModal('editChecklistItemModal');
-            this.load();
-        } else {
-            showError(data?.message || 'Failed to update item');
-        }
-    },
 
     async toggleStatus(item_id) {
         const confirmed = await confirmDialog(`Are you sure you want to toggle the status of this item?\n\nNote: Existing SWO checklists will NOT be affected.`);

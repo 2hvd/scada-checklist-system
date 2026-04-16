@@ -4,6 +4,8 @@ require_once __DIR__ . '/../../config/functions.php';
 requireRole('control');
 
 $swo_id = isset($_GET['swo_id']) ? intval($_GET['swo_id']) : null;
+$mode = isset($_GET['mode']) ? trim($_GET['mode']) : '';
+$viewOnly = ($mode === 'view');
 if (!$swo_id) {
     header('Location: /scada-checklist-system/views/control/index.php');
     exit;
@@ -87,6 +89,6 @@ function toggleSidebar() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    ReviewManager.init(<?php echo $swo_id; ?>, 'control');
+    ReviewManager.init(<?php echo $swo_id; ?>, 'control', <?php echo $viewOnly ? 'true' : 'false'; ?>);
 });
 </script>

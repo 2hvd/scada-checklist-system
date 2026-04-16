@@ -43,6 +43,7 @@ $readOnly = !in_array($swo['status'], ['In Progress']);
 require_once __DIR__ . '/../components/header.php';
 require_once __DIR__ . '/../components/sidebar.php';
 ?>
+<link rel="stylesheet" href="/scada-checklist-system/assets/css/review_page.css">
 <div class="main-content">
     <div class="topbar">
         <div style="display:flex;align-items:center;gap:12px;">

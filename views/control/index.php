@@ -55,10 +55,11 @@ require_once __DIR__ . '/../components/sidebar.php';
                                     <th>Station</th>
                                     <th>Assigned To</th>
                                     <th>Completed At</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="controlCompletedTableBody">
-                                <tr><td colspan="4" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
+                                <tr><td colspan="5" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
                             </tbody>
                         </table>
                     </div>
