@@ -154,12 +154,24 @@ foreach ($bySection as $secKey => $rows) {
 
         $childTotal = 0;
         $childCompleted = 0;
+        $childDone = 0;
+        $childNa = 0;
+        $childStill = 0;
+        $childNotYet = 0;
+        $childEmpty = 0;
         foreach ($childRows as $child) {
             $childKey = $child['item_key'];
             $childStatus = $userStatuses[$childKey] ?? 'empty';
             $childTotal++;
             if ($childStatus === 'done' || $childStatus === 'na') {
                 $childCompleted++;
+            }
+            switch ($childStatus) {
+                case 'done':    $childDone++;   break;
+                case 'na':      $childNa++;     break;
+                case 'still':   $childStill++;  break;
+                case 'not_yet': $childNotYet++; break;
+                default:        $childEmpty++;  break;
             }
         }
         $childCompletionPct = $childTotal > 0 ? round(($childCompleted / $childTotal) * 100, 1) : null;
@@ -191,17 +203,13 @@ foreach ($bySection as $secKey => $rows) {
             }
         }
 
-        foreach ($childRows as $child) {
-            $childKey = $child['item_key'];
-            $childStatus = $userStatuses[$childKey] ?? 'empty';
-            $totalItems++;
-            switch ($childStatus) {
-                case 'done':    $doneCount++;    break;
-                case 'na':      $naCount++;      break;
-                case 'still':   $stillCount++;   break;
-                case 'not_yet': $notYetCount++;  break;
-                default:        $emptyCount++;   break;
-            }
+        if ($hasChildren) {
+            $totalItems += $childTotal;
+            $doneCount  += $childDone;
+            $naCount    += $childNa;
+            $stillCount += $childStill;
+            $notYetCount += $childNotYet;
+            $emptyCount += $childEmpty;
         }
     }
     $sections[] = $sectionData;
