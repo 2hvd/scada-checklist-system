@@ -39,7 +39,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                 </div>
                 <div class="info-item">
                     <span>Status:</span>
-                    <span id="reviewStatusWrap"><span class="badge badge-pending">Pending Control Review</span></span>
+                    <span id="reviewStatusWrap" class="badge badge-pending">Pending Control Review</span>
                 </div>
             </div>
 

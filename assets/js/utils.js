@@ -18,6 +18,11 @@ function formatDateShort(dateStr) {
 }
 
 function getStatusBadge(status) {
+    const cls = getStatusBadgeClass(status);
+    return `<span class="badge ${cls}">${escapeHtml(status)}</span>`;
+}
+
+function getStatusBadgeClass(status) {
     const statusMap = {
         'Draft':                    'badge-draft',
         'Pending':                  'badge-pending',
@@ -30,8 +35,7 @@ function getStatusBadge(status) {
         'Completed':                'badge-completed',
         'Closed':                   'badge-closed',
     };
-    const cls = statusMap[status] || 'badge-draft';
-    return `<span class="badge ${cls}">${escapeHtml(status)}</span>`;
+    return statusMap[status] || 'badge-draft';
 }
 
 function getChecklistStatusBadge(status) {

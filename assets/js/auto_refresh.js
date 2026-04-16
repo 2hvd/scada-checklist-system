@@ -1,9 +1,21 @@
 /* auto_refresh.js - Lightweight automatic page refresh */
 (function () {
-    const body = document.body || {};
-    const AUTO_REFRESH_MS = Number(body.dataset.autoRefreshMs) || 60000;
+    const body = document.body;
+    if (!body) return;
+
+    function readPositiveNumber(value, fallback, key) {
+        if (value == null || value === '') return fallback;
+        const n = Number(value);
+        if (!Number.isFinite(n) || n <= 0) {
+            console.warn(`Invalid ${key} value "${value}", using ${fallback}.`);
+            return fallback;
+        }
+        return n;
+    }
+
+    const AUTO_REFRESH_MS = readPositiveNumber(body.dataset.autoRefreshMs, 60000, 'data-auto-refresh-ms');
     // Keep a short idle guard so we refresh only after the user stops interacting.
-    const MIN_IDLE_MS = Number(body.dataset.autoRefreshIdleMs) || 10000;
+    const MIN_IDLE_MS = readPositiveNumber(body.dataset.autoRefreshIdleMs, 10000, 'data-auto-refresh-idle-ms');
     let lastInteractionAt = Date.now();
 
     const markInteraction = () => { lastInteractionAt = Date.now(); };
