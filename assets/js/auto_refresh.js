@@ -1,7 +1,9 @@
 /* auto_refresh.js - Lightweight automatic page refresh */
 (function () {
-    const AUTO_REFRESH_MS = 30000;
-    const MIN_IDLE_MS = 8000;
+    const body = document.body || {};
+    const AUTO_REFRESH_MS = Number(body.dataset.autoRefreshMs) || 60000;
+    // Keep a short idle guard so we refresh only after the user stops interacting.
+    const MIN_IDLE_MS = Number(body.dataset.autoRefreshIdleMs) || 10000;
     let lastInteractionAt = Date.now();
 
     const markInteraction = () => { lastInteractionAt = Date.now(); };
