@@ -421,10 +421,7 @@ const AdminTimeline = {
                     </td>
                     <td>${escapeHtml(s.assigned_to_name || '—')}</td>
                     <td>${s.started_at ? formatDateShort(s.started_at) : '—'}</td>
-                    <td>
-                        ${s.submitted_at ? formatDateShort(s.submitted_at) : '—'}
-                        <div class="text-muted" style="font-size:11px;">${escapeHtml(s.assigned_to_name || '—')}</div>
-                    </td>
+                    <td>${s.submitted_at ? formatDateShort(s.submitted_at) : '—'}</td>
                     <td>
                         ${s.support_reviewed_at ? formatDateShort(s.support_reviewed_at) : '—'}
                         <div class="text-muted" style="font-size:11px;">${escapeHtml(s.support_reviewer_name || '—')}</div>
