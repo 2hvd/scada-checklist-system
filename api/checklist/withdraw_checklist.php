@@ -40,7 +40,7 @@ if ($swo['assigned_to'] != $user_id) {
 }
 if (!in_array($swo['status'], ['Pending Support Review', 'Submitted'])) {
     $conn->close();
-    jsonResponse(false, 'Only checklists with status Pending Support Review or Submitted can be withdrawn');
+    jsonResponse(false, 'Only checklists pending review can be withdrawn');
 }
 
 $stmt = $conn->prepare("UPDATE swo_list SET status = 'In Progress', submitted_at = NULL WHERE id = ?");
