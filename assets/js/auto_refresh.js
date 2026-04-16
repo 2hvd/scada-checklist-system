@@ -13,7 +13,7 @@
         return n;
     }
 
-    // 5s is a balance between freshness and load; use a higher value via data-auto-refresh-ms for larger deployments.
+    // 5s is a balance between freshness and load; use 10-15s when you expect ~50+ concurrent users.
     const POLL_INTERVAL_MS = readPositiveNumber(body.dataset.autoRefreshMs, 5000, 'data-auto-refresh-ms');
     // Short guard to avoid refreshing exactly while a click/typing action is being processed.
     const MIN_IDLE_MS = readPositiveNumber(body.dataset.autoRefreshIdleMs, 1200, 'data-auto-refresh-idle-ms');
@@ -84,7 +84,7 @@
                 window.location.reload();
             }
         } catch (err) {
-            console.warn('Realtime refresh poll failed; retrying on next interval.', err);
+            console.warn('Real-time refresh poll failed; retrying on next interval.', err);
         } finally {
             inFlight = false;
         }
