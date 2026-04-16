@@ -52,10 +52,10 @@ function buildRealtimeVersion($conn) {
                 IFNULL(COUNT(*),0), ':',
                 IFNULL(SUM(CRC32(CONCAT_WS('|',
                     id, swo_number, station_name, swo_type, status,
-                    COALESCE(created_by,''), COALESCE(assigned_to,''), COALESCE(approved_by,''),
-                    COALESCE(assigned_at,''), COALESCE(submitted_at,''), COALESCE(approved_at,''),
-                    COALESCE(support_reviewed_at,''), COALESCE(control_reviewed_at,''),
-                    COALESCE(rejection_reason,'')
+                    COALESCE(created_by,'NULL'), COALESCE(assigned_to,'NULL'), COALESCE(approved_by,'NULL'),
+                    COALESCE(assigned_at,'NULL'), COALESCE(submitted_at,'NULL'), COALESCE(approved_at,'NULL'),
+                    COALESCE(support_reviewed_at,'NULL'), COALESCE(control_reviewed_at,'NULL'),
+                    COALESCE(rejection_reason,'NULL')
                 ))),0)
             ) FROM swo_list"
         );
@@ -67,7 +67,7 @@ function buildRealtimeVersion($conn) {
                 IFNULL(COUNT(*),0), ':',
                 IFNULL(SUM(CRC32(CONCAT_WS('|',
                     id, item_key, section, section_number, description,
-                    COALESCE(parent_item_id,''), is_active, is_deleted, COALESCE(swo_type_id,'')
+                    COALESCE(parent_item_id,'NULL'), is_active, is_deleted, COALESCE(swo_type_id,'NULL')
                 ))),0)
             ) FROM checklist_items"
         );
