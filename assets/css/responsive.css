@@ -52,7 +52,7 @@
         border: none;
         font-size: 20px;
         cursor: pointer;
-        color: var(--primary-blue);
+        color: var(--white);
     }
 
     .page-content { padding: 16px; }

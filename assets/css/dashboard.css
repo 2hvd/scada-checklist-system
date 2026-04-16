@@ -136,7 +136,7 @@
     flex-direction: column;
 }
 .topbar {
-    background: var(--white);
+    background: var(--primary-blue);
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     padding: 14px 24px;
     display: flex;
@@ -149,7 +149,7 @@
 .topbar-title {
     font-size: 18px;
     font-weight: 700;
-    color: var(--primary-blue);
+    color: var(--white);
     margin: 0;
 }
 .topbar-actions {
