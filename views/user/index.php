@@ -175,5 +175,13 @@ async function submitChecklist(swoId) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', loadUserDashboard);
+document.addEventListener('DOMContentLoaded', function () {
+    loadUserDashboard();
+
+    const AUTO_REFRESH_MS = 10000;
+    setInterval(() => {
+        if (document.hidden) return;
+        loadUserDashboard();
+    }, AUTO_REFRESH_MS);
+});
 </script>

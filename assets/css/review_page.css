@@ -119,7 +119,7 @@
 }
 
 .review-section-header {
-    background: #2e86de;
+    background: var(--primary-blue);
     padding: 12px 20px;
     font-weight: 700;
     font-size: 14px;
@@ -135,12 +135,12 @@
 }
 
 .review-table th {
-    background: #eaf3ff;
+    background: var(--primary-blue);
     padding: 10px 12px;
     text-align: left;
     font-weight: 600;
-    color: #1f4f82;
-    border-bottom: 2px solid #c8ddf5;
+    color: #fff;
+    border-bottom: 2px solid #16314d;
     white-space: nowrap;
 }
 
