@@ -4,11 +4,13 @@ const ReviewManager = {
     swoId: null,
     role: null,      // 'user', 'support', 'control'
     swoStatus: null,
+    readOnly: false,
     saveTimers: {},
 
-    async init(swoId, role) {
+    async init(swoId, role, readOnly = false) {
         this.swoId = swoId;
         this.role  = role;
+        this.readOnly = !!readOnly;
         await this.load();
         this.attachEventListeners();
     },
@@ -44,6 +46,9 @@ const ReviewManager = {
         const progress = data.progress || 0;
 
         this.swoStatus = swo.status;
+        if (this.role === 'control' && this.swoStatus !== 'Pending Control Review') {
+            this.readOnly = true;
+        }
 
         // Header title
         const titleEl = document.getElementById('reviewTitle');
@@ -92,6 +97,13 @@ const ReviewManager = {
                 </table>
             </div>
         `).join('');
+
+        if (this.role === 'control' && this.readOnly) {
+            const returnBtn = document.getElementById('returnBtn');
+            const approveBtn = document.getElementById('approveBtn');
+            if (returnBtn) returnBtn.style.display = 'none';
+            if (approveBtn) approveBtn.style.display = 'none';
+        }
     },
 
     renderRow(item, num) {
@@ -103,7 +115,10 @@ const ReviewManager = {
         const statusHtml = hasChildProgress
             ? `<span class="badge" style="background:#3498db;color:#fff;">${escapeHtml(String(item.child_completion_pct ?? 0))}% (${escapeHtml(String(item.child_completed_count || 0))}/${escapeHtml(String(item.child_total_count || 0))})</span>`
             : getChecklistStatusBadge(item.status);
-        const decisionHtml = this.role !== 'user' ? `
+        const decisionHtml = this.role !== 'user'
+            ? (this.readOnly
+                ? `<td class="col-decision">${item.decision ? getChecklistStatusBadge(item.decision) : '<span class="text-muted">—</span>'}</td>`
+                : `
             <td class="col-decision">
                 <select class="review-decision-select"
                         data-item-key="${escapeHtml(item.key)}"
@@ -115,7 +130,8 @@ const ReviewManager = {
                     <option value="still"   ${item.decision === 'still'   ? 'selected' : ''}>Still</option>
                     <option value="not_yet" ${item.decision === 'not_yet' ? 'selected' : ''}>Not Yet</option>
                 </select>
-            </td>` : '';
+            </td>`)
+            : '';
 
         const userCommentColHtml = this.role !== 'user' ? `
             <td class="col-comment user-col-readonly">
@@ -146,7 +162,8 @@ const ReviewManager = {
                     <textarea class="review-comment-textarea"
                               data-item-key="${escapeHtml(item.key)}"
                               rows="2"
-                              placeholder="Add comment...">${escapeHtml(item.comment || '')}</textarea>
+                              placeholder="Add comment..."
+                              ${this.readOnly ? 'disabled' : ''}>${escapeHtml(item.comment || '')}</textarea>
                 </td>
             </tr>`;
     },
@@ -154,6 +171,7 @@ const ReviewManager = {
     attachEventListeners() {
         const content = document.getElementById('reviewContent');
         if (!content) return;
+        if (this.readOnly) return;
 
         // Decision dropdowns – auto-save on change (support / control only)
         if (this.role !== 'user') {

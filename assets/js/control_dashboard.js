@@ -44,10 +44,16 @@ const ControlDashboard = {
                 <td>${formatDateShort(s.support_reviewed_at)}</td>
                 <td>${s.control_reviewed_at ? formatDateShort(s.control_reviewed_at) : '—'}</td>
                 <td>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <a class="btn btn-info btn-sm"
+                       href="/scada-checklist-system/views/control/review_swo.php?swo_id=${s.id}&mode=view">
+                        View
+                    </a>
                     <a class="btn btn-primary btn-sm"
                        href="/scada-checklist-system/views/control/review_swo.php?swo_id=${s.id}">
                         Review
                     </a>
+                    </div>
                 </td>
             </tr>
         `).join('');
@@ -57,7 +63,7 @@ const ControlDashboard = {
         const tbody = document.getElementById('controlCompletedTableBody');
         if (!tbody) return;
         if (!swos.length) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No completed reviews yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No completed reviews yet.</td></tr>';
             return;
         }
         tbody.innerHTML = swos.map(s => `
@@ -66,6 +72,12 @@ const ControlDashboard = {
                 <td>${escapeHtml(s.station_name)}</td>
                 <td>${escapeHtml(s.assigned_to_name || '—')}</td>
                 <td>${formatDate(s.control_reviewed_at)}</td>
+                <td>
+                    <a class="btn btn-info btn-sm"
+                       href="/scada-checklist-system/views/control/review_swo.php?swo_id=${s.id}&mode=view">
+                        View
+                    </a>
+                </td>
             </tr>
         `).join('');
     },

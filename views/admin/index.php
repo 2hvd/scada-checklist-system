@@ -257,29 +257,6 @@ require_once __DIR__ . '/../components/sidebar.php';
     </div>
 </div>
 
-<!-- Edit Checklist Item Modal -->
-<div class="modal-overlay" id="editChecklistItemModal">
-    <div class="modal">
-        <div class="modal-header">
-            <span class="modal-title">Edit Checklist Item</span>
-            <button class="modal-close" onclick="closeModal('editChecklistItemModal')">×</button>
-        </div>
-        <input type="hidden" id="ciEditId">
-        <div class="form-group">
-            <label>Item Key</label>
-            <input type="text" id="ciEditKey" class="form-control" disabled>
-        </div>
-        <div class="form-group">
-            <label>Description *</label>
-            <textarea id="ciEditDescription" class="form-control" rows="3"></textarea>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('editChecklistItemModal')">Cancel</button>
-            <button class="btn btn-primary" onclick="ChecklistItems.submitEdit()">Update Item</button>
-        </div>
-    </div>
-</div>
-
 <!-- Reject Modal -->
 <div class="modal-overlay" id="rejectModal">
     <div class="modal">
