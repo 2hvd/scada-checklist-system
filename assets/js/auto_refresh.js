@@ -13,7 +13,8 @@
         return n;
     }
 
-    // 5s is a balance between freshness and load; use 10-15s when you expect ~50+ concurrent users.
+    // Global page-reload change polling (separate from dashboard list polling) defaults to 5s.
+    // Use 10-15s for larger deployments (~50+ concurrent users).
     const POLL_INTERVAL_MS = readPositiveNumber(body.dataset.autoRefreshMs, 5000, 'data-auto-refresh-ms');
     // Short guard to avoid refreshing exactly while a click/typing action is being processed.
     const MIN_IDLE_MS = readPositiveNumber(body.dataset.autoRefreshIdleMs, 1200, 'data-auto-refresh-idle-ms');

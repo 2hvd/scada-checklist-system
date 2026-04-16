@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initTabs('mainTabs');
     SupportDashboard.init();
 
-    const AUTO_REFRESH_MS = 10000;
+    const AUTO_REFRESH_MS = getDashboardRefreshMs(10000);
     setInterval(() => {
         if (document.hidden) return;
         if (document.querySelector('.modal-overlay.active')) return;

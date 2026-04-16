@@ -178,7 +178,7 @@ async function submitChecklist(swoId) {
 document.addEventListener('DOMContentLoaded', function () {
     loadUserDashboard();
 
-    const AUTO_REFRESH_MS = 10000;
+    const AUTO_REFRESH_MS = getDashboardRefreshMs(10000);
     setInterval(() => {
         if (document.hidden) return;
         loadUserDashboard();

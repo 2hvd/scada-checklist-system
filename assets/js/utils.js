@@ -105,6 +105,13 @@ function renderProgressBar(pct, showText = true) {
     `;
 }
 
+function getDashboardRefreshMs(defaultMs = 10000) {
+    const raw = document.body?.dataset?.dashboardRefreshMs;
+    if (raw == null || raw === '') return defaultMs;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : defaultMs;
+}
+
 function openModal(id) {
     const el = document.getElementById(id);
     if (el) el.classList.add('active');
