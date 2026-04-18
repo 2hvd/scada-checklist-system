@@ -7,12 +7,12 @@ require_once __DIR__ . '/../components/sidebar.php';
 ?>
 <div class="main-content">
     <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="topbar-title">My Dashboard</h1>
         </div>
         <div class="topbar-actions">
-            <span style="font-size:13px;color:#666;">Welcome, <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong></span>
+            <span class="welcome-text">Welcome, <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong></span>
         </div>
     </div>
 

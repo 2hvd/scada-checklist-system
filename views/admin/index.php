@@ -7,12 +7,12 @@ require_once __DIR__ . '/../components/sidebar.php';
 ?>
 <div class="main-content">
     <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="topbar-title">Admin Dashboard</h1>
         </div>
         <div class="topbar-actions">
-            <span style="font-size:13px;color:#666;">Welcome, <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong></span>
+            <span class="welcome-text">Welcome, <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong></span>
         </div>
     </div>
 
@@ -61,8 +61,8 @@ require_once __DIR__ . '/../components/sidebar.php';
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">All SWOs</h3>
-                        <div class="filter-bar" style="margin:0">
-                            <select id="statusFilter" class="form-control" style="width:auto">
+                        <div class="filter-bar filter-bar-compact">
+                            <select id="statusFilter" class="form-control form-control-auto">
                                 <option value="">All Statuses</option>
                                 <option value="Draft">Draft</option>
                                 <option value="Pending">Pending</option>
@@ -137,21 +137,21 @@ require_once __DIR__ . '/../components/sidebar.php';
                     <div class="card-header" style="flex-wrap:wrap;gap:10px;">
                         <h3 class="card-title" style="margin:0;">Checklist Items</h3>
                         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-                            <select id="ciSectionFilter" class="form-control" style="width:auto;">
+                            <select id="ciSectionFilter" class="form-control form-control-auto">
                                 <option value="">All Sections</option>
                                 <option value="during_config">During Configuration</option>
                                 <option value="during_commissioning">During Commissioning</option>
                                 <option value="after_commissioning">After Commissioning</option>
                             </select>
-                            <select id="ciStatusFilter" class="form-control" style="width:auto;">
+                            <select id="ciStatusFilter" class="form-control form-control-auto">
                                 <option value="all">All Items</option>
                                 <option value="active">Active Only</option>
                                 <option value="inactive">Inactive Only</option>
                             </select>
-                            <select id="ciSwoTypeFilter" class="form-control" style="width:auto;">
+                            <select id="ciSwoTypeFilter" class="form-control form-control-auto">
                                 <option value="">All Types</option>
                             </select>
-                            <input type="text" id="ciSearchFilter" class="form-control" placeholder="🔍 Search description…" style="width:220px;">
+                            <input type="text" id="ciSearchFilter" class="form-control search-control-wide" placeholder="🔍 Search description…">
                             <button class="btn btn-primary btn-sm" onclick="ChecklistItems.openAddModal()">+ Add Item</button>
                             <button class="btn btn-secondary btn-sm" onclick="ChecklistItems.load()">🔄 Refresh</button>
                         </div>

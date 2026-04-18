@@ -137,7 +137,8 @@
 }
 .topbar {
     background: var(--white);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    box-shadow: 0 6px 18px rgba(26,58,92,0.08);
+    border-bottom: 1px solid #e6ebf2;
     padding: 14px 24px;
     display: flex;
     justify-content: space-between;
@@ -151,6 +152,11 @@
     font-weight: 700;
     color: var(--primary-blue);
     margin: 0;
+}
+.topbar-title-no-margin { margin: 0; }
+.topbar-subtitle {
+    font-size: 12px;
+    color: rgba(255,255,255,.85);
 }
 .topbar.checklist-topbar {
     background: var(--primary-blue);
@@ -207,7 +213,8 @@
     background: var(--white);
     border-radius: var(--radius);
     padding: 20px;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid #e6ebf2;
     border-left: 4px solid var(--accent);
     transition: transform var(--transition), box-shadow var(--transition);
 }
@@ -594,7 +601,7 @@
 
 .swo-timeline-table th,
 .swo-complete-timeline-table th {
-    background: #34495e;
+    background: var(--primary-blue);
     color: white;
     padding: 12px;
     text-align: left;
@@ -605,7 +612,7 @@
 .swo-timeline-table td,
 .swo-complete-timeline-table td {
     padding: 10px 12px;
-    border-bottom: 1px solid #ecf0f1;
+    border-bottom: 1px solid #e6ebf2;
     font-size: 13px;
     white-space: nowrap;
 }
@@ -647,7 +654,7 @@
 .swo-submitted-table thead,
 .swo-pending-table thead,
 .feedback-table thead {
-    background: #34495e;
+    background: var(--primary-blue);
     color: white;
 }
 
@@ -666,7 +673,7 @@
 .swo-pending-table td,
 .feedback-table td {
     padding: 10px 12px;
-    border-bottom: 1px solid #ecf0f1;
+    border-bottom: 1px solid #e6ebf2;
     font-size: 13px;
     vertical-align: top;
 }
@@ -712,4 +719,43 @@
 .badge-pending-support-review {
     background: #cce5ff;
     color: #004085;
+}
+
+/* ========== Cross-page shared sections ========== */
+#swoInfoBar,
+#supportModalSwoInfo,
+#controlModalSwoInfo {
+    color: #5f6b7a !important;
+}
+
+#feedbackAlert {
+    display: none;
+    margin-bottom: 14px;
+}
+
+#feedbackActions,
+#swoActions {
+    margin-top: 20px !important;
+    display: flex !important;
+    gap: 10px !important;
+    flex-wrap: wrap;
+}
+
+#feedbackActions.hidden,
+#swoActions.hidden {
+    display: none !important;
+}
+
+#supportReviewModal .modal,
+#controlReviewModal .modal {
+    max-width: 900px !important;
+    width: 95vw !important;
+}
+
+#supportReviewModal .table-wrapper,
+#controlReviewModal .table-wrapper {
+    max-height: 50vh !important;
+    overflow-y: auto !important;
+    border: 1px solid #e6ebf2;
+    border-radius: 8px;
 }

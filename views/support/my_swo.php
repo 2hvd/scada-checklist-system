@@ -7,7 +7,7 @@ require_once __DIR__ . '/../components/sidebar.php';
 ?>
 <div class="main-content">
     <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="topbar-title">My SWOs</h1>
         </div>
@@ -20,8 +20,8 @@ require_once __DIR__ . '/../components/sidebar.php';
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">SWOs Created by Me</h3>
-                <div class="filter-bar" style="margin:0">
-                    <select id="statusFilter" onchange="filterTable()" class="form-control" style="width:auto">
+                <div class="filter-bar filter-bar-compact">
+                    <select id="statusFilter" onchange="filterTable()" class="form-control form-control-auto">
                         <option value="">All Statuses</option>
                         <option value="Draft">Draft</option>
                         <option value="Pending">Pending</option>

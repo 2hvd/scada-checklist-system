@@ -7,7 +7,7 @@ require_once __DIR__ . '/../components/sidebar.php';
 ?>
 <div class="main-content">
     <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="topbar-title">Support Dashboard</h1>
         </div>
@@ -101,14 +101,14 @@ require_once __DIR__ . '/../components/sidebar.php';
 
 <!-- Support Review Modal -->
 <div class="modal-overlay" id="supportReviewModal">
-    <div class="modal" style="max-width:900px;width:95vw;">
+    <div class="modal modal-review">
         <div class="modal-header">
             <span class="modal-title" id="supportModalTitle">Support Review</span>
             <button class="modal-close" onclick="closeModal('supportReviewModal')">✕</button>
         </div>
-        <div id="supportModalSwoInfo" style="font-size:13px;color:#666;margin-bottom:16px;"></div>
+        <div id="supportModalSwoInfo" class="review-modal-info"></div>
 
-        <div class="table-wrapper" style="max-height:50vh;overflow-y:auto;">
+        <div class="table-wrapper modal-table-wrapper">
             <table id="supportReviewTable">
                 <thead>
                     <tr>
@@ -125,12 +125,12 @@ require_once __DIR__ . '/../components/sidebar.php';
             </table>
         </div>
 
-        <div style="margin-top:16px;">
-            <label style="font-weight:600;display:block;margin-bottom:6px;">Overall Comments:</label>
+        <div class="modal-form-section">
+            <label class="modal-form-label">Overall Comments:</label>
             <textarea id="supportOverallComments" class="form-control" rows="3" placeholder="Add overall review comments..."></textarea>
         </div>
 
-        <div class="modal-footer" style="margin-top:16px;">
+        <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeModal('supportReviewModal')">Cancel</button>
             <button class="btn btn-danger" id="supportRejectBtn" onclick="SupportDashboard.submitReject()">
                 ❌ Reject (Back to User)

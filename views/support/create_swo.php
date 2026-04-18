@@ -7,7 +7,7 @@ require_once __DIR__ . '/../components/sidebar.php';
 ?>
 <div class="main-content">
     <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="topbar-title">Create New SWO</h1>
         </div>
@@ -17,7 +17,7 @@ require_once __DIR__ . '/../components/sidebar.php';
     </div>
 
     <div class="page-content">
-        <div class="card" style="max-width:700px;margin:0 auto;">
+        <div class="card card-form-centered">
             <div class="card-header">
                 <h3 class="card-title">SWO Details</h3>
             </div>
