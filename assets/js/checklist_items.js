@@ -114,7 +114,7 @@ const ChecklistItems = {
                 : '';
             const usageCount = parseInt(item.usage_count) || 0;
             const usageBadge = usageCount > 0
-                ? `<span class="badge badge-ci-usage" title="Used in ${usageCount} SWO(s)" aria-label="Warning: used in ${usageCount} SWO${usageCount > 1 ? 's' : ''}"><span aria-hidden="true">⚠</span> ${usageCount} SWO${usageCount > 1 ? 's' : ''}</span>`
+                ? `<span class="badge badge-ci-usage" title="Used in ${usageCount} SWO(s)"><span aria-hidden="true">⚠</span> ${usageCount} SWO${usageCount > 1 ? 's' : ''}</span>`
                 : '<span class="text-muted">—</span>';
             const swoTypeName = item.swo_type_name && item.swo_type_name !== '—' ? item.swo_type_name : null;
             const swoTypeBadge = swoTypeName
