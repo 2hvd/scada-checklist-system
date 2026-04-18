@@ -42,10 +42,10 @@ if (!$swo) {
 
 $swo_type_id = !empty($swo['swo_type_id']) ? intval($swo['swo_type_id']) : null;
 $itemSql = "SELECT ci.id, ci.section, ci.section_number, ci.item_key, ci.description, ci.parent_item_id,
-                   ci.visible_control, ci.control_parent_item_id
-               FROM checklist_items ci
-              WHERE ci.is_deleted = 0
-                AND ci.is_active = 1";
+                   ci.visible_control, ci.control_parent_item_id, ci.visible_user
+                FROM checklist_items ci
+               WHERE ci.is_deleted = 0
+                 AND ci.is_active = 1";
 if ($swo_type_id !== null) {
     $itemSql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
 }
@@ -166,7 +166,8 @@ foreach ($bySection as $secKey => $rows) {
 
     foreach ($parents as $parent) {
         $parentKey = $parent['item_key'];
-        $parentStatus = $userStatuses[$parentKey] ?? 'empty';
+        $parentUserStatusHidden = intval($parent['visible_user'] ?? 1) !== 1;
+        $parentStatus = $parentUserStatusHidden ? 'empty' : ($userStatuses[$parentKey] ?? 'empty');
         $supportReview = $supportReviews[$parentKey] ?? ['support_decision' => '', 'support_comment' => ''];
         $controlReview = $controlReviews[$parentKey] ?? ['decision' => '', 'comment' => ''];
 
@@ -180,11 +181,12 @@ foreach ($bySection as $secKey => $rows) {
             'decision'         => $controlReview['decision'],
             'comment'          => $controlReview['comment'],
             'is_parent'        => isset($children[$parent['id']]),
+            'user_status_hidden' => $parentUserStatusHidden,
             'parent_item_id'   => null,
             'item_id'          => intval($parent['id']),
         ];
 
-        if (!isset($children[$parent['id']])) {
+        if (!isset($children[$parent['id']]) && !$parentUserStatusHidden) {
             $totalItems++;
             switch ($parentStatus) {
                 case 'done':    $doneCount++;    break;
@@ -197,7 +199,8 @@ foreach ($bySection as $secKey => $rows) {
 
         foreach ($children[$parent['id']] ?? [] as $child) {
             $childKey = $child['item_key'];
-            $childStatus = $userStatuses[$childKey] ?? 'empty';
+            $childStatusHidden = intval($child['visible_user'] ?? 1) !== 1;
+            $childStatus = $childStatusHidden ? 'empty' : ($userStatuses[$childKey] ?? 'empty');
             $childSupportReview = $supportReviews[$childKey] ?? ['support_decision' => '', 'support_comment' => ''];
             $childControlReview = $controlReviews[$childKey] ?? ['decision' => '', 'comment' => ''];
 
@@ -211,18 +214,21 @@ foreach ($bySection as $secKey => $rows) {
                 'decision'         => $childControlReview['decision'],
                 'comment'          => $childControlReview['comment'],
                 'is_parent'        => false,
+                'user_status_hidden' => $childStatusHidden,
                 'parent_item_id'   => intval($parent['id']),
                 'parent_key'       => $parentKey,
                 'item_id'          => intval($child['id']),
             ];
 
-            $totalItems++;
-            switch ($childStatus) {
-                case 'done':    $doneCount++;    break;
-                case 'na':      $naCount++;      break;
-                case 'still':   $stillCount++;   break;
-                case 'not_yet': $notYetCount++;  break;
-                default:        $emptyCount++;   break;
+            if (!$childStatusHidden) {
+                $totalItems++;
+                switch ($childStatus) {
+                    case 'done':    $doneCount++;    break;
+                    case 'na':      $naCount++;      break;
+                    case 'still':   $stillCount++;   break;
+                    case 'not_yet': $notYetCount++;  break;
+                    default:        $emptyCount++;   break;
+                }
             }
         }
     }
@@ -248,16 +254,19 @@ foreach ($bySection as $secKey => $rows) {
             'decision'         => $controlReview['decision'],
             'comment'          => $controlReview['comment'],
             'is_parent'        => false,
+            'user_status_hidden' => intval($row['visible_user'] ?? 1) !== 1,
             'parent_item_id'   => intval($parentId),
             'item_id'          => intval($row['id']),
         ];
-        $totalItems++;
-        switch ($status) {
-            case 'done':    $doneCount++;    break;
-            case 'na':      $naCount++;      break;
-            case 'still':   $stillCount++;   break;
-            case 'not_yet': $notYetCount++;  break;
-            default:        $emptyCount++;   break;
+        if (intval($row['visible_user'] ?? 1) === 1) {
+            $totalItems++;
+            switch ($status) {
+                case 'done':    $doneCount++;    break;
+                case 'na':      $naCount++;      break;
+                case 'still':   $stillCount++;   break;
+                case 'not_yet': $notYetCount++;  break;
+                default:        $emptyCount++;   break;
+            }
         }
     }
     $sections[] = $sectionData;

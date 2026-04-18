@@ -112,12 +112,17 @@ const ReviewManager = {
     renderRow(item, num) {
         const parsedNumber = this.getDisplayNumber(item);
         const isChild = !!item.parent_item_id;
+        const userStatusHidden = item.user_status_hidden === true
+            || item.user_status_hidden === 1
+            || item.user_status_hidden === '1';
         const hasChildProgress = this.role === 'support'
             && item.is_parent
             && Number(item.child_total_count || 0) > 0;
-        const statusHtml = hasChildProgress
-            ? `<span class="badge" style="background:#3498db;color:#fff;">${escapeHtml(String(item.child_completion_pct ?? 0))}% (${escapeHtml(String(item.child_completed_count || 0))}/${escapeHtml(String(item.child_total_count || 0))})</span>`
-            : getChecklistStatusBadge(item.status);
+        const statusHtml = userStatusHidden
+            ? '<span class="text-muted">Hidden from User</span>'
+            : (hasChildProgress
+                ? `<span class="badge" style="background:#3498db;color:#fff;">${escapeHtml(String(item.child_completion_pct ?? 0))}% (${escapeHtml(String(item.child_completed_count || 0))}/${escapeHtml(String(item.child_total_count || 0))})</span>`
+                : getChecklistStatusBadge(item.status));
         const decisionHtml = this.buildDecisionCell(item);
 
         const userCommentColHtml = this.role !== 'user' ? `

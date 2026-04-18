@@ -45,9 +45,10 @@ if ($swo['status'] !== 'In Progress') {
 }
 $swo_type_id = $swo['swo_type_id'] !== null ? intval($swo['swo_type_id']) : null;
 
-// Submit validation must follow role visibility + hierarchy rules:
-// only user-visible leaf items are required for submission.
-$sql = "SELECT COUNT(*) AS empty_count
+// Submit validation must match user checklist rendering:
+// only user-visible leaf items can block submission.
+$sql = "SELECT ci.id, ci.item_key, ci.parent_item_id, ci.user_parent_item_id,
+               COALESCE(cs.status, 'empty') AS status
         FROM checklist_items ci
         LEFT JOIN checklist_status cs
                ON cs.item_key = ci.item_key
@@ -55,52 +56,50 @@ $sql = "SELECT COUNT(*) AS empty_count
               AND cs.user_id = ?
         WHERE ci.is_active = 1
           AND ci.is_deleted = 0
-          AND COALESCE(ci.visible_user, 1) = 1
-          AND COALESCE(cs.status, 'empty') = 'empty'";
+          AND COALESCE(ci.visible_user, 1) = 1";
 
 if ($swo_type_id !== null) {
     $sql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
-    $sql .= " AND NOT EXISTS (
-                SELECT 1
-                  FROM checklist_items c2
-                 WHERE c2.is_deleted = 0
-                   AND c2.is_active = 1
-                   AND COALESCE(c2.visible_user, 1) = 1
-                   AND (c2.swo_type_id = ? OR c2.swo_type_id IS NULL)
-                   AND (
-                        c2.user_parent_item_id = ci.id
-                        OR (c2.user_parent_item_id IS NULL AND c2.parent_item_id = ci.id)
-                   )
-             )";
     $stmt = $conn->prepare($sql);
-    // swo_id and user_id are each bound once; swo_type_id is bound twice
-    // (main item filter + leaf-child NOT EXISTS filter).
-    $stmt->bind_param('iiii', $swo_id, $user_id, $swo_type_id, $swo_type_id);
+    $stmt->bind_param('iii', $swo_id, $user_id, $swo_type_id);
 } else {
     $sql .= " AND ci.swo_type_id IS NULL";
-    $sql .= " AND NOT EXISTS (
-                SELECT 1
-                  FROM checklist_items c2
-                 WHERE c2.is_deleted = 0
-                   AND c2.is_active = 1
-                   AND COALESCE(c2.visible_user, 1) = 1
-                   AND c2.swo_type_id IS NULL
-                   AND (
-                        c2.user_parent_item_id = ci.id
-                        OR (c2.user_parent_item_id IS NULL AND c2.parent_item_id = ci.id)
-                   )
-             )";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('ii', $swo_id, $user_id);
 }
 
 $stmt->execute();
-$row = $stmt->get_result()->fetch_assoc();
+$rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 
-if ($row['empty_count'] > 0) {
+$childrenByParent = [];
+foreach ($rows as $r) {
+    $effectiveParentId = $r['user_parent_item_id'] !== null
+        ? intval($r['user_parent_item_id'])
+        : ($r['parent_item_id'] !== null ? intval($r['parent_item_id']) : null);
+    if ($effectiveParentId !== null) {
+        if (!isset($childrenByParent[$effectiveParentId])) {
+            $childrenByParent[$effectiveParentId] = 0;
+        }
+        $childrenByParent[$effectiveParentId]++;
+    }
+}
+
+$empty_count = 0;
+foreach ($rows as $r) {
+    $itemId = intval($r['id']);
+    $hasChildren = !empty($childrenByParent[$itemId]);
+    if ($hasChildren) {
+        continue;
+    }
+    if (($r['status'] ?? 'empty') === 'empty') {
+        $empty_count++;
+    }
+}
+
+if ($empty_count > 0) {
     $conn->close();
-    jsonResponse(false, 'All checklist items must have a status before submitting. ' . $row['empty_count'] . ' item(s) still empty.');
+    jsonResponse(false, 'All checklist items must have a status before submitting. ' . $empty_count . ' item(s) still empty.');
 }
 
 // Update SWO status
