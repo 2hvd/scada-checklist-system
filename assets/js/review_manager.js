@@ -311,6 +311,7 @@ const ReviewManager = {
         // Validate all items have a decision
         const decisions = document.querySelectorAll('.review-decision-select');
         for (const dropdown of decisions) {
+            if (dropdown.dataset.isParent === '1') continue;
             if (!dropdown.value || dropdown.value.trim() === '') {
                 showError('All items must have a decision before accepting');
                 return;
@@ -367,6 +368,7 @@ const ReviewManager = {
         // Validate all items have a decision
         const decisions = document.querySelectorAll('.review-decision-select');
         for (const dropdown of decisions) {
+            if (dropdown.dataset.isParent === '1') continue;
             if (!dropdown.value || dropdown.value.trim() === '') {
                 showError('All items must have a decision before approving');
                 return;

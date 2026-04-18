@@ -45,8 +45,8 @@ if ($swo['status'] !== 'In Progress') {
 }
 $swo_type_id = $swo['swo_type_id'] !== null ? intval($swo['swo_type_id']) : null;
 
-// Submit validation must follow checklist visibility rules by SWO type
-// so hidden items from other types do not block submission.
+// Submit validation must follow role visibility + hierarchy rules:
+// only user-visible leaf items are required for submission.
 $sql = "SELECT COUNT(*) AS empty_count
         FROM checklist_items ci
         LEFT JOIN checklist_status cs
@@ -55,14 +55,41 @@ $sql = "SELECT COUNT(*) AS empty_count
               AND cs.user_id = ?
         WHERE ci.is_active = 1
           AND ci.is_deleted = 0
+          AND COALESCE(ci.visible_user, 1) = 1
           AND COALESCE(cs.status, 'empty') = 'empty'";
 
 if ($swo_type_id !== null) {
     $sql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
+    $sql .= " AND NOT EXISTS (
+                SELECT 1
+                  FROM checklist_items c2
+                 WHERE c2.is_deleted = 0
+                   AND c2.is_active = 1
+                   AND COALESCE(c2.visible_user, 1) = 1
+                   AND (c2.swo_type_id = ? OR c2.swo_type_id IS NULL)
+                   AND (
+                        c2.user_parent_item_id = ci.id
+                        OR (c2.user_parent_item_id IS NULL AND c2.parent_item_id = ci.id)
+                   )
+             )";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('iii', $swo_id, $user_id, $swo_type_id);
+    // swo_id and user_id are each bound once; swo_type_id is bound twice
+    // (main item filter + leaf-child NOT EXISTS filter).
+    $stmt->bind_param('iiii', $swo_id, $user_id, $swo_type_id, $swo_type_id);
 } else {
     $sql .= " AND ci.swo_type_id IS NULL";
+    $sql .= " AND NOT EXISTS (
+                SELECT 1
+                  FROM checklist_items c2
+                 WHERE c2.is_deleted = 0
+                   AND c2.is_active = 1
+                   AND COALESCE(c2.visible_user, 1) = 1
+                   AND c2.swo_type_id IS NULL
+                   AND (
+                        c2.user_parent_item_id = ci.id
+                        OR (c2.user_parent_item_id IS NULL AND c2.parent_item_id = ci.id)
+                   )
+             )";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('ii', $swo_id, $user_id);
 }
