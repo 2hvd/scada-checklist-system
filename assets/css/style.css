@@ -2,6 +2,7 @@
 :root {
     --primary-blue: #1a3a5c;
     --accent: #2e86de;
+    --accent-rgb: 46, 134, 222;
     --accent-dark: #1a6db5;
     --success: #27ae60;
     --warning: #f39c12;
@@ -118,7 +119,7 @@ a:hover { text-decoration: underline; }
     outline: none;
     box-sizing: border-box;
 }
-.form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(46,134,222,0.12); }
+.form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12); }
 select.form-control { cursor: pointer; }
 textarea.form-control { min-height: 80px; resize: vertical; }
 .form-control-sm { padding: 4px 8px; font-size: 12px; }
@@ -373,7 +374,8 @@ table tbody tr:last-child td { border-bottom: none; }
 }
 
 .search-control-wide {
-    width: 220px;
+    width: 100%;
+    max-width: 220px;
 }
 
 .card-form-centered {

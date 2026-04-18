@@ -722,40 +722,7 @@
 }
 
 /* ========== Cross-page shared sections ========== */
-#swoInfoBar,
-#supportModalSwoInfo,
-#controlModalSwoInfo {
-    color: #5f6b7a !important;
-}
-
 #feedbackAlert {
     display: none;
     margin-bottom: 14px;
-}
-
-#feedbackActions,
-#swoActions {
-    margin-top: 20px !important;
-    display: flex !important;
-    gap: 10px !important;
-    flex-wrap: wrap;
-}
-
-#feedbackActions.hidden,
-#swoActions.hidden {
-    display: none !important;
-}
-
-#supportReviewModal .modal,
-#controlReviewModal .modal {
-    max-width: 900px !important;
-    width: 95vw !important;
-}
-
-#supportReviewModal .table-wrapper,
-#controlReviewModal .table-wrapper {
-    max-height: 50vh !important;
-    overflow-y: auto !important;
-    border: 1px solid #e6ebf2;
-    border-radius: 8px;
 }
