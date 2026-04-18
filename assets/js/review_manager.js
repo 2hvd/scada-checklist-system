@@ -41,7 +41,10 @@ const ReviewManager = {
 
     renderPage(data) {
         const swo      = data.swo;
-        const sections = data.sections || [];
+        const sections = (data.sections || []).map(section => ({
+            ...section,
+            items: this.orderSectionItems(section.items || []),
+        }));
         const counts   = data.counts   || {};
         const progress = data.progress || 0;
 
@@ -63,16 +66,7 @@ const ReviewManager = {
             statusWrap.textContent = swo.status;
         }
 
-        // Progress
-        const progressColor = progress >= 80 ? '#27ae60' : (progress >= 50 ? '#f39c12' : '#e74c3c');
-        const barEl = document.getElementById('reviewProgressBar');
-        if (barEl) { barEl.style.width = progress + '%'; barEl.style.background = progressColor; }
-        const pctEl = document.getElementById('reviewProgressPct');
-        if (pctEl) pctEl.textContent = progress + '%';
-        const textEl = document.getElementById('reviewProgressText');
-        if (textEl) textEl.textContent =
-            `${counts.done || 0} Done, ${counts.na || 0} N/A, ${counts.still || 0} Still, ` +
-            `${counts.not_yet || 0} Not Yet, ${counts.empty || 0} Empty`;
+        this.updateProgress(progress, counts);
 
         // Sections
         const container = document.getElementById('reviewSections');
@@ -112,12 +106,17 @@ const ReviewManager = {
     renderRow(item, num) {
         const parsedNumber = this.getDisplayNumber(item);
         const isChild = !!item.parent_item_id;
-        const hasChildProgress = this.role === 'support'
+        const userStatusHidden = item.user_status_hidden === true
+            || item.user_status_hidden === 1
+            || item.user_status_hidden === '1';
+        const hasChildProgress = this.role !== 'user'
             && item.is_parent
             && Number(item.child_total_count || 0) > 0;
         const statusHtml = hasChildProgress
             ? `<span class="badge" style="background:#3498db;color:#fff;">${escapeHtml(String(item.child_completion_pct ?? 0))}% (${escapeHtml(String(item.child_completed_count || 0))}/${escapeHtml(String(item.child_total_count || 0))})</span>`
-            : getChecklistStatusBadge(item.status);
+            : (userStatusHidden
+                ? '<span class="text-muted">Hidden from User</span>'
+                : getChecklistStatusBadge(item.status));
         const decisionHtml = this.buildDecisionCell(item);
 
         const userCommentColHtml = this.role !== 'user' ? `
@@ -227,9 +226,117 @@ const ReviewManager = {
 
     getDisplayNumber(item) {
         if (!item || !item.key) return '';
-        const m = String(item.key).match(/_(\d+)(?:_(\d+))?(?:_t\d+)?$/);
+        const m = String(item.key).match(/_(\d+)(?:_(\d+))?(?:_t\d+)?(?:_\d+)?$/);
         if (!m) return '';
         return m[2] ? `${parseInt(m[1], 10)}.${parseInt(m[2], 10)}` : String(parseInt(m[1], 10));
+    },
+
+    orderSectionItems(items) {
+        if (!Array.isArray(items) || items.length < 2) return items || [];
+
+        const itemId = (item) => String(item?.item_id ?? item?.key ?? '');
+        const itemMap = new Map();
+        items.forEach(item => {
+            const id = itemId(item);
+            if (id) itemMap.set(id, item);
+            const key = String(item?.key ?? '');
+            if (key) itemMap.set(key, item);
+        });
+
+        const resolveParentRef = (item) => {
+            const parentId = item?.parent_item_id;
+            const parentIdRef = parentId == null ? '' : String(parentId);
+            if (parentIdRef && itemMap.has(parentIdRef)) return parentIdRef;
+            const parentKeyRef = String(item?.parent_key ?? '');
+            if (parentKeyRef && itemMap.has(parentKeyRef)) return parentKeyRef;
+            return '';
+        };
+
+        const childrenByParent = new Map();
+        items.forEach(item => {
+            const parentRef = resolveParentRef(item);
+            if (!parentRef) return;
+            if (!childrenByParent.has(parentRef)) childrenByParent.set(parentRef, []);
+            childrenByParent.get(parentRef).push(item);
+        });
+
+        const roots = items.filter(item => !resolveParentRef(item));
+
+        const getOrderTuple = (item) => {
+            const m = String(item?.key || '').match(/_(\d+)(?:_(\d+))?(?:_t\d+)?(?:_\d+)?$/);
+            if (!m) return null;
+            return [parseInt(m[1], 10), m[2] ? parseInt(m[2], 10) : 0];
+        };
+        const compareItems = (a, b) => {
+            const aTuple = getOrderTuple(a);
+            const bTuple = getOrderTuple(b);
+            if (aTuple && !bTuple) return -1;
+            if (!aTuple && bTuple) return 1;
+            if (!aTuple && !bTuple) {
+                const labelCmp = String(a?.label || '').localeCompare(String(b?.label || ''));
+                if (labelCmp !== 0) return labelCmp;
+                return itemId(a).localeCompare(itemId(b));
+            }
+            const [aMain, aSub] = aTuple;
+            const [bMain, bSub] = bTuple;
+            if (aMain !== bMain) return aMain - bMain;
+            if (aSub !== bSub) return aSub - bSub;
+            return itemId(a).localeCompare(itemId(b));
+        };
+
+        roots.sort(compareItems);
+        childrenByParent.forEach(list => list.sort(compareItems));
+
+        const ordered = [];
+        const pushed = new Set();
+        const pushItem = (item) => {
+            const id = itemId(item);
+            if (pushed.has(id)) return;
+            ordered.push(item);
+            pushed.add(id);
+            const childList = childrenByParent.get(id) || [];
+            childList.forEach(pushItem);
+        };
+
+        roots.forEach(pushItem);
+        items.filter(item => !pushed.has(itemId(item))).sort(compareItems).forEach(pushItem);
+        return ordered;
+    },
+
+    async refreshProgress() {
+        if (this.role === 'user') return;
+        const endpointMap = {
+            support: '/swo/get_support_review.php',
+            control: '/swo/get_control_review.php',
+        };
+        const endpoint = endpointMap[this.role];
+        if (!endpoint) return;
+
+        try {
+            const data = await API.get(endpoint, { swo_id: this.swoId });
+            if (!data || !data.success) return;
+            this.updateProgress(data.data?.progress || 0, data.data?.counts || {});
+        } catch (err) {
+            console.error('ReviewManager.refreshProgress error:', err);
+        }
+    },
+
+    updateProgress(progress, counts) {
+        const safeProgress = Math.max(0, Math.min(100, Number(progress) || 0));
+        const progressColor = safeProgress >= 80 ? '#27ae60' : (safeProgress >= 50 ? '#f39c12' : '#e74c3c');
+        const barEl = document.getElementById('reviewProgressBar');
+        if (barEl) {
+            barEl.style.width = safeProgress + '%';
+            barEl.style.background = progressColor;
+        }
+        const pctEl = document.getElementById('reviewProgressPct');
+        if (pctEl) pctEl.textContent = safeProgress + '%';
+        const textEl = document.getElementById('reviewProgressText');
+        if (textEl) {
+            textEl.textContent =
+                `${counts.done || 0} Done, ${counts.na || 0} N/A, ${counts.still || 0} Still, ` +
+                `${counts.not_yet || 0} Not Yet, ${counts.empty || 0} Empty`;
+        }
     },
 
     scheduleItemSave(itemKey) {
@@ -268,6 +375,7 @@ const ReviewManager = {
         try {
             const data = await API.post(endpoint, payload);
             if (data && data.success) {
+                await this.refreshProgress();
                 this.showSaved();
             } else {
                 this.showError('Save failed');
@@ -311,6 +419,7 @@ const ReviewManager = {
         // Validate all items have a decision
         const decisions = document.querySelectorAll('.review-decision-select');
         for (const dropdown of decisions) {
+            if (dropdown.dataset.isParent === '1') continue;
             if (!dropdown.value || dropdown.value.trim() === '') {
                 showError('All items must have a decision before accepting');
                 return;
@@ -367,6 +476,7 @@ const ReviewManager = {
         // Validate all items have a decision
         const decisions = document.querySelectorAll('.review-decision-select');
         for (const dropdown of decisions) {
+            if (dropdown.dataset.isParent === '1') continue;
             if (!dropdown.value || dropdown.value.trim() === '') {
                 showError('All items must have a decision before approving');
                 return;

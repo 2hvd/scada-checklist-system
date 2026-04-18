@@ -43,19 +43,47 @@ if (!in_array($swo['status'], ['Pending Support Review', 'Returned from Control'
     jsonResponse(false, 'SWO is not pending support review');
 }
 
-// Validate ALL checklist items for this SWO have a support decision before accepting
+// Validate only support-visible leaf items for this SWO have a support decision before accepting
 $swo_type_id = !empty($swo['swo_type_id']) ? intval($swo['swo_type_id']) : null;
 $checkSql = "SELECT COUNT(ci.item_key) AS total_items,
                     SUM(CASE WHEN sir.support_decision IS NOT NULL AND sir.support_decision != '' THEN 1 ELSE 0 END) AS decided_items
-             FROM checklist_items ci
-             LEFT JOIN support_item_reviews sir ON sir.swo_id = ? AND sir.item_key = ci.item_key
-             WHERE ci.is_active = 1 AND ci.is_deleted = 0";
+              FROM checklist_items ci
+              LEFT JOIN support_item_reviews sir ON sir.swo_id = ? AND sir.item_key = ci.item_key
+              WHERE ci.is_active = 1
+                AND ci.is_deleted = 0
+                AND COALESCE(ci.visible_support, 1) = 1";
 if ($swo_type_id !== null) {
-    $checkSql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
+    $checkSql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)
+                   AND NOT EXISTS (
+                        SELECT 1
+                          FROM checklist_items c
+                         WHERE c.is_deleted = 0
+                           AND c.is_active = 1
+                           AND COALESCE(c.visible_support, 1) = 1
+                           AND (c.swo_type_id = ? OR c.swo_type_id IS NULL)
+                           AND (
+                                c.support_parent_item_id = ci.id
+                                OR (c.support_parent_item_id IS NULL AND c.parent_item_id = ci.id)
+                           )
+                   )";
+} else {
+    $checkSql .= " AND NOT EXISTS (
+                        SELECT 1
+                          FROM checklist_items c
+                         WHERE c.is_deleted = 0
+                           AND c.is_active = 1
+                           AND COALESCE(c.visible_support, 1) = 1
+                           AND (
+                                c.support_parent_item_id = ci.id
+                                OR (c.support_parent_item_id IS NULL AND c.parent_item_id = ci.id)
+                           )
+                   )";
 }
 $checkStmt = $conn->prepare($checkSql);
 if ($swo_type_id !== null) {
-    $checkStmt->bind_param('ii', $swo_id, $swo_type_id);
+    // swo_id is bound once; swo_type_id is bound twice
+    // (main role-visible filter + NOT EXISTS leaf-child filter).
+    $checkStmt->bind_param('iii', $swo_id, $swo_type_id, $swo_type_id);
 } else {
     $checkStmt->bind_param('i', $swo_id);
 }
@@ -68,6 +96,16 @@ if ($totalItems > 0 && $decidedItems < $totalItems) {
     $conn->close();
     jsonResponse(false, 'All items must have a decision before accepting');
 }
+
+// Start control stage with fresh decisions every time this SWO is forwarded.
+$stmt = $conn->prepare("DELETE FROM control_item_reviews WHERE swo_id = ?");
+$stmt->bind_param('i', $swo_id);
+if (!$stmt->execute()) {
+    $stmt->close();
+    $conn->close();
+    jsonResponse(false, 'Failed to reset control decisions');
+}
+$stmt->close();
 
 // Update SWO status to Pending Control Review
 $stmt = $conn->prepare(

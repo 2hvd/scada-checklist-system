@@ -50,6 +50,8 @@ $where = implode(' AND ', $whereClauses);
 
 $sql = "SELECT ci.id, ci.section, ci.section_number, ci.description, ci.item_key,
                ci.swo_type_id, ci.parent_item_id,
+               ci.visible_user, ci.visible_support, ci.visible_control,
+               ci.user_parent_item_id, ci.support_parent_item_id, ci.control_parent_item_id,
                ci.is_active, ci.created_at, u.username AS created_by_name,
                st.name AS swo_type_name,
                parent.description AS parent_description,
@@ -69,10 +71,12 @@ $sql = "SELECT ci.id, ci.section, ci.section_number, ci.description, ci.item_key
            LEFT JOIN swo_types st ON st.id = ci.swo_type_id
            LEFT JOIN checklist_items parent ON parent.id = ci.parent_item_id
          WHERE {$where}
-         GROUP BY ci.id, ci.section, ci.section_number, ci.description, ci.item_key,
-                  ci.swo_type_id, ci.parent_item_id,
-                  ci.is_active, ci.created_at, u.id,
-                  st.name, parent.description, parent.item_key
+          GROUP BY ci.id, ci.section, ci.section_number, ci.description, ci.item_key,
+                   ci.swo_type_id, ci.parent_item_id,
+                   ci.visible_user, ci.visible_support, ci.visible_control,
+                   ci.user_parent_item_id, ci.support_parent_item_id, ci.control_parent_item_id,
+                   ci.is_active, ci.created_at, u.id,
+                   st.name, parent.description, parent.item_key
          ORDER BY ci.swo_type_id, ci.section, ci.parent_item_id IS NOT NULL, ci.parent_item_id, ci.section_number";
 
 $stmt = $conn->prepare($sql);
@@ -91,6 +95,9 @@ while ($row = $res->fetch_assoc()) {
     $row['swo_type_name']     = $row['swo_type_name'] ?? '—';
     $row['parent_description'] = $row['parent_description'] ?? null;
     $row['parent_item_key']   = $row['parent_item_key'] ?? null;
+    $row['visible_user']      = intval($row['visible_user'] ?? 1);
+    $row['visible_support']   = intval($row['visible_support'] ?? 1);
+    $row['visible_control']   = intval($row['visible_control'] ?? 1);
     $items[] = $row;
 }
 $stmt->close();
@@ -156,9 +163,9 @@ $activeItems = array_sum(array_column($stats, 'active'));
 // Get parent items list for the add modal
 $parentItems = [];
 $parentSql = "SELECT ci.id, ci.description, ci.item_key, ci.section, ci.section_number, ci.swo_type_id, st.name AS swo_type_name
-                FROM checklist_items ci
-                LEFT JOIN swo_types st ON st.id = ci.swo_type_id
-               WHERE ci.is_deleted = 0 AND ci.is_active = 1 AND ci.parent_item_id IS NULL";
+                 FROM checklist_items ci
+                 LEFT JOIN swo_types st ON st.id = ci.swo_type_id
+                WHERE ci.is_deleted = 0 AND ci.is_active = 1 AND ci.parent_item_id IS NULL";
 $parentParams = [];
 $parentTypes = '';
 if ($swoTypeFilter > 0) {

@@ -28,27 +28,38 @@ while ($swo = $result->fetch_assoc()) {
     $swoTypeId = !empty($swo['swo_type_id']) ? intval($swo['swo_type_id']) : null;
     if ($swoTypeId !== null) {
         $itemStmt = $conn->prepare(
-            "SELECT id, item_key, parent_item_id
+            "SELECT id, item_key, parent_item_id, user_parent_item_id, visible_user
              FROM checklist_items
              WHERE is_active = 1 AND is_deleted = 0
-               AND (swo_type_id = ? OR swo_type_id IS NULL)"
+                AND (swo_type_id = ? OR swo_type_id IS NULL)"
         );
         $itemStmt->bind_param('i', $swoTypeId);
     } else {
         $itemStmt = $conn->prepare(
-            "SELECT id, item_key, parent_item_id
+            "SELECT id, item_key, parent_item_id, user_parent_item_id, visible_user
              FROM checklist_items
              WHERE is_active = 1 AND is_deleted = 0"
         );
     }
     $itemStmt->execute();
-    $itemRows = $itemStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $rawRows = $itemStmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $itemStmt->close();
+
+    $itemRows = [];
+    foreach ($rawRows as $row) {
+        if (intval($row['visible_user'] ?? 1) !== 1) {
+            continue;
+        }
+        $row['effective_parent_item_id'] = $row['user_parent_item_id'] !== null
+            ? intval($row['user_parent_item_id'])
+            : ($row['parent_item_id'] !== null ? intval($row['parent_item_id']) : null);
+        $itemRows[] = $row;
+    }
 
     $hasChildren = [];
     foreach ($itemRows as $row) {
-        if ($row['parent_item_id'] !== null) {
-            $hasChildren[intval($row['parent_item_id'])] = true;
+        if ($row['effective_parent_item_id'] !== null) {
+            $hasChildren[intval($row['effective_parent_item_id'])] = true;
         }
     }
 

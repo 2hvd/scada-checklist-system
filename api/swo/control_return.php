@@ -43,6 +43,26 @@ if ($swo['status'] !== 'Pending Control Review') {
     jsonResponse(false, 'SWO is not pending control review');
 }
 
+// Returned SWOs should be re-reviewed by Support from a clean decision state.
+$stmt = $conn->prepare("DELETE FROM support_item_reviews WHERE swo_id = ?");
+$stmt->bind_param('i', $swo_id);
+if (!$stmt->execute()) {
+    $stmt->close();
+    $conn->close();
+    jsonResponse(false, 'Failed to reset support decisions');
+}
+$stmt->close();
+
+// Keep control comments visible for Support, but clear prior control decisions.
+$stmt = $conn->prepare("UPDATE control_item_reviews SET control_decision = NULL WHERE swo_id = ?");
+$stmt->bind_param('i', $swo_id);
+if (!$stmt->execute()) {
+    $stmt->close();
+    $conn->close();
+    jsonResponse(false, 'Failed to reset control decisions');
+}
+$stmt->close();
+
 // Update SWO status to Returned from Control
 $stmt = $conn->prepare(
     "UPDATE swo_list SET status = 'Returned from Control',

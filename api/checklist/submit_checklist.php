@@ -45,9 +45,10 @@ if ($swo['status'] !== 'In Progress') {
 }
 $swo_type_id = $swo['swo_type_id'] !== null ? intval($swo['swo_type_id']) : null;
 
-// Submit validation must follow checklist visibility rules by SWO type
-// so hidden items from other types do not block submission.
-$sql = "SELECT COUNT(*) AS empty_count
+// Submit validation must match user checklist rendering:
+// only user-visible leaf items can block submission.
+$sql = "SELECT ci.id, ci.item_key, ci.parent_item_id, ci.user_parent_item_id,
+               COALESCE(cs.status, 'empty') AS status
         FROM checklist_items ci
         LEFT JOIN checklist_status cs
                ON cs.item_key = ci.item_key
@@ -55,7 +56,7 @@ $sql = "SELECT COUNT(*) AS empty_count
               AND cs.user_id = ?
         WHERE ci.is_active = 1
           AND ci.is_deleted = 0
-          AND COALESCE(cs.status, 'empty') = 'empty'";
+          AND COALESCE(ci.visible_user, 1) = 1";
 
 if ($swo_type_id !== null) {
     $sql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
@@ -68,13 +69,57 @@ if ($swo_type_id !== null) {
 }
 
 $stmt->execute();
-$row = $stmt->get_result()->fetch_assoc();
+$rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 
-if ($row['empty_count'] > 0) {
-    $conn->close();
-    jsonResponse(false, 'All checklist items must have a status before submitting. ' . $row['empty_count'] . ' item(s) still empty.');
+$childrenByParent = [];
+foreach ($rows as $r) {
+    $effectiveParentId = $r['user_parent_item_id'] !== null
+        ? intval($r['user_parent_item_id'])
+        : ($r['parent_item_id'] !== null ? intval($r['parent_item_id']) : null);
+    if ($effectiveParentId !== null) {
+        if (!isset($childrenByParent[$effectiveParentId])) {
+            $childrenByParent[$effectiveParentId] = 0;
+        }
+        $childrenByParent[$effectiveParentId]++;
+    }
 }
+
+$empty_count = 0;
+foreach ($rows as $r) {
+    $itemId = intval($r['id']);
+    $hasChildren = !empty($childrenByParent[$itemId]);
+    if ($hasChildren) {
+        continue;
+    }
+    if (($r['status'] ?? 'empty') === 'empty') {
+        $empty_count++;
+    }
+}
+
+if ($empty_count > 0) {
+    $conn->close();
+    jsonResponse(false, 'All checklist items must have a status before submitting. ' . $empty_count . ' item(s) still empty.');
+}
+
+// Start each review cycle from a clean slate.
+$stmt = $conn->prepare("DELETE FROM support_item_reviews WHERE swo_id = ?");
+$stmt->bind_param('i', $swo_id);
+if (!$stmt->execute()) {
+    $stmt->close();
+    $conn->close();
+    jsonResponse(false, 'Failed to reset support review state');
+}
+$stmt->close();
+
+$stmt = $conn->prepare("DELETE FROM control_item_reviews WHERE swo_id = ?");
+$stmt->bind_param('i', $swo_id);
+if (!$stmt->execute()) {
+    $stmt->close();
+    $conn->close();
+    jsonResponse(false, 'Failed to reset control review state');
+}
+$stmt->close();
 
 // Update SWO status
 $stmt = $conn->prepare("UPDATE swo_list SET status = 'Pending Support Review', submitted_at = NOW() WHERE id = ?");
