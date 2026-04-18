@@ -66,16 +66,7 @@ const ReviewManager = {
             statusWrap.textContent = swo.status;
         }
 
-        // Progress
-        const progressColor = progress >= 80 ? '#27ae60' : (progress >= 50 ? '#f39c12' : '#e74c3c');
-        const barEl = document.getElementById('reviewProgressBar');
-        if (barEl) { barEl.style.width = progress + '%'; barEl.style.background = progressColor; }
-        const pctEl = document.getElementById('reviewProgressPct');
-        if (pctEl) pctEl.textContent = progress + '%';
-        const textEl = document.getElementById('reviewProgressText');
-        if (textEl) textEl.textContent =
-            `${counts.done || 0} Done, ${counts.na || 0} N/A, ${counts.still || 0} Still, ` +
-            `${counts.not_yet || 0} Not Yet, ${counts.empty || 0} Empty`;
+        this.updateProgress(progress, counts);
 
         // Sections
         const container = document.getElementById('reviewSections');
@@ -312,6 +303,42 @@ const ReviewManager = {
         return ordered;
     },
 
+    async refreshProgress() {
+        if (this.role === 'user') return;
+        const endpointMap = {
+            support: '/swo/get_support_review.php',
+            control: '/swo/get_control_review.php',
+        };
+        const endpoint = endpointMap[this.role];
+        if (!endpoint) return;
+
+        try {
+            const data = await API.get(endpoint, { swo_id: this.swoId });
+            if (!data || !data.success) return;
+            this.updateProgress(data.data?.progress || 0, data.data?.counts || {});
+        } catch (err) {
+            console.error('ReviewManager.refreshProgress error:', err);
+        }
+    },
+
+    updateProgress(progress, counts) {
+        const safeProgress = Math.max(0, Math.min(100, Number(progress) || 0));
+        const progressColor = safeProgress >= 80 ? '#27ae60' : (safeProgress >= 50 ? '#f39c12' : '#e74c3c');
+        const barEl = document.getElementById('reviewProgressBar');
+        if (barEl) {
+            barEl.style.width = safeProgress + '%';
+            barEl.style.background = progressColor;
+        }
+        const pctEl = document.getElementById('reviewProgressPct');
+        if (pctEl) pctEl.textContent = safeProgress + '%';
+        const textEl = document.getElementById('reviewProgressText');
+        if (textEl) {
+            textEl.textContent =
+                `${counts.done || 0} Done, ${counts.na || 0} N/A, ${counts.still || 0} Still, ` +
+                `${counts.not_yet || 0} Not Yet, ${counts.empty || 0} Empty`;
+        }
+    },
+
     scheduleItemSave(itemKey) {
         if (this.saveTimers[itemKey]) {
             clearTimeout(this.saveTimers[itemKey]);
@@ -348,6 +375,7 @@ const ReviewManager = {
         try {
             const data = await API.post(endpoint, payload);
             if (data && data.success) {
+                await this.refreshProgress();
                 this.showSaved();
             } else {
                 this.showError('Save failed');
