@@ -88,7 +88,7 @@ const ChecklistItems = {
                 ? this._items.find(it => String(it.id) === String(cfg[role].parent_item_id))
                 : null;
             const parentBadgeText = parent ? `#${escapeHtml(String(parent.section_number))}` : '—';
-            return `<span class="badge ci-role-tag ci-role-tag-on">${label}: ${parentBadgeText}</span>`;
+            return `<span class="badge ci-role-tag ci-role-tag-on">${label} ${parentBadgeText}</span>`;
         });
         return badges.join('');
     },

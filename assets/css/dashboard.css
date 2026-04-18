@@ -820,6 +820,7 @@
 .ci-role-tag {
     text-transform: uppercase;
     letter-spacing: .2px;
+    white-space: nowrap;
 }
 
 .ci-role-tag-on {
