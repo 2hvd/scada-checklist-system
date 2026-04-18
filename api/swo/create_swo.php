@@ -26,14 +26,6 @@ $action       = 'submit';
 
 if (empty($swo_number) || empty($station_name)) {
     jsonResponse(false, 'SWO number and station name are required');
-<<<<<<< HEAD
-=======
-}
-
-// Require either swo_type_id or swo_type string
-if (empty($swo_type) && $swo_type_id === null) {
-    jsonResponse(false, 'SWO type is required');
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 
 // Require either swo_type_id or swo_type string

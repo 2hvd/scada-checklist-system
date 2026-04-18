@@ -29,7 +29,6 @@ function scalarOrDefault($conn, $sql, $default = '0') {
 
 function buildRealtimeVersion($conn) {
     $parts = [];
-<<<<<<< HEAD
 
     // Check all needed tables in a single query
     $needed = ['user_item_comments', 'support_item_reviews', 'control_item_reviews',
@@ -46,13 +45,10 @@ function buildRealtimeVersion($conn) {
     }
     $stmt->close();
 
-=======
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
     $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(timestamp)), 0) FROM audit_log");
     $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(updated_at)), 0) FROM checklist_status");
     $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(created_at)), 0) FROM comments");
 
-<<<<<<< HEAD
     if (isset($existingTables['user_item_comments'])) {
         $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(saved_at)), 0) FROM user_item_comments");
     }
@@ -69,24 +65,6 @@ function buildRealtimeVersion($conn) {
         $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(created_at)), 0) FROM control_reviews");
     }
     if (isset($existingTables['swo_list'])) {
-=======
-    if (tableExists($conn, 'user_item_comments')) {
-        $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(saved_at)), 0) FROM user_item_comments");
-    }
-    if (tableExists($conn, 'support_item_reviews')) {
-        $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(reviewed_at)), 0) FROM support_item_reviews");
-    }
-    if (tableExists($conn, 'control_item_reviews')) {
-        $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(reviewed_at)), 0) FROM control_item_reviews");
-    }
-    if (tableExists($conn, 'support_reviews')) {
-        $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(created_at)), 0) FROM support_reviews");
-    }
-    if (tableExists($conn, 'control_reviews')) {
-        $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(created_at)), 0) FROM control_reviews");
-    }
-    if (tableExists($conn, 'swo_list')) {
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
         $parts[] = scalarOrDefault(
             $conn,
             "SELECT CONCAT(
@@ -101,11 +79,7 @@ function buildRealtimeVersion($conn) {
             ) FROM swo_list"
         );
     }
-<<<<<<< HEAD
     if (isset($existingTables['checklist_items'])) {
-=======
-    if (tableExists($conn, 'checklist_items')) {
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
         $parts[] = scalarOrDefault(
             $conn,
             "SELECT CONCAT(

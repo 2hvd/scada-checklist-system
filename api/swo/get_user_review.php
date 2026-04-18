@@ -43,11 +43,7 @@ if ($swo_type_id !== null) {
     $itemSql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
 }
 // Keep parent items first, then children grouped by parent and ordered by section number.
-<<<<<<< HEAD
 $itemSql .= " ORDER BY ci.section, COALESCE(ci.parent_item_id, ci.id), ci.parent_item_id IS NOT NULL, ci.section_number";
-=======
-$itemSql .= " ORDER BY ci.section, CASE WHEN ci.parent_item_id IS NULL THEN 0 ELSE 1 END, ci.parent_item_id, ci.section_number";
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 
 if ($swo_type_id !== null) {
     $itemStmt = $conn->prepare($itemSql);

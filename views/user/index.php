@@ -171,34 +171,11 @@ function renderTable(swos) {
         </table>`;
 }
 
-<<<<<<< HEAD
 document.addEventListener('DOMContentLoaded', function () {
     // Default: all active
     document.getElementById('filterAll').classList.add('filter-active');
     loadUserDashboard();
     const AUTO_REFRESH_MS = getDashboardRefreshMs(10000);
     setInterval(() => { if (!document.hidden) loadUserDashboard(); }, AUTO_REFRESH_MS);
-=======
-async function submitChecklist(swoId) {
-    const confirmed = await confirmDialog('Submit this checklist for review?');
-    if (!confirmed) return;
-    const data = await API.post('/checklist/submit_checklist.php', {swo_id: swoId});
-    if (data && data.success) {
-        showSuccess('Checklist submitted for review!');
-        setTimeout(() => loadUserDashboard(), 1500);
-    } else {
-        showError(data?.message || 'Failed to submit');
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-    loadUserDashboard();
-
-    const AUTO_REFRESH_MS = getDashboardRefreshMs(10000);
-    setInterval(() => {
-        if (document.hidden) return;
-        loadUserDashboard();
-    }, AUTO_REFRESH_MS);
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 });
 </script>

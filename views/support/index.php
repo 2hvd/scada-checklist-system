@@ -8,11 +8,7 @@ require_once __DIR__ . '/../components/sidebar.php';
 <div class="main-content">
     <div class="topbar">
         <div class="topbar-heading">
-<<<<<<< HEAD
             <button class="sidebar-toggle" onclick="toggleSidebar()">â˜°</button>
-=======
-            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
             <h1 class="topbar-title">Support Dashboard</h1>
         </div>
         <div class="topbar-actions">

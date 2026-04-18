@@ -106,7 +106,6 @@ const ReviewManager = {
     renderRow(item, num) {
         const parsedNumber = this.getDisplayNumber(item);
         const isChild = !!item.parent_item_id;
-<<<<<<< HEAD
 
         // Comment-only rows: hidden from this role but user left a comment — render like normal child rows
         if (item.comment_only) {
@@ -121,8 +120,6 @@ const ReviewManager = {
                 </tr>`;
         }
 
-=======
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
         const userStatusHidden = item.user_status_hidden === true
             || item.user_status_hidden === 1
             || item.user_status_hidden === '1';

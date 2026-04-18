@@ -188,10 +188,7 @@ if (isset($_SESSION['user_id'])) {
             margin-bottom: 16px;
             font-size: 13px;
             display: none;
-<<<<<<< HEAD
             font-weight: 500;
-=======
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
         }
         .login-footer {
             text-align: center;
