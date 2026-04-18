@@ -166,21 +166,23 @@ foreach ($bySection as $secKey => $rows) {
 
         $childTotal = 0;
         $childCompleted = 0;
+        $childVisibleTotal = 0;
         $childDone = 0;
         $childNa = 0;
         $childStill = 0;
         $childNotYet = 0;
         $childEmpty = 0;
         foreach ($childRows as $child) {
-            if (intval($child['visible_user'] ?? 1) !== 1) {
-                continue;
-            }
             $childKey = $child['item_key'];
             $childStatus = $userStatuses[$childKey] ?? 'empty';
             $childTotal++;
             if ($childStatus === 'done' || $childStatus === 'na') {
                 $childCompleted++;
             }
+            if (intval($child['visible_user'] ?? 1) !== 1) {
+                continue;
+            }
+            $childVisibleTotal++;
             switch ($childStatus) {
                 case 'done':    $childDone++;   break;
                 case 'na':      $childNa++;     break;
@@ -220,7 +222,7 @@ foreach ($bySection as $secKey => $rows) {
         }
 
         if ($hasChildren) {
-            $totalItems += $childTotal;
+            $totalItems += $childVisibleTotal;
             $doneCount  += $childDone;
             $naCount    += $childNa;
             $stillCount += $childStill;

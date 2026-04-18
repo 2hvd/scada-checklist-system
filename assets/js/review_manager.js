@@ -235,7 +235,7 @@ const ReviewManager = {
 
     getDisplayNumber(item) {
         if (!item || !item.key) return '';
-        const m = String(item.key).match(/_(\d+)(?:_(\d+))?(?:_t\d+)?$/);
+        const m = String(item.key).match(/_(\d+)(?:_(\d+))?(?:_t\d+)?(?:_\d+)?$/);
         if (!m) return '';
         return m[2] ? `${parseInt(m[1], 10)}.${parseInt(m[2], 10)}` : String(parseInt(m[1], 10));
     },
@@ -245,25 +245,34 @@ const ReviewManager = {
 
         const itemId = (item) => String(item?.item_id ?? item?.key ?? '');
         const itemMap = new Map();
-        items.forEach(item => itemMap.set(itemId(item), item));
+        items.forEach(item => {
+            const id = itemId(item);
+            if (id) itemMap.set(id, item);
+            const key = String(item?.key ?? '');
+            if (key) itemMap.set(key, item);
+        });
+
+        const resolveParentRef = (item) => {
+            const parentId = item?.parent_item_id;
+            const parentIdRef = parentId == null ? '' : String(parentId);
+            if (parentIdRef && itemMap.has(parentIdRef)) return parentIdRef;
+            const parentKeyRef = String(item?.parent_key ?? '');
+            if (parentKeyRef && itemMap.has(parentKeyRef)) return parentKeyRef;
+            return '';
+        };
 
         const childrenByParent = new Map();
         items.forEach(item => {
-            const parentId = item?.parent_item_id;
-            const parentKey = parentId == null ? '' : String(parentId);
-            if (!parentKey || !itemMap.has(parentKey)) return;
-            if (!childrenByParent.has(parentKey)) childrenByParent.set(parentKey, []);
-            childrenByParent.get(parentKey).push(item);
+            const parentRef = resolveParentRef(item);
+            if (!parentRef) return;
+            if (!childrenByParent.has(parentRef)) childrenByParent.set(parentRef, []);
+            childrenByParent.get(parentRef).push(item);
         });
 
-        const roots = items.filter(item => {
-            const parentId = item?.parent_item_id;
-            const parentKey = parentId == null ? '' : String(parentId);
-            return !parentKey || !itemMap.has(parentKey);
-        });
+        const roots = items.filter(item => !resolveParentRef(item));
 
         const getOrderTuple = (item) => {
-            const m = String(item?.key || '').match(/_(\d+)(?:_(\d+))?(?:_t\d+)?$/);
+            const m = String(item?.key || '').match(/_(\d+)(?:_(\d+))?(?:_t\d+)?(?:_\d+)?$/);
             if (!m) return null;
             return [parseInt(m[1], 10), m[2] ? parseInt(m[2], 10) : 0];
         };

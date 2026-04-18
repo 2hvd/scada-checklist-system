@@ -176,11 +176,11 @@ foreach ($bySection as $secKey => $rows) {
         $childTotal = 0;
         $childCompleted = 0;
         foreach ($childRows as $child) {
+            $childTotal++;
             if (intval($child['visible_user'] ?? 1) !== 1) {
                 continue;
             }
             $childStatus = $userStatuses[$child['item_key']] ?? 'empty';
-            $childTotal++;
             if ($childStatus === 'done' || $childStatus === 'na') {
                 $childCompleted++;
             }
