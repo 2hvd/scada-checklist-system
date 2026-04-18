@@ -114,7 +114,7 @@ require_once __DIR__ . '/../components/sidebar.php';
             <!-- Tab: Manage Checklist Items -->
             <div class="tab-content" id="tab-checklist-items">
                 <!-- Statistics Cards -->
-                <div class="stats-grid" id="checklistItemsStats" style="margin-bottom:20px;">
+                <div class="stats-grid" id="checklistItemsStats">
                     <div class="stat-card">
                         <div class="stat-value" id="ciStatTotal">—</div>
                         <div class="stat-label">Total Items</div>
@@ -134,9 +134,9 @@ require_once __DIR__ . '/../components/sidebar.php';
                 </div>
 
                 <div class="card">
-                    <div class="card-header" style="flex-wrap:wrap;gap:10px;">
-                        <h3 class="card-title" style="margin:0;">Checklist Items</h3>
-                        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                    <div class="card-header ci-card-header">
+                        <h3 class="card-title">Checklist Items</h3>
+                        <div class="ci-card-actions">
                             <select id="ciSectionFilter" class="form-control form-control-auto">
                                 <option value="">All Sections</option>
                                 <option value="during_config">During Configuration</option>
@@ -157,7 +157,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                         </div>
                     </div>
                     <div class="table-wrapper">
-                        <table>
+                        <table class="ci-items-table">
                             <thead>
                                 <tr>
                                     <th>Section</th>
@@ -232,40 +232,40 @@ require_once __DIR__ . '/../components/sidebar.php';
             </select>
         </div>
         <div class="form-group">
-            <label>SWO Type <small style="color:#999;">(Optional)</small></label>
+            <label>SWO Type <small class="text-muted">(Optional)</small></label>
             <select id="ciAddSwoType" class="form-control" onchange="ChecklistItems.onSwoTypeChange()">
                 <option value="">-- Select SWO Type --</option>
             </select>
         </div>
         <div class="form-group">
             <label>Role Visibility & Child Mapping *</label>
-            <div style="display:grid;grid-template-columns:repeat(3,minmax(190px,1fr));gap:12px;">
-                <div style="border:1px solid #e4e4e4;border-radius:8px;padding:10px;">
-                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <div class="ci-role-grid">
+                <div class="ci-role-card">
+                    <label class="ci-role-title">
                         <input type="checkbox" id="ciAddRoleUserVisible" checked>
                         <span>User</span>
                     </label>
-                    <label style="font-size:12px;color:#666;">Child</label>
+                    <label class="ci-role-child-label">Child</label>
                     <select id="ciAddRoleUserParent" class="form-control">
                         <option value="">-- No Parent (Top-level) --</option>
                     </select>
                 </div>
-                <div style="border:1px solid #e4e4e4;border-radius:8px;padding:10px;">
-                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <div class="ci-role-card">
+                    <label class="ci-role-title">
                         <input type="checkbox" id="ciAddRoleSupportVisible" checked>
                         <span>Support</span>
                     </label>
-                    <label style="font-size:12px;color:#666;">Child</label>
+                    <label class="ci-role-child-label">Child</label>
                     <select id="ciAddRoleSupportParent" class="form-control">
                         <option value="">-- No Parent (Top-level) --</option>
                     </select>
                 </div>
-                <div style="border:1px solid #e4e4e4;border-radius:8px;padding:10px;">
-                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <div class="ci-role-card">
+                    <label class="ci-role-title">
                         <input type="checkbox" id="ciAddRoleControlVisible" checked>
                         <span>Control</span>
                     </label>
-                    <label style="font-size:12px;color:#666;">Child</label>
+                    <label class="ci-role-child-label">Child</label>
                     <select id="ciAddRoleControlParent" class="form-control">
                         <option value="">-- No Parent (Top-level) --</option>
                     </select>
@@ -273,7 +273,7 @@ require_once __DIR__ . '/../components/sidebar.php';
             </div>
         </div>
         <div class="form-group">
-            <label>Item Number * <small style="color:#999;">(auto-suggested)</small></label>
+            <label>Item Number * <small class="text-muted">(auto-suggested)</small></label>
             <input type="number" id="ciAddNumber" class="form-control" min="1" max="99" placeholder="e.g. 9">
         </div>
         <div class="form-group">
@@ -295,34 +295,34 @@ require_once __DIR__ . '/../components/sidebar.php';
             <button class="modal-close" onclick="closeModal('checklistItemRoleMapModal')">×</button>
         </div>
         <input type="hidden" id="ciRoleMapItemId">
-        <div style="font-size:12px;color:#666;margin-bottom:10px;" id="ciRoleMapItemTitle"></div>
-        <div style="display:grid;grid-template-columns:repeat(3,minmax(190px,1fr));gap:12px;">
-            <div style="border:1px solid #e4e4e4;border-radius:8px;padding:10px;">
-                <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <div class="ci-role-map-title" id="ciRoleMapItemTitle"></div>
+        <div class="ci-role-grid">
+            <div class="ci-role-card">
+                <label class="ci-role-title">
                     <input type="checkbox" id="ciRoleMapUserVisible" checked>
                     <span>User</span>
                 </label>
-                <label style="font-size:12px;color:#666;">Child</label>
+                <label class="ci-role-child-label">Child</label>
                 <select id="ciRoleMapUserParent" class="form-control">
                     <option value="">-- No Parent (Top-level) --</option>
                 </select>
             </div>
-            <div style="border:1px solid #e4e4e4;border-radius:8px;padding:10px;">
-                <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <div class="ci-role-card">
+                <label class="ci-role-title">
                     <input type="checkbox" id="ciRoleMapSupportVisible" checked>
                     <span>Support</span>
                 </label>
-                <label style="font-size:12px;color:#666;">Child</label>
+                <label class="ci-role-child-label">Child</label>
                 <select id="ciRoleMapSupportParent" class="form-control">
                     <option value="">-- No Parent (Top-level) --</option>
                 </select>
             </div>
-            <div style="border:1px solid #e4e4e4;border-radius:8px;padding:10px;">
-                <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <div class="ci-role-card">
+                <label class="ci-role-title">
                     <input type="checkbox" id="ciRoleMapControlVisible" checked>
                     <span>Control</span>
                 </label>
-                <label style="font-size:12px;color:#666;">Child</label>
+                <label class="ci-role-child-label">Child</label>
                 <select id="ciRoleMapControlParent" class="form-control">
                     <option value="">-- No Parent (Top-level) --</option>
                 </select>
