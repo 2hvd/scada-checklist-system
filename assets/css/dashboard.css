@@ -746,8 +746,8 @@
     overflow-wrap: anywhere;
 }
 
-.ci-desc-cell--child {
-    padding-left: 18px !important;
+.ci-items-table td.ci-desc-cell--child {
+    padding-left: 18px;
 }
 
 .ci-desc-prefix {
