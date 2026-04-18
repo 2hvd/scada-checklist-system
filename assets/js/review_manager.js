@@ -264,12 +264,21 @@ const ReviewManager = {
 
         const getOrderTuple = (item) => {
             const m = String(item?.key || '').match(/_(\d+)(?:_(\d+))?(?:_t\d+)?$/);
-            if (!m) return [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER];
+            if (!m) return null;
             return [parseInt(m[1], 10), m[2] ? parseInt(m[2], 10) : 0];
         };
         const compareItems = (a, b) => {
-            const [aMain, aSub] = getOrderTuple(a);
-            const [bMain, bSub] = getOrderTuple(b);
+            const aTuple = getOrderTuple(a);
+            const bTuple = getOrderTuple(b);
+            if (aTuple && !bTuple) return -1;
+            if (!aTuple && bTuple) return 1;
+            if (!aTuple && !bTuple) {
+                const labelCmp = String(a?.label || '').localeCompare(String(b?.label || ''));
+                if (labelCmp !== 0) return labelCmp;
+                return itemId(a).localeCompare(itemId(b));
+            }
+            const [aMain, aSub] = aTuple;
+            const [bMain, bSub] = bTuple;
             if (aMain !== bMain) return aMain - bMain;
             if (aSub !== bSub) return aSub - bSub;
             return itemId(a).localeCompare(itemId(b));
