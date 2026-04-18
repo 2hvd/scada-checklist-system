@@ -43,10 +43,10 @@ if (!$swo) {
 
 $swo_type_id = !empty($swo['swo_type_id']) ? intval($swo['swo_type_id']) : null;
 $itemSql = "SELECT ci.id, ci.section, ci.section_number, ci.item_key, ci.description, ci.parent_item_id,
-                   ci.visible_control, ci.control_parent_item_id, ci.visible_user
-                FROM checklist_items ci
-               WHERE ci.is_deleted = 0
-                 AND ci.is_active = 1";
+                   ci.visible_control, ci.control_parent_item_id, ci.visible_user, ci.user_parent_item_id
+                 FROM checklist_items ci
+                WHERE ci.is_deleted = 0
+                  AND ci.is_active = 1";
 if ($swo_type_id !== null) {
     $itemSql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
 }
@@ -60,13 +60,18 @@ if ($swo_type_id !== null) {
 $itemStmt->execute();
 $itemsRes = $itemStmt->get_result();
 $itemRows = [];
+$allItemRows = [];
 while ($row = $itemsRes->fetch_assoc()) {
-    if (intval($row['visible_control'] ?? 1) !== 1) {
-        continue;
-    }
     $row['effective_parent_item_id'] = $row['control_parent_item_id'] !== null
         ? intval($row['control_parent_item_id'])
         : ($row['parent_item_id'] !== null ? intval($row['parent_item_id']) : null);
+    $row['user_effective_parent_item_id'] = $row['user_parent_item_id'] !== null
+        ? intval($row['user_parent_item_id'])
+        : ($row['parent_item_id'] !== null ? intval($row['parent_item_id']) : null);
+    $allItemRows[] = $row;
+    if (intval($row['visible_control'] ?? 1) !== 1) {
+        continue;
+    }
     $itemRows[] = $row;
 }
 $itemStmt->close();
@@ -83,6 +88,21 @@ while ($row = $result->fetch_assoc()) {
     $userStatuses[$row['item_key']] = $row['status'];
 }
 $stmt->close();
+
+$userChildrenByParent = [];
+foreach ($allItemRows as $row) {
+    if (intval($row['visible_user'] ?? 1) !== 1) {
+        continue;
+    }
+    $parentId = $row['user_effective_parent_item_id'];
+    if ($parentId === null) {
+        continue;
+    }
+    if (!isset($userChildrenByParent[$parentId])) {
+        $userChildrenByParent[$parentId] = [];
+    }
+    $userChildrenByParent[$parentId][] = $row;
+}
 
 // Load support item reviews (read-only for control)
 $stmt = $conn->prepare(
@@ -171,15 +191,13 @@ foreach ($bySection as $secKey => $rows) {
         $supportReview = $supportReviews[$parentKey] ?? ['support_decision' => '', 'support_comment' => ''];
         $controlReview = $controlReviews[$parentKey] ?? ['decision' => '', 'comment' => ''];
         $childRows = $children[$parent['id']] ?? [];
-        $hasChildren = !empty($childRows);
+        $hasVisibleChildren = !empty($childRows);
 
+        $progressChildRows = $userChildrenByParent[intval($parent['id'])] ?? [];
         $childTotal = 0;
         $childCompleted = 0;
-        foreach ($childRows as $child) {
+        foreach ($progressChildRows as $child) {
             $childTotal++;
-            if (intval($child['visible_user'] ?? 1) !== 1) {
-                continue;
-            }
             $childStatus = $userStatuses[$child['item_key']] ?? 'empty';
             if ($childStatus === 'done' || $childStatus === 'na') {
                 $childCompleted++;
@@ -196,7 +214,7 @@ foreach ($bySection as $secKey => $rows) {
             'support_comment'  => $supportReview['support_comment'],
             'decision'         => $controlReview['decision'],
             'comment'          => $controlReview['comment'],
-            'is_parent'        => $hasChildren,
+            'is_parent'        => ($hasVisibleChildren || $childTotal > 0),
             'user_status_hidden' => $parentUserStatusHidden,
             'parent_item_id'   => null,
             'item_id'          => intval($parent['id']),
@@ -205,7 +223,7 @@ foreach ($bySection as $secKey => $rows) {
             'child_completion_pct' => $childCompletionPct,
         ];
 
-        if (!$hasChildren && !$parentUserStatusHidden) {
+        if (!$hasVisibleChildren && !$parentUserStatusHidden) {
             $totalItems++;
             switch ($parentStatus) {
                 case 'done':    $doneCount++;    break;
