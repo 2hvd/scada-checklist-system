@@ -42,11 +42,7 @@ while ($user = $userResult->fetch_assoc()) {
     $swoStmt = $conn->prepare(
         "SELECT id, swo_type_id
          FROM swo_list
-<<<<<<< HEAD
          WHERE assigned_to = ? AND status NOT IN ('Rejected','Pending','Registered')"
-=======
-         WHERE assigned_to = ? AND status NOT IN ('Draft','Pending','Registered')"
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
     );
     $swoStmt->bind_param('i', $user['id']);
     $swoStmt->execute();
@@ -54,7 +50,6 @@ while ($user = $userResult->fetch_assoc()) {
     $swoStmt->close();
 
     foreach ($assignedSwos as $swoRow) {
-<<<<<<< HEAD
         $swoId     = intval($swoRow['id']);
         $swoTypeId = !empty($swoRow['swo_type_id']) ? intval($swoRow['swo_type_id']) : null;
         $swoCacheKey = 'swo_' . $swoId;
@@ -87,21 +82,6 @@ while ($user = $userResult->fetch_assoc()) {
                 } else {
                     $itemStmt = $conn->prepare($itemSql);
                 }
-=======
-        $swoId = intval($swoRow['id']);
-        $swoTypeId = !empty($swoRow['swo_type_id']) ? intval($swoRow['swo_type_id']) : null;
-        $cacheKey = $swoTypeId !== null ? strval($swoTypeId) : 'null';
-        if (!isset($leafKeysByTypeCache[$cacheKey])) {
-            $itemSql = "SELECT id, item_key, parent_item_id, user_parent_item_id, visible_user
-                        FROM checklist_items
-                        WHERE is_active = 1 AND is_deleted = 0";
-            if ($swoTypeId !== null) {
-                $itemSql .= " AND (swo_type_id = ? OR swo_type_id IS NULL)";
-                $itemStmt = $conn->prepare($itemSql);
-                $itemStmt->bind_param('i', $swoTypeId);
-            } else {
-                $itemStmt = $conn->prepare($itemSql);
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
             }
             $itemStmt->execute();
             $rawItems = $itemStmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -125,28 +105,16 @@ while ($user = $userResult->fetch_assoc()) {
                 }
             }
 
-<<<<<<< HEAD
             $leafKeysByTypeCache[$swoCacheKey] = [];
             foreach ($visibleItems as $item) {
                 $itemId = intval($item['id']);
                 if (!isset($hasChildren[$itemId])) {
                     $leafKeysByTypeCache[$swoCacheKey][$item['item_key']] = true;
-=======
-            $leafKeysByTypeCache[$cacheKey] = [];
-            foreach ($visibleItems as $item) {
-                $itemId = intval($item['id']);
-                if (!isset($hasChildren[$itemId])) {
-                    $leafKeysByTypeCache[$cacheKey][$item['item_key']] = true;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
                 }
             }
         }
 
-<<<<<<< HEAD
         $leafKeys = $leafKeysByTypeCache[$swoCacheKey];
-=======
-        $leafKeys = $leafKeysByTypeCache[$cacheKey];
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 
         if (empty($leafKeys)) {
             continue;

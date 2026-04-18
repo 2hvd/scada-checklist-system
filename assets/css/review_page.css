@@ -8,17 +8,6 @@
 }
 .review-header h1 { margin:0; font-size:22px; font-weight:700; color:var(--primary); letter-spacing:-.02em; }
 
-<<<<<<< HEAD
-=======
-.review-header h1 {
-    margin: 0;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--primary-blue);
-}
-
-/* ── SWO info bar ── */
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 .review-info-bar {
     display:flex; align-items:center; gap:16px; flex-wrap:wrap;
     font-size:13px; color:#555; margin-bottom:16px;
@@ -26,17 +15,8 @@
 .review-info-bar .info-item { display:flex; align-items:center; gap:5px; }
 
 .review-progress {
-<<<<<<< HEAD
     background:#fff; border:1px solid rgba(226,232,240,.6); border-radius:14px;
     padding:18px 22px; margin-bottom:20px; box-shadow:var(--shadow-soft);
-=======
-    background: #fff;
-    border: 1px solid #e6ebf2;
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-bottom: 20px;
-    box-shadow: var(--shadow-soft);
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 .review-progress-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-weight:600; font-size:14px; }
 .review-progress-pct { font-size:22px; font-weight:800; color:#6366f1; letter-spacing:-.02em; }
@@ -52,54 +32,19 @@
 .save-indicator.hidden { opacity:0; pointer-events:none; }
 
 .review-section {
-<<<<<<< HEAD
     background:#fff; border:1px solid rgba(226,232,240,.6); border-radius:14px;
     margin-bottom:20px; overflow:hidden; box-shadow:var(--shadow-soft);
-=======
-    background: #fff;
-    border: 1px solid #e6ebf2;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    overflow: hidden;
-    box-shadow: var(--shadow-soft);
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 .review-section-header {
-<<<<<<< HEAD
     background:linear-gradient(135deg,#0c1527,#1a2744);
     padding:14px 22px; font-weight:700; font-size:14px; color:#fff;
-=======
-    background: var(--primary-blue);
-    padding: 12px 20px;
-    font-weight: 700;
-    font-size: 14px;
-    color: #fff;
-    border-bottom: 1px solid #e8eaf0;
-}
-
-/* ── Review table ── */
-.review-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 
 .review-table { width:100%; border-collapse:collapse; font-size:13px; }
 .review-table th {
-<<<<<<< HEAD
     background:linear-gradient(135deg,#0c1527,#1a2744);
     padding:11px 12px; text-align:left; font-weight:600; color:#fff;
     border-bottom:2px solid #16314d; white-space:nowrap;
-=======
-    background: var(--primary-blue);
-    padding: 10px 12px;
-    text-align: left;
-    font-weight: 600;
-    color: #fff;
-    border-bottom: 2px solid #16314d;
-    white-space: nowrap;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 .review-table th:first-child { width:40px; text-align:center; }
 .review-table td { padding:11px 12px; border-bottom:1px solid var(--gray-100); vertical-align:top; }
@@ -130,68 +75,9 @@
 .control-col-readonly { background:var(--gray-50); font-size:12px; color:#555; max-width:180px; }
 .control-comment-readonly { font-size:12px; color:#555; font-style:italic; white-space:pre-wrap; word-break:break-word; }
 
-<<<<<<< HEAD
 .review-overall-comments {
     background:#fff; border:1px solid rgba(226,232,240,.6); border-radius:14px;
     padding:22px; margin-bottom:20px; box-shadow:var(--shadow-soft);
-=======
-/* Read-only user comment columns for support and control view */
-.user-col-readonly {
-    background: #fafbfc;
-    font-size: 12px;
-    color: #555;
-    max-width: 180px;
-}
-
-.user-comment-readonly {
-    font-size: 12px;
-    color: #555;
-    font-style: italic;
-    white-space: pre-wrap;
-    word-break: break-word;
-}
-
-/* Read-only support columns for control view */
-.support-col-readonly {
-    background: #fafbfc;
-    font-size: 12px;
-    color: #555;
-    max-width: 180px;
-}
-
-.support-comment-readonly {
-    font-size: 12px;
-    color: #555;
-    font-style: italic;
-    white-space: pre-wrap;
-    word-break: break-word;
-}
-
-/* Read-only control columns for support re-review view */
-.control-col-readonly {
-    background: #fafbfc;
-    font-size: 12px;
-    color: #555;
-    max-width: 180px;
-}
-
-.control-comment-readonly {
-    font-size: 12px;
-    color: #555;
-    font-style: italic;
-    white-space: pre-wrap;
-    word-break: break-word;
-}
-
-/* ── Overall comments ── */
-.review-overall-comments {
-    background: #fff;
-    border: 1px solid #e6ebf2;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: var(--shadow-soft);
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 .review-overall-comments label { display:block; font-weight:600; font-size:14px; margin-bottom:8px; color:#333; }
 .review-overall-comments textarea {

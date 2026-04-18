@@ -45,7 +45,6 @@ if ($swo['status'] !== 'In Progress') {
 }
 $swo_type_id = $swo['swo_type_id'] !== null ? intval($swo['swo_type_id']) : null;
 
-<<<<<<< HEAD
 // Use snapshot if available, otherwise fall back to active items
 $snapCheck = $conn->prepare("SELECT COUNT(*) as cnt FROM swo_checklist_items WHERE swo_id = ?");
 $snapCheck->bind_param('i', $swo_id);
@@ -89,29 +88,6 @@ if ($snapCount > 0) {
         $stmt = $conn->prepare($sql);
         $stmt->bind_param('ii', $swo_id, $user_id);
     }
-=======
-// Submit validation must match user checklist rendering:
-// only user-visible leaf items can block submission.
-$sql = "SELECT ci.id, ci.item_key, ci.parent_item_id, ci.user_parent_item_id,
-               COALESCE(cs.status, 'empty') AS status
-        FROM checklist_items ci
-        LEFT JOIN checklist_status cs
-               ON cs.item_key = ci.item_key
-              AND cs.swo_id = ?
-              AND cs.user_id = ?
-        WHERE ci.is_active = 1
-          AND ci.is_deleted = 0
-          AND COALESCE(ci.visible_user, 1) = 1";
-
-if ($swo_type_id !== null) {
-    $sql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('iii', $swo_id, $user_id, $swo_type_id);
-} else {
-    $sql .= " AND ci.swo_type_id IS NULL";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('ii', $swo_id, $user_id);
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 
 $stmt->execute();

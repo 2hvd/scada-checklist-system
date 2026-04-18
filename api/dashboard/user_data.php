@@ -24,7 +24,6 @@ $result = $stmt->get_result();
 $swos = [];
 
 while ($swo = $result->fetch_assoc()) {
-<<<<<<< HEAD
     $swoId     = intval($swo['id']);
     $swoTypeId = !empty($swo['swo_type_id']) ? intval($swo['swo_type_id']) : null;
 
@@ -44,11 +43,6 @@ while ($swo = $result->fetch_assoc()) {
         );
         $itemStmt->bind_param('i', $swoId);
     } elseif ($swoTypeId !== null) {
-=======
-    // Get applicable checklist items (count only effective/leaf items)
-    $swoTypeId = !empty($swo['swo_type_id']) ? intval($swo['swo_type_id']) : null;
-    if ($swoTypeId !== null) {
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
         $itemStmt = $conn->prepare(
             "SELECT id, item_key, parent_item_id, user_parent_item_id, visible_user
              FROM checklist_items

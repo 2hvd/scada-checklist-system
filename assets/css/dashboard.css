@@ -173,18 +173,11 @@
 }
 
 .topbar {
-<<<<<<< HEAD
     background: rgba(255, 255, 255, .85);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(226, 232, 240, .6);
     padding: 16px 28px;
-=======
-    background: var(--white);
-    box-shadow: 0 6px 18px rgba(26,58,92,0.08);
-    border-bottom: 1px solid #e6ebf2;
-    padding: 14px 24px;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -205,29 +198,12 @@
 .topbar-title-no-margin {
     margin: 0;
 }
-<<<<<<< HEAD
 
 .topbar-subtitle {
     font-size: 12px;
     color: var(--gray-500);
 }
 
-=======
-.topbar-title-no-margin { margin: 0; }
-.topbar-subtitle {
-    font-size: 12px;
-    color: rgba(255,255,255,.85);
-}
-.topbar.checklist-topbar {
-    background: var(--primary-blue);
-}
-.topbar.checklist-topbar .topbar-title {
-    color: var(--white);
-}
-.topbar.checklist-topbar .sidebar-toggle {
-    color: var(--white);
-}
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 .topbar-actions {
     display: flex;
     align-items: center;
@@ -303,19 +279,11 @@
 }
 
 .stat-card {
-<<<<<<< HEAD
     background: #fff;
     border-radius: 14px;
     padding: 22px;
     box-shadow: var(--shadow-soft);
     border: 1px solid rgba(226, 232, 240, .6);
-=======
-    background: var(--white);
-    border-radius: var(--radius);
-    padding: 20px;
-    box-shadow: var(--shadow-soft);
-    border: 1px solid #e6ebf2;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
     border-left: 4px solid var(--accent);
     transition: all .25s ease;
     position: relative;
@@ -743,7 +711,6 @@
     word-break: break-word;
 }
 
-<<<<<<< HEAD
 .reviewer-comment-readonly {
     display: block;
     font-size: 12px;
@@ -757,22 +724,6 @@
 }
 
 /* ========== Checklist Table ========== */
-=======
-/* ========== Reviewer Comment (read-only feedback in checklist table) ========== */
-.reviewer-comment-readonly {
-    display: block;
-    font-size: 12px;
-    color: #856404;
-    white-space: pre-wrap;
-    word-break: break-word;
-    background: #fff3cd;
-    border-left: 3px solid #ffc107;
-    padding: 6px 10px;
-    border-radius: 4px;
-}
-
-/* ========== Checklist Table (user checklist with column headers) ========== */
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 .checklist-table {
     width: 100%;
     border-collapse: collapse;
@@ -780,11 +731,7 @@
 }
 
 .checklist-table thead {
-<<<<<<< HEAD
     background: linear-gradient(135deg, #0c1527, #1a2744);
-=======
-    background: var(--primary-blue);
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
     color: #fff;
     font-weight: 600;
 }
@@ -802,15 +749,6 @@
     border-bottom: 1px solid var(--gray-100);
     vertical-align: top;
     overflow: hidden;
-<<<<<<< HEAD
-=======
-}
-/* Ensure <tr class="checklist-item"> renders as a proper table row,
-   overriding the flex display that the .checklist-item rule applies. */
-.checklist-table tbody tr.checklist-item,
-.checklist-table tbody tr.checklist-item--support {
-    display: table-row;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 
 .checklist-table tbody tr.checklist-item,
@@ -830,13 +768,6 @@
     width: 50px;
     text-align: center;
 }
-<<<<<<< HEAD
-=======
-.checklist-table .col-status { width: 150px; }
-.checklist-table .col-comment { width: 30%; }
-.checklist-table .col-decision { width: 150px; }
-.checklist-table .item-label { font-size: 14px; word-break: break-word; overflow-wrap: break-word; }
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 
 .checklist-table .col-status {
     width: 150px;
@@ -956,13 +887,8 @@
 
 .swo-timeline-table th,
 .swo-complete-timeline-table th {
-<<<<<<< HEAD
     background: linear-gradient(135deg, #0c1527, #1a2744);
     color: #fff;
-=======
-    background: var(--primary-blue);
-    color: white;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
     padding: 12px;
     text-align: left;
     font-weight: 600;
@@ -971,13 +897,8 @@
 
 .swo-timeline-table td,
 .swo-complete-timeline-table td {
-<<<<<<< HEAD
     padding: 11px 12px;
     border-bottom: 1px solid var(--gray-100);
-=======
-    padding: 10px 12px;
-    border-bottom: 1px solid #e6ebf2;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
     font-size: 13px;
     white-space: nowrap;
 }
@@ -1019,13 +940,8 @@
 .swo-submitted-table thead,
 .swo-pending-table thead,
 .feedback-table thead {
-<<<<<<< HEAD
     background: linear-gradient(135deg, #0c1527, #1a2744);
     color: #fff;
-=======
-    background: var(--primary-blue);
-    color: white;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 
 .swo-management-table th,
@@ -1042,13 +958,8 @@
 .swo-submitted-table td,
 .swo-pending-table td,
 .feedback-table td {
-<<<<<<< HEAD
     padding: 11px 12px;
     border-bottom: 1px solid var(--gray-100);
-=======
-    padding: 10px 12px;
-    border-bottom: 1px solid #e6ebf2;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
     font-size: 13px;
     vertical-align: top;
 }
@@ -1096,19 +1007,11 @@
     color: #1e40af;
 }
 
-<<<<<<< HEAD
-=======
-/* ========== Cross-page shared sections ========== */
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 #feedbackAlert {
     margin-bottom: 14px;
 }
 
-<<<<<<< HEAD
 /* ========== Admin Checklist Items ========== */
-=======
-/* ========== Admin Checklist Items Table ========== */
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 .ci-items-table th,
 .ci-items-table td {
     vertical-align: top;
@@ -1137,7 +1040,6 @@
     margin-right: 4px;
 }
 
-<<<<<<< HEAD
 .badge-ci-child {
     background: linear-gradient(135deg, #818cf8, #6366f1);
     color: #fff;
@@ -1152,14 +1054,6 @@
     border-radius: 6px;
     color: #344054;
     border: 1px solid var(--gray-100);
-=======
-.ci-item-key {
-    font-size: 11px;
-    background: #f2f4f7;
-    padding: 2px 6px;
-    border-radius: 4px;
-    color: #344054;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 
 .ci-created-cell {
@@ -1174,64 +1068,39 @@
 }
 
 .badge-ci-active {
-<<<<<<< HEAD
     background: linear-gradient(135deg, #10b981, #059669);
-=======
-    background: #27ae60;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
     color: #fff;
 }
 
 .badge-ci-inactive {
-<<<<<<< HEAD
     background: linear-gradient(135deg, #ef4444, #dc2626);
-=======
-    background: #e74c3c;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
     color: #fff;
 }
 
 .badge-ci-parent {
-<<<<<<< HEAD
     background: linear-gradient(135deg, #6366f1, #4f46e5);
-=======
-    background: #3498db;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
     color: #fff;
     font-size: 10px;
     letter-spacing: .2px;
 }
 
 .badge-ci-usage {
-<<<<<<< HEAD
     background: linear-gradient(135deg, #f59e0b, #d97706);
-=======
-    background: #f39c12;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
     color: #fff;
 }
 
 .badge-ci-type {
-<<<<<<< HEAD
     background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-=======
-    background: #9b59b6;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
     color: #fff;
 }
 
 .ci-role-cell {
-<<<<<<< HEAD
     min-width: 240px;
-=======
-    min-width: 230px;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 
 .ci-role-stack {
     display: flex;
     flex-direction: column;
-<<<<<<< HEAD
     gap: 8px;
 }
 
@@ -1240,22 +1109,12 @@
     grid-template-columns: repeat(3, auto);
     gap: 4px;
     justify-content: start;
-=======
-    gap: 6px;
-}
-
-.ci-role-summary {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 
 .ci-role-tag {
     text-transform: uppercase;
     letter-spacing: .2px;
     white-space: nowrap;
-<<<<<<< HEAD
     font-size: 10px;
     padding: 3px 8px;
     border-radius: 14px;
@@ -1264,17 +1123,10 @@
 
 .ci-role-tag-on {
     background: #1e293b;
-=======
-}
-
-.ci-role-tag-on {
-    background: #34495e;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
     color: #fff;
 }
 
 .ci-role-tag-off {
-<<<<<<< HEAD
     background: #cbd5e1;
     color: #64748b;
 }
@@ -1285,16 +1137,6 @@
     width: fit-content;
     font-size: 11px;
     padding: 4px 10px;
-=======
-    background: var(--ci-role-tag-off-bg);
-    color: #fff;
-}
-
-.ci-role-map-btn {
-    background: #6c757d;
-    border: 1px solid #6c757d;
-    width: fit-content;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 
 .ci-actions-cell {
@@ -1310,7 +1152,6 @@
 
 .ci-delete-btn {
     background: #fff;
-<<<<<<< HEAD
     color: #dc2626;
     border: 1px solid #fecaca;
 }
@@ -1318,15 +1159,6 @@
 .ci-delete-btn:hover {
     background: #fef2f2;
     color: #b91c1c;
-=======
-    color: #c0392b;
-    border: 1px solid #efb4ac;
-}
-
-.ci-delete-btn:hover {
-    background: #fdecea;
-    color: #a93226;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 
 .ci-card-header {
@@ -1356,16 +1188,10 @@
 }
 
 .ci-role-card {
-<<<<<<< HEAD
     border: 1px solid var(--gray-200);
     border-radius: 10px;
     padding: 12px;
     background: var(--gray-50);
-=======
-    border: 1px solid #e4e7ec;
-    border-radius: 8px;
-    padding: 10px;
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 
 .ci-role-title {
@@ -1392,11 +1218,7 @@
     overflow-x: hidden;
 }
 
-<<<<<<< HEAD
 @media(max-width:900px) {
-=======
-@media (max-width: 900px) {
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
     .ci-card-actions .ci-refresh-btn {
         margin-left: 0;
     }
@@ -1410,16 +1232,8 @@
     }
 }
 
-<<<<<<< HEAD
 @media(max-width:640px) {
     .ci-role-grid {
         grid-template-columns: 1fr;
     }
 }
-=======
-@media (max-width: 640px) {
-    .ci-role-grid {
-        grid-template-columns: 1fr;
-    }
-}
->>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
