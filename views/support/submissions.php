@@ -53,7 +53,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                     <h3 class="card-title">Comments</h3>
                 </div>
                 <div id="commentsContainer"></div>
-                <form id="commentForm" class="mt-2">
+                <form id="commentForm" class="modal-form-section">
                     <div class="comment-form">
                         <textarea class="form-control" placeholder="Add a comment or review note..." required></textarea>
                         <button type="submit" class="btn btn-primary">Send</button>

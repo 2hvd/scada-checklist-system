@@ -25,7 +25,7 @@ require_once __DIR__ . '/../components/sidebar.php';
     </div>
 
     <div class="page-content">
-        <div id="feedbackAlert"></div>
+        <div id="feedbackAlert" class="hidden"></div>
 
         <div id="swoInfoBar" class="info-bar">
             <div><strong>SWO:</strong> <span id="infoSwoNumber">—</span></div>
