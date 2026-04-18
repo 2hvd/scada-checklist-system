@@ -19,9 +19,10 @@ $user_id = $_SESSION['user_id'];
 $stmt = $conn->prepare(
     "SELECT s.id, s.swo_number, s.station_name, s.swo_type, s.swo_type_id, s.kcor, s.status,
             s.submitted_at, s.support_reviewed_at,
+            s.assigned_to,
             ua.username AS assigned_to_name,
             us.username AS support_reviewer_name
-     FROM swo_list s
+      FROM swo_list s
       LEFT JOIN users ua ON s.assigned_to      = ua.id
       LEFT JOIN users us ON s.support_reviewer_id = us.id
      WHERE s.id = ?
@@ -71,9 +72,10 @@ while ($row = $itemsRes->fetch_assoc()) {
 $itemStmt->close();
 
 $stmt = $conn->prepare(
-    "SELECT item_key, status FROM checklist_status WHERE swo_id = ?"
+    "SELECT item_key, status FROM checklist_status WHERE swo_id = ? AND user_id = ?"
 );
-$stmt->bind_param('i', $swo_id);
+$assignedUserId = intval($swo['assigned_to'] ?? 0);
+$stmt->bind_param('ii', $swo_id, $assignedUserId);
 $stmt->execute();
 $result = $stmt->get_result();
 $userStatuses = [];
@@ -128,8 +130,6 @@ while ($row = $result->fetch_assoc()) {
     ];
 }
 $stmt->close();
-
-$conn->close();
 
 // Build structured sections
 $sections = [];
@@ -272,8 +272,54 @@ foreach ($bySection as $secKey => $rows) {
     $sections[] = $sectionData;
 }
 
+$summarySql = "SELECT ci.id, ci.item_key, ci.parent_item_id, ci.user_parent_item_id
+               FROM checklist_items ci
+               WHERE ci.is_deleted = 0
+                 AND ci.is_active = 1
+                 AND COALESCE(ci.visible_user, 1) = 1";
+if ($swo_type_id !== null) {
+    $summarySql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
+    $summaryStmt = $conn->prepare($summarySql);
+    $summaryStmt->bind_param('i', $swo_type_id);
+} else {
+    $summaryStmt = $conn->prepare($summarySql);
+}
+$summaryStmt->execute();
+$summaryRows = $summaryStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$summaryStmt->close();
+
+$summaryHasChildren = [];
+foreach ($summaryRows as $row) {
+    $effectiveParent = $row['user_parent_item_id'] !== null
+        ? intval($row['user_parent_item_id'])
+        : ($row['parent_item_id'] !== null ? intval($row['parent_item_id']) : null);
+    if ($effectiveParent !== null) {
+        $summaryHasChildren[$effectiveParent] = true;
+    }
+}
+
+$doneCount = $naCount = $stillCount = $notYetCount = $emptyCount = 0;
+$totalItems = 0;
+foreach ($summaryRows as $row) {
+    $itemId = intval($row['id']);
+    if (isset($summaryHasChildren[$itemId])) {
+        continue;
+    }
+    $status = $userStatuses[$row['item_key']] ?? 'empty';
+    $totalItems++;
+    switch ($status) {
+        case 'done':    $doneCount++;    break;
+        case 'na':      $naCount++;      break;
+        case 'still':   $stillCount++;   break;
+        case 'not_yet': $notYetCount++;  break;
+        default:        $emptyCount++;   break;
+    }
+}
+
 $completed = $doneCount + $naCount;
 $progress  = $totalItems > 0 ? round($completed / $totalItems * 100, 1) : 0;
+
+$conn->close();
 
 jsonResponse(true, 'Control review data retrieved', [
     'swo'      => $swo,
