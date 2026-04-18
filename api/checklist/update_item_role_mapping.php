@@ -106,13 +106,11 @@ foreach (['user', 'support', 'control'] as $role) {
     }
 }
 
-$legacy_parent_item_id = $current_parent;
-if ($legacy_parent_item_id === null) {
-    $legacy_parent_item_id = $firstParentForLegacy;
-}
-if ($firstParentForLegacy === null) {
-    $legacy_parent_item_id = null;
-}
+// Preserve existing legacy parent when present; otherwise use the first role parent as fallback
+// so older parent_item_id-based flows keep working during migration.
+$legacy_parent_item_id = ($firstParentForLegacy !== null)
+    ? ($current_parent ?? $firstParentForLegacy)
+    : null;
 
 $visible_user = $role_map['user']['visible'];
 $visible_support = $role_map['support']['visible'];

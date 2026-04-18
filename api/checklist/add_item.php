@@ -161,6 +161,8 @@ if ($existing) {
 
 // Generate item_key based on hierarchy + SWO type context
 if ($parent_item_id !== null) {
+    // Supports deprecated clients that send parent_item_id directly instead of role_config.
+    // Can be removed after all clients migrate to role_config-based parent mapping.
     if ($parent === null) {
         $chk = $conn->prepare("SELECT id, section_number FROM checklist_items WHERE id = ? AND is_deleted = 0");
         $chk->bind_param('i', $parent_item_id);

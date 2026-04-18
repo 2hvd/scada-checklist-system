@@ -151,6 +151,10 @@ foreach ($bySection as $secKey => $rows) {
             $children[$row['effective_parent_item_id']][] = $row;
         }
     }
+    $parentIdSet = [];
+    foreach ($parents as $p) {
+        $parentIdSet[intval($p['id'])] = true;
+    }
 
     foreach ($parents as $parent) {
         $parentKey = $parent['item_key'];
@@ -220,19 +224,10 @@ foreach ($bySection as $secKey => $rows) {
         }
     }
 
+    // Keep orphaned items visible when their role-specific parent is hidden for this role.
     foreach ($rows as $row) {
         $parentId = $row['effective_parent_item_id'];
-        if ($parentId === null) {
-            continue;
-        }
-        $parentExists = false;
-        foreach ($parents as $p) {
-            if (intval($p['id']) === intval($parentId)) {
-                $parentExists = true;
-                break;
-            }
-        }
-        if ($parentExists) {
+        if ($parentId === null || isset($parentIdSet[intval($parentId)])) {
             continue;
         }
 

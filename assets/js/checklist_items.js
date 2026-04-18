@@ -87,8 +87,8 @@ const ChecklistItems = {
             const parent = cfg[role].parent_item_id
                 ? this._items.find(it => String(it.id) === String(cfg[role].parent_item_id))
                 : null;
-            const childLabel = parent ? ` #${escapeHtml(String(parent.section_number))}` : ' —';
-            return `<span class="badge" style="background:#34495e;color:#fff;">${label}${childLabel}</span>`;
+            const parentBadgeText = parent ? ` #${escapeHtml(String(parent.section_number))}` : '—';
+            return `<span class="badge" style="background:#34495e;color:#fff;">${label}${parentBadgeText}</span>`;
         });
         return badges.join(' ');
     },
@@ -214,7 +214,7 @@ const ChecklistItems = {
             const select = document.getElementById(ids.parent);
             if (!select) return;
             const selected = currentConfig?.[role]?.parent_item_id || '';
-            select.innerHTML = '<option value="">-- No Child Parent --</option>' + options;
+            select.innerHTML = '<option value="">-- No Parent (Top-level) --</option>' + options;
             select.value = selected;
         });
         this._syncRoleFormState(mode);
@@ -312,7 +312,7 @@ const ChecklistItems = {
         if (sectionNum < 1 || sectionNum > 99) return showWarning('Item number must be between 1-99.');
         if (!description) return showWarning('Please enter a description.');
         if (!this._roleOrder.some(role => roleConfig[role].visible)) {
-            return showWarning('Enable at least one role.');
+            return showWarning('At least one role (User, Support, or Control) must be enabled for this item.');
         }
 
         try {
@@ -355,7 +355,7 @@ const ChecklistItems = {
         const roleConfig = this._collectRoleConfig('map');
         if (!itemId) return;
         if (!this._roleOrder.some(role => roleConfig[role].visible)) {
-            return showWarning('Enable at least one role.');
+            return showWarning('At least one role (User, Support, or Control) must be enabled for this item.');
         }
 
         const data = await API.post('/checklist/update_item_role_mapping.php', {
@@ -433,7 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     if (addType) addType.addEventListener('change', () => ChecklistItems.onSwoTypeChange());
 
-    ['User', 'Support', 'Control'].forEach(cap => {
+    ChecklistItems._roleOrder.map(role => role.charAt(0).toUpperCase() + role.slice(1)).forEach(cap => {
         const addVisible = document.getElementById(`ciAddRole${cap}Visible`);
         const addParent = document.getElementById(`ciAddRole${cap}Parent`);
         const mapVisible = document.getElementById(`ciRoleMap${cap}Visible`);

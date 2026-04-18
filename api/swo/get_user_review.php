@@ -122,6 +122,10 @@ foreach ($bySection as $secKey => $rows) {
             $children[$row['effective_parent_item_id']][] = $row;
         }
     }
+    $parentIdSet = [];
+    foreach ($parents as $p) {
+        $parentIdSet[intval($p['id'])] = true;
+    }
 
     foreach ($parents as $parent) {
         $parentStatus = $userStatuses[$parent['item_key']] ?? 'empty';
@@ -169,19 +173,11 @@ foreach ($bySection as $secKey => $rows) {
         }
     }
 
+    // Keep orphaned items visible when their role-specific parent exists in DB
+    // but is not visible to the current role in this response.
     foreach ($rows as $row) {
         $parentId = $row['effective_parent_item_id'];
-        if ($parentId === null) {
-            continue;
-        }
-        $parentExists = false;
-        foreach ($parents as $p) {
-            if (intval($p['id']) === intval($parentId)) {
-                $parentExists = true;
-                break;
-            }
-        }
-        if ($parentExists) {
+        if ($parentId === null || isset($parentIdSet[intval($parentId)])) {
             continue;
         }
         $st = $userStatuses[$row['item_key']] ?? 'empty';

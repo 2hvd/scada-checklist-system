@@ -247,7 +247,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                     </label>
                     <label style="font-size:12px;color:#666;">Child</label>
                     <select id="ciAddRoleUserParent" class="form-control">
-                        <option value="">-- No Child Parent --</option>
+                        <option value="">-- No Parent (Top-level) --</option>
                     </select>
                 </div>
                 <div style="border:1px solid #e4e4e4;border-radius:8px;padding:10px;">
@@ -257,7 +257,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                     </label>
                     <label style="font-size:12px;color:#666;">Child</label>
                     <select id="ciAddRoleSupportParent" class="form-control">
-                        <option value="">-- No Child Parent --</option>
+                        <option value="">-- No Parent (Top-level) --</option>
                     </select>
                 </div>
                 <div style="border:1px solid #e4e4e4;border-radius:8px;padding:10px;">
@@ -267,7 +267,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                     </label>
                     <label style="font-size:12px;color:#666;">Child</label>
                     <select id="ciAddRoleControlParent" class="form-control">
-                        <option value="">-- No Child Parent --</option>
+                        <option value="">-- No Parent (Top-level) --</option>
                     </select>
                 </div>
             </div>
@@ -304,7 +304,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                 </label>
                 <label style="font-size:12px;color:#666;">Child</label>
                 <select id="ciRoleMapUserParent" class="form-control">
-                    <option value="">-- No Child Parent --</option>
+                    <option value="">-- No Parent (Top-level) --</option>
                 </select>
             </div>
             <div style="border:1px solid #e4e4e4;border-radius:8px;padding:10px;">
@@ -314,7 +314,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                 </label>
                 <label style="font-size:12px;color:#666;">Child</label>
                 <select id="ciRoleMapSupportParent" class="form-control">
-                    <option value="">-- No Child Parent --</option>
+                    <option value="">-- No Parent (Top-level) --</option>
                 </select>
             </div>
             <div style="border:1px solid #e4e4e4;border-radius:8px;padding:10px;">
@@ -324,7 +324,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                 </label>
                 <label style="font-size:12px;color:#666;">Child</label>
                 <select id="ciRoleMapControlParent" class="form-control">
-                    <option value="">-- No Child Parent --</option>
+                    <option value="">-- No Parent (Top-level) --</option>
                 </select>
             </div>
         </div>
