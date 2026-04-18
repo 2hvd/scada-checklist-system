@@ -97,6 +97,16 @@ if ($totalItems > 0 && $decidedItems < $totalItems) {
     jsonResponse(false, 'All items must have a decision before accepting');
 }
 
+// Start control stage with fresh decisions every time this SWO is forwarded.
+$stmt = $conn->prepare("DELETE FROM control_item_reviews WHERE swo_id = ?");
+$stmt->bind_param('i', $swo_id);
+if (!$stmt->execute()) {
+    $stmt->close();
+    $conn->close();
+    jsonResponse(false, 'Failed to reset control decisions');
+}
+$stmt->close();
+
 // Update SWO status to Pending Control Review
 $stmt = $conn->prepare(
     "UPDATE swo_list SET status = 'Pending Control Review',

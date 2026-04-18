@@ -102,6 +102,25 @@ if ($empty_count > 0) {
     jsonResponse(false, 'All checklist items must have a status before submitting. ' . $empty_count . ' item(s) still empty.');
 }
 
+// Start each review cycle from a clean slate.
+$stmt = $conn->prepare("DELETE FROM support_item_reviews WHERE swo_id = ?");
+$stmt->bind_param('i', $swo_id);
+if (!$stmt->execute()) {
+    $stmt->close();
+    $conn->close();
+    jsonResponse(false, 'Failed to reset support review state');
+}
+$stmt->close();
+
+$stmt = $conn->prepare("DELETE FROM control_item_reviews WHERE swo_id = ?");
+$stmt->bind_param('i', $swo_id);
+if (!$stmt->execute()) {
+    $stmt->close();
+    $conn->close();
+    jsonResponse(false, 'Failed to reset control review state');
+}
+$stmt->close();
+
 // Update SWO status
 $stmt = $conn->prepare("UPDATE swo_list SET status = 'Pending Support Review', submitted_at = NOW() WHERE id = ?");
 $stmt->bind_param('i', $swo_id);
