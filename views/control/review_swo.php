@@ -4,6 +4,8 @@ require_once __DIR__ . '/../../config/functions.php';
 requireRole('control');
 
 $swo_id = isset($_GET['swo_id']) ? intval($_GET['swo_id']) : null;
+$mode = isset($_GET['mode']) ? trim($_GET['mode']) : '';
+$viewOnly = ($mode === 'view');
 if (!$swo_id) {
     header('Location: /scada-checklist-system/views/control/index.php');
     exit;
@@ -15,12 +17,12 @@ require_once __DIR__ . '/../components/sidebar.php';
 <link rel="stylesheet" href="/scada-checklist-system/assets/css/review_page.css">
 
 <div class="main-content">
-    <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+    <div class="topbar checklist-topbar">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="topbar-title" id="reviewTitle">Loading…</h1>
         </div>
-        <div class="topbar-actions" style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-actions">
             <span class="save-indicator hidden" id="saveIndicator"></span>
             <a href="/scada-checklist-system/views/control/index.php" class="btn btn-secondary btn-sm">← Dashboard</a>
         </div>
@@ -37,7 +39,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                 </div>
                 <div class="info-item">
                     <span>Status:</span>
-                    <span class="badge badge-pending">Pending Control Review</span>
+                    <span id="reviewStatusWrap" class="badge badge-pending">Pending Control Review</span>
                 </div>
             </div>
 
@@ -87,6 +89,6 @@ function toggleSidebar() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    ReviewManager.init(<?php echo $swo_id; ?>, 'control');
+    ReviewManager.init(<?php echo $swo_id; ?>, 'control', <?php echo $viewOnly ? 'true' : 'false'; ?>);
 });
 </script>

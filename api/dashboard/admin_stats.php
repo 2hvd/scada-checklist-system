@@ -24,7 +24,7 @@ $userStmt = $conn->prepare(
         COUNT(DISTINCT s.id) AS total_assigned,
         SUM(CASE WHEN s.status = 'Completed' OR s.status = 'Closed' THEN 1 ELSE 0 END) AS completed,
         SUM(CASE WHEN s.status = 'In Progress' THEN 1 ELSE 0 END) AS in_progress,
-        SUM(CASE WHEN s.status = 'Submitted' THEN 1 ELSE 0 END) AS submitted
+        SUM(CASE WHEN s.status IN ('Pending Support Review', 'Submitted') THEN 1 ELSE 0 END) AS pending_review
     FROM users u
     LEFT JOIN swo_list s ON s.assigned_to = u.id
     WHERE u.role = 'user' AND u.active = 1
@@ -33,24 +33,117 @@ $userStmt = $conn->prepare(
 $userStmt->execute();
 $userResult = $userStmt->get_result();
 $userStats = [];
+$leafKeysByTypeCache = [];
 
 while ($user = $userResult->fetch_assoc()) {
-    // Get checklist progress for this user
-    $progressStmt = $conn->prepare(
-        "SELECT 
-            COUNT(*) AS total,
-            SUM(CASE WHEN cs.status IN ('done','na') THEN 1 ELSE 0 END) AS completed_items
-         FROM checklist_status cs
-         JOIN swo_list s ON cs.swo_id = s.id
-         WHERE cs.user_id = ? AND s.status NOT IN ('Draft','Pending','Registered')"
-    );
-    $progressStmt->bind_param('i', $user['id']);
-    $progressStmt->execute();
-    $progress = $progressStmt->get_result()->fetch_assoc();
-    $progressStmt->close();
+    $userTotalItems = 0;
+    $userCompletedItems = 0;
 
-    $user['total_items'] = intval($progress['total']);
-    $user['completed_items'] = intval($progress['completed_items']);
+    $swoStmt = $conn->prepare(
+        "SELECT id, swo_type_id
+         FROM swo_list
+         WHERE assigned_to = ? AND status NOT IN ('Rejected','Pending','Registered')"
+    );
+    $swoStmt->bind_param('i', $user['id']);
+    $swoStmt->execute();
+    $assignedSwos = $swoStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $swoStmt->close();
+
+    foreach ($assignedSwos as $swoRow) {
+        $swoId     = intval($swoRow['id']);
+        $swoTypeId = !empty($swoRow['swo_type_id']) ? intval($swoRow['swo_type_id']) : null;
+        $swoCacheKey = 'swo_' . $swoId;
+
+        if (!isset($leafKeysByTypeCache[$swoCacheKey])) {
+            // Check for snapshot
+            $snapChk = $conn->prepare("SELECT COUNT(*) as cnt FROM swo_checklist_items WHERE swo_id = ?");
+            $snapChk->bind_param('i', $swoId);
+            $snapChk->execute();
+            $snapCnt = intval($snapChk->get_result()->fetch_assoc()['cnt']);
+            $snapChk->close();
+
+            if ($snapCnt > 0) {
+                $itemStmt = $conn->prepare(
+                    "SELECT ci.id, ci.item_key, ci.parent_item_id, ci.user_parent_item_id, ci.visible_user
+                     FROM swo_checklist_items sci
+                     JOIN checklist_items ci ON ci.id = sci.item_id
+                     WHERE sci.swo_id = ?"
+                );
+                $itemStmt->bind_param('i', $swoId);
+            } else {
+                // Fallback: active items by type
+                $itemSql = "SELECT id, item_key, parent_item_id, user_parent_item_id, visible_user
+                            FROM checklist_items
+                            WHERE is_active = 1 AND is_deleted = 0";
+                if ($swoTypeId !== null) {
+                    $itemSql .= " AND (swo_type_id = ? OR swo_type_id IS NULL)";
+                    $itemStmt = $conn->prepare($itemSql);
+                    $itemStmt->bind_param('i', $swoTypeId);
+                } else {
+                    $itemStmt = $conn->prepare($itemSql);
+                }
+            }
+            $itemStmt->execute();
+            $rawItems = $itemStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            $itemStmt->close();
+
+            $visibleItems = [];
+            foreach ($rawItems as $item) {
+                if (intval($item['visible_user'] ?? 1) !== 1) {
+                    continue;
+                }
+                $item['effective_parent_item_id'] = $item['user_parent_item_id'] !== null
+                    ? intval($item['user_parent_item_id'])
+                    : ($item['parent_item_id'] !== null ? intval($item['parent_item_id']) : null);
+                $visibleItems[] = $item;
+            }
+
+            $hasChildren = [];
+            foreach ($visibleItems as $item) {
+                if ($item['effective_parent_item_id'] !== null) {
+                    $hasChildren[intval($item['effective_parent_item_id'])] = true;
+                }
+            }
+
+            $leafKeysByTypeCache[$swoCacheKey] = [];
+            foreach ($visibleItems as $item) {
+                $itemId = intval($item['id']);
+                if (!isset($hasChildren[$itemId])) {
+                    $leafKeysByTypeCache[$swoCacheKey][$item['item_key']] = true;
+                }
+            }
+        }
+
+        $leafKeys = $leafKeysByTypeCache[$swoCacheKey];
+
+        if (empty($leafKeys)) {
+            continue;
+        }
+
+        $userTotalItems += count($leafKeys);
+
+        $statusStmt = $conn->prepare(
+            "SELECT item_key, status
+             FROM checklist_status
+             WHERE swo_id = ? AND user_id = ?"
+        );
+        $statusStmt->bind_param('ii', $swoId, $user['id']);
+        $statusStmt->execute();
+        $statusRows = $statusStmt->get_result();
+        while ($status = $statusRows->fetch_assoc()) {
+            if (!isset($leafKeys[$status['item_key']])) {
+                continue;
+            }
+            if ($status['status'] === 'done' || $status['status'] === 'na') {
+                $userCompletedItems++;
+            }
+        }
+        $statusStmt->close();
+    }
+
+    $user['total_items'] = $userTotalItems;
+    $user['completed_items'] = $userCompletedItems;
+    $user['submitted'] = intval($user['pending_review']);
     $user['completion_pct'] = $user['total_items'] > 0
         ? round($user['completed_items'] / $user['total_items'] * 100, 1)
         : 0;

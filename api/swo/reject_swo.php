@@ -47,7 +47,7 @@ if ($swo['status'] !== 'Pending') {
 
 $admin_id = $_SESSION['user_id'];
 
-$stmt = $conn->prepare("UPDATE swo_list SET status = 'Draft' WHERE id = ?");
+$stmt = $conn->prepare("UPDATE swo_list SET status = 'Rejected' WHERE id = ?");
 $stmt->bind_param('i', $swo_id);
 if (!$stmt->execute()) {
     $stmt->close();
@@ -64,7 +64,7 @@ $stmt->bind_param('iiss', $admin_id, $swo_id, $item_key, $comment_text);
 $stmt->execute();
 $stmt->close();
 
-logAudit($conn, $admin_id, $swo_id, 'REJECT_SWO', 'Pending', 'Draft');
+logAudit($conn, $admin_id, $swo_id, 'REJECT_SWO', 'Pending', 'Rejected');
 
 // Log in submissions_history
 $stmt = $conn->prepare("INSERT INTO submissions_history (user_id, swo_id, action, notes) VALUES (?,?,'reject',?)");
@@ -73,4 +73,4 @@ $stmt->execute();
 $stmt->close();
 
 $conn->close();
-jsonResponse(true, 'SWO rejected and returned to Draft');
+jsonResponse(true, 'SWO rejected successfully');

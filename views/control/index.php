@@ -7,7 +7,7 @@ require_once __DIR__ . '/../components/sidebar.php';
 ?>
 <div class="main-content">
     <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="topbar-title">Control Dashboard</h1>
         </div>
@@ -55,10 +55,11 @@ require_once __DIR__ . '/../components/sidebar.php';
                                     <th>Station</th>
                                     <th>Assigned To</th>
                                     <th>Completed At</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="controlCompletedTableBody">
-                                <tr><td colspan="4" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
+                                <tr><td colspan="5" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -70,14 +71,14 @@ require_once __DIR__ . '/../components/sidebar.php';
 
 <!-- Control Review Modal -->
 <div class="modal-overlay" id="controlReviewModal">
-    <div class="modal" style="max-width:900px;width:95vw;">
+    <div class="modal modal-review">
         <div class="modal-header">
             <span class="modal-title" id="controlModalTitle">Control Review</span>
             <button class="modal-close" onclick="closeModal('controlReviewModal')">✕</button>
         </div>
-        <div id="controlModalSwoInfo" style="font-size:13px;color:#666;margin-bottom:16px;"></div>
+        <div id="controlModalSwoInfo" class="review-modal-info"></div>
 
-        <div class="table-wrapper" style="max-height:50vh;overflow-y:auto;">
+        <div class="table-wrapper modal-table-wrapper">
             <table id="controlReviewTable">
                 <thead>
                     <tr>
@@ -96,12 +97,12 @@ require_once __DIR__ . '/../components/sidebar.php';
             </table>
         </div>
 
-        <div style="margin-top:16px;">
-            <label style="font-weight:600;display:block;margin-bottom:6px;">Overall Comments:</label>
+        <div class="modal-form-section">
+            <label class="modal-form-label">Overall Comments:</label>
             <textarea id="controlOverallComments" class="form-control" rows="3" placeholder="Add overall review comments..."></textarea>
         </div>
 
-        <div class="modal-footer" style="margin-top:16px;">
+        <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeModal('controlReviewModal')">Cancel</button>
             <button class="btn btn-warning" id="controlReturnBtn" onclick="ControlDashboard.submitReturn()">
                 ↩ Return to Support
@@ -127,5 +128,12 @@ function toggleSidebar() {
 document.addEventListener('DOMContentLoaded', function() {
     initTabs('mainTabs');
     ControlDashboard.loadData();
+
+    const AUTO_REFRESH_MS = getDashboardRefreshMs(10000);
+    setInterval(() => {
+        if (document.hidden) return;
+        if (document.querySelector('.modal-overlay.active')) return;
+        ControlDashboard.loadData();
+    }, AUTO_REFRESH_MS);
 });
 </script>

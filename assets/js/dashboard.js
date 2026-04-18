@@ -24,12 +24,12 @@ const AdminDashboard = {
             const totalSwos = Object.values(sc).reduce((a, b) => a + b, 0);
             const pending = sc['Pending'] || 0;
             const inProgress = sc['In Progress'] || 0;
-            const submitted = sc['Submitted'] || 0;
+            const pendingReview = (sc['Pending Support Review'] || 0) + (sc['Submitted'] || 0);
 
             document.getElementById('statTotal').textContent = totalSwos;
             document.getElementById('statPending').textContent = pending;
             document.getElementById('statInProgress').textContent = inProgress;
-            document.getElementById('statSubmitted').textContent = submitted;
+            document.getElementById('statSubmitted').textContent = pendingReview;
 
             // Update pending badge
             const badge = document.getElementById('pendingBadge');
@@ -74,8 +74,8 @@ const AdminDashboard = {
                         <div class="lbl">In Progress</div>
                     </div>
                     <div class="user-card-stat">
-                        <div class="val">${u.submitted}</div>
-                        <div class="lbl">Submitted</div>
+                        <div class="val">${u.pending_review ?? u.submitted ?? 0}</div>
+                        <div class="lbl">Pending Review</div>
                     </div>
                 </div>
                 ${renderProgressBar(u.completion_pct)}
@@ -156,7 +156,7 @@ const AdminDashboard = {
     async approveSWO(swoId) {
         const confirmed = await confirmDialog('Approve this SWO? It will become Registered.');
         if (!confirmed) return;
-        const data = await API.post('/swo/approve_swo.php', {swo_id: swoId});
+        const data = await API.post('/swo/approve_swo.php', { swo_id: swoId });
         if (data && data.success) {
             showSuccess('SWO approved successfully');
             this.loadSWOTable();
@@ -176,7 +176,7 @@ const AdminDashboard = {
         const swoId = document.getElementById('rejectSwoId').value;
         const reason = document.getElementById('rejectReason').value.trim();
         if (!reason) { showWarning('Please enter a rejection reason.'); return; }
-        const data = await API.post('/swo/reject_swo.php', {swo_id: swoId, reason});
+        const data = await API.post('/swo/reject_swo.php', { swo_id: swoId, reason });
         if (data && data.success) {
             showSuccess('SWO rejected');
             closeModal('rejectModal');
@@ -209,7 +209,7 @@ const AdminDashboard = {
         const swoId = document.getElementById('assignSwoId').value;
         const userId = document.getElementById('assignUserSelect').value;
         if (!userId) { showWarning('Please select a user.'); return; }
-        const data = await API.post('/swo/assign_swo.php', {swo_id: swoId, user_id: userId});
+        const data = await API.post('/swo/assign_swo.php', { swo_id: swoId, user_id: userId });
         if (data && data.success) {
             showSuccess('SWO assigned successfully');
             closeModal('assignModal');
@@ -221,7 +221,7 @@ const AdminDashboard = {
     },
 
     async viewSWO(swoId) {
-        const data = await API.get('/swo/get_swo_details.php', {swo_id: swoId});
+        const data = await API.get('/swo/get_swo_details.php', { swo_id: swoId });
         if (!data || !data.success) { showError('Failed to load SWO details'); return; }
         const s = data.data.swo;
         document.getElementById('viewSwoContent').innerHTML = `
@@ -233,6 +233,8 @@ const AdminDashboard = {
                 <tr><td style="padding:6px;font-weight:600">Status</td><td>${getStatusBadge(s.status)}</td></tr>
                 <tr><td style="padding:6px;font-weight:600">Created By</td><td>${escapeHtml(s.created_by_name || '—')}</td></tr>
                 <tr><td style="padding:6px;font-weight:600">Assigned To</td><td>${escapeHtml(s.assigned_to_name || '—')}</td></tr>
+                <tr><td style="padding:6px;font-weight:600">Support Reviewer</td><td>${escapeHtml(s.support_reviewer_name || '—')}</td></tr>
+                <tr><td style="padding:6px;font-weight:600">Control Reviewer</td><td>${escapeHtml(s.control_reviewer_name || '—')}</td></tr>
                 <tr><td style="padding:6px;font-weight:600">Description</td><td>${escapeHtml(s.description || '—')}</td></tr>
                 <tr><td style="padding:6px;font-weight:600">Created</td><td>${formatDate(s.created_at)}</td></tr>
             </table>
@@ -285,17 +287,19 @@ const SupportDashboard = {
 
     renderStatusSummary(summary) {
         const total = Object.values(summary).reduce((a, b) => a + b, 0);
-        const el = document.getElementById('supportSummaryCards');
-        if (!el) return;
         const pendingSupport = (summary['Pending Support Review'] || 0) + (summary['Returned from Control'] || 0);
         const inProgress = summary['In Progress'] || 0;
         const sentToControl = summary['Pending Control Review'] || 0;
-        el.innerHTML = `
-            <div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">Total SWOs</div></div>
-            <div class="stat-card border-warning"><div class="stat-value" id="statSupportPending">${pendingSupport}</div><div class="stat-label">Pending Review</div></div>
-            <div class="stat-card border-success"><div class="stat-value">${inProgress}</div><div class="stat-label">In Progress</div></div>
-            <div class="stat-card border-info"><div class="stat-value">${sentToControl}</div><div class="stat-label">Sent to Control</div></div>
-        `;
+
+        const elTotal = document.getElementById('statSupportTotal');
+        const elPending = document.getElementById('statSupportPending');
+        const elProgress = document.getElementById('statSupportInProgress');
+        const elSent = document.getElementById('statSupportSent');
+
+        if (elTotal) elTotal.textContent = total;
+        if (elPending) elPending.textContent = pendingSupport;
+        if (elProgress) elProgress.textContent = inProgress;
+        if (elSent) elSent.textContent = sentToControl;
     },
 
     renderMySWOs(swos) {
@@ -351,7 +355,7 @@ const SupportDashboard = {
 };
 
 // Initialize based on page
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     if (document.body.dataset.page === 'admin') {
         AdminDashboard.init();
     }

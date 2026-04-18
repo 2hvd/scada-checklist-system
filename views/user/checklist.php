@@ -12,29 +12,45 @@ if (!$swo_id) {
 // Verify assignment
 require_once __DIR__ . '/../../config/db_config.php';
 $conn = getDBConnection();
-$stmt = $conn->prepare("SELECT swo_number, station_name, swo_type, kcor, status, rejection_reason FROM swo_list WHERE id = ? AND assigned_to = ?");
+$stmt = $conn->prepare("SELECT swo_number, station_name, swo_type, swo_type_id, kcor, status, rejection_reason FROM swo_list WHERE id = ? AND assigned_to = ?");
 $stmt->bind_param('ii', $swo_id, $_SESSION['user_id']);
 $stmt->execute();
 $swo = $stmt->get_result()->fetch_assoc();
 $stmt->close();
-$conn->close();
 
 if (!$swo) {
+    $conn->close();
     header('Location: /scada-checklist-system/views/user/index.php');
     exit;
 }
+
+// Determine whether the Support Comment column should be shown:
+// true if rejection_reason is set OR if there are saved support item reviews
+$hasSupportReviews = !empty($swo['rejection_reason']);
+if (!$hasSupportReviews) {
+    $checkStmt = $conn->prepare("SELECT 1 FROM support_item_reviews WHERE swo_id = ? LIMIT 1");
+    if ($checkStmt) {
+        $checkStmt->bind_param('i', $swo_id);
+        $checkStmt->execute();
+        $hasSupportReviews = $checkStmt->get_result()->num_rows > 0;
+        $checkStmt->close();
+    }
+}
+
+$conn->close();
 
 $readOnly = !in_array($swo['status'], ['In Progress']);
 require_once __DIR__ . '/../components/header.php';
 require_once __DIR__ . '/../components/sidebar.php';
 ?>
+<link rel="stylesheet" href="/scada-checklist-system/assets/css/review_page.css">
 <div class="main-content">
-    <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+    <div class="topbar checklist-topbar">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <div>
-                <h1 class="topbar-title" style="margin:0;"><?php echo htmlspecialchars($swo['swo_number']); ?></h1>
-                <div style="font-size:12px;color:#666;"><?php echo htmlspecialchars($swo['station_name']); ?> &mdash; <?php echo htmlspecialchars($swo['swo_type']); ?></div>
+                <h1 class="topbar-title topbar-title-no-margin"><?php echo htmlspecialchars($swo['swo_number']); ?></h1>
+                <div class="topbar-subtitle"><?php echo htmlspecialchars($swo['station_name']); ?> &mdash; <?php echo htmlspecialchars($swo['swo_type']); ?></div>
             </div>
         </div>
         <div class="topbar-actions">
@@ -96,6 +112,12 @@ function toggleSidebar() {
     document.getElementById('sidebarOverlay').classList.toggle('active');
 }
 document.addEventListener('DOMContentLoaded', function() {
-    ChecklistPage.init(<?php echo $swo_id; ?>, <?php echo $readOnly ? 'true' : 'false'; ?>);
+    ChecklistPage.init(
+        <?php echo $swo_id; ?>,
+        <?php echo $readOnly ? 'true' : 'false'; ?>,
+        <?php echo json_encode($swo['status']); ?>,
+        <?php echo $hasSupportReviews ? 'true' : 'false'; ?>,
+        <?php echo !empty($swo['swo_type_id']) ? intval($swo['swo_type_id']) : 'null'; ?>
+    );
 });
 </script>

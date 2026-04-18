@@ -1,4 +1,4 @@
-<?php
+﻿﻿<?php
 $pageTitle = 'SWO Management';
 require_once __DIR__ . '/../../config/functions.php';
 requireRole('admin');
@@ -7,12 +7,11 @@ require_once __DIR__ . '/../components/sidebar.php';
 ?>
 <div class="main-content">
     <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
-            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+        <div class="topbar-heading">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">â˜°</button>
             <h1 class="topbar-title">SWO Management</h1>
         </div>
         <div class="topbar-actions">
-            <button class="btn btn-primary btn-sm" onclick="loadSWOs()">🔄 Refresh</button>
         </div>
     </div>
 
@@ -20,20 +19,22 @@ require_once __DIR__ . '/../components/sidebar.php';
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">All SWOs</h3>
-                <div class="filter-bar" style="margin:0">
-                    <select id="statusFilter" class="form-control" style="width:auto" onchange="loadSWOs()">
+                <div class="filter-bar filter-bar-compact">
+                    <select id="statusFilter" class="form-control form-control-auto" onchange="loadSWOs()">
                         <option value="">All Statuses</option>
-                        <option value="Draft">Draft</option>
                         <option value="Pending">Pending</option>
                         <option value="Registered">Registered</option>
                         <option value="In Progress">In Progress</option>
+                        <option value="Pending Support Review">Pending Support Review</option>
+                        <option value="Pending Control Review">Pending Control Review</option>
+                        <option value="Returned from Control">Returned from Control</option>
                         <option value="Submitted">Submitted</option>
                         <option value="Completed">Completed</option>
                         <option value="Closed">Closed</option>
                     </select>
                 </div>
             </div>
-            <div class="table-wrapper" style="overflow-x:auto;">
+            <div class="table-wrapper">
                 <table class="swo-management-table">
                     <thead>
                         <tr>
@@ -65,7 +66,7 @@ require_once __DIR__ . '/../components/sidebar.php';
     <div class="modal">
         <div class="modal-header">
             <span class="modal-title">Reject SWO</span>
-            <button class="modal-close" onclick="closeModal('rejectModal')">×</button>
+            <button class="modal-close" onclick="closeModal('rejectModal')">Ã—</button>
         </div>
         <input type="hidden" id="rejectSwoId">
         <div class="form-group">
@@ -84,7 +85,7 @@ require_once __DIR__ . '/../components/sidebar.php';
     <div class="modal">
         <div class="modal-header">
             <span class="modal-title">Assign SWO to User</span>
-            <button class="modal-close" onclick="closeModal('assignModal')">×</button>
+            <button class="modal-close" onclick="closeModal('assignModal')">Ã—</button>
         </div>
         <input type="hidden" id="assignSwoId">
         <div class="form-group">
@@ -103,7 +104,7 @@ require_once __DIR__ . '/../components/sidebar.php';
     <div class="modal">
         <div class="modal-header">
             <span class="modal-title">SWO Details</span>
-            <button class="modal-close" onclick="closeModal('viewSwoModal')">×</button>
+            <button class="modal-close" onclick="closeModal('viewSwoModal')">Ã—</button>
         </div>
         <div id="viewSwoContent"></div>
         <div class="modal-footer">
@@ -149,14 +150,20 @@ async function loadSWOs() {
                 <td><strong>${escapeHtml(s.swo_number)}</strong></td>
                 <td>${escapeHtml(s.station_name)}</td>
                 <td>${escapeHtml(s.swo_type)}</td>
-                <td>${escapeHtml(s.kcor || '—')}</td>
+                <td>${escapeHtml(s.kcor || '"”')}</td>
                 <td>${getStatusBadge(s.status)}</td>
-                <td>${s.created_at ? formatDateShort(s.created_at) : '—'}</td>
-                <td>${escapeHtml(s.assigned_to || '—')}</td>
-                <td>${s.assigned_at ? formatDateShort(s.assigned_at) : '—'}</td>
-                <td>${s.submitted_at ? formatDateShort(s.submitted_at) : '—'}</td>
-                <td>${s.support_reviewed_at ? formatDateShort(s.support_reviewed_at) : '—'}</td>
-                <td>${s.control_reviewed_at ? formatDateShort(s.control_reviewed_at) : '—'}</td>
+                <td>${s.created_at ? formatDateShort(s.created_at) : '"”'}</td>
+                <td>${escapeHtml(s.assigned_to || '"”')}</td>
+                <td>${s.assigned_at ? formatDateShort(s.assigned_at) : '"”'}</td>
+                <td>${s.submitted_at ? formatDateShort(s.submitted_at) : '"”'}</td>
+                <td>
+                    ${s.support_reviewed_at ? formatDateShort(s.support_reviewed_at) : '"”'}
+                    <div class="text-muted" style="font-size:11px;">${escapeHtml(s.support_reviewer_name || '"”')}</div>
+                </td>
+                <td>
+                    ${s.control_reviewed_at ? formatDateShort(s.control_reviewed_at) : '"”'}
+                    <div class="text-muted" style="font-size:11px;">${escapeHtml(s.control_reviewer_name || '"”')}</div>
+                </td>
                 <td>
                     <button class="btn btn-secondary btn-sm" onclick="AdminDashboard.viewSWO(${s.id})">View</button>
                 </td>

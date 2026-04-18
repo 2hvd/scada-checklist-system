@@ -1,4 +1,4 @@
-<?php
+﻿﻿<?php
 $pageTitle = 'Submissions';
 require_once __DIR__ . '/../../config/functions.php';
 requireRole('support');
@@ -10,12 +10,12 @@ require_once __DIR__ . '/../components/sidebar.php';
 ?>
 <div class="main-content">
     <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
-            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+        <div class="topbar-heading">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">â˜°</button>
             <h1 class="topbar-title">Submissions</h1>
         </div>
         <div class="topbar-actions">
-            <a href="/scada-checklist-system/views/support/index.php" class="btn btn-secondary btn-sm">← Dashboard</a>
+            <a href="/scada-checklist-system/views/support/index.php" class="btn btn-secondary btn-sm">â† Dashboard</a>
         </div>
     </div>
 
@@ -26,15 +26,15 @@ require_once __DIR__ . '/../components/sidebar.php';
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title" id="swoTitle">Loading SWO...</h3>
-                    <button class="btn btn-primary btn-sm" onclick="ChecklistPage.exportCSV()">📥 Export CSV</button>
+                    <button class="btn btn-primary btn-sm" onclick="ChecklistPage.exportCSV()">ðŸ“¥ Export CSV</button>
                 </div>
-                <div id="swoInfoBar" style="margin-bottom:16px;font-size:13px;color:#666;"></div>
+                <div id="swoInfoBar" class="review-modal-info"></div>
 
                 <!-- Progress -->
                 <div style="margin-bottom:20px;">
                     <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
                         <span style="font-weight:600">Progress</span>
-                        <span id="progressPct" style="font-weight:700;color:#2e86de">—</span>
+                        <span id="progressPct" style="font-weight:700;color:#2e86de">"”</span>
                     </div>
                     <div class="progress-bar-wrapper">
                         <div class="progress-bar" id="progressBar" style="width:0%"></div>
@@ -53,7 +53,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                     <h3 class="card-title">Comments</h3>
                 </div>
                 <div id="commentsContainer"></div>
-                <form id="commentForm" style="margin-top:16px;">
+                <form id="commentForm" class="modal-form-section">
                     <div class="comment-form">
                         <textarea class="form-control" placeholder="Add a comment or review note..." required></textarea>
                         <button type="submit" class="btn btn-primary">Send</button>
@@ -67,7 +67,6 @@ require_once __DIR__ . '/../components/sidebar.php';
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">Checklists Awaiting Review</h3>
-                <button class="btn btn-secondary btn-sm" onclick="loadSubmissions()">🔄 Refresh</button>
             </div>
             <div class="table-wrapper">
                 <table>
@@ -111,11 +110,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     const details = await API.get('/swo/get_swo_details.php', {swo_id: swoId});
     if (details && details.success) {
         const s = details.data.swo;
-        document.getElementById('swoTitle').textContent = `${s.swo_number} — ${s.station_name}`;
+        document.getElementById('swoTitle').textContent = `${s.swo_number} "” ${s.station_name}`;
         document.getElementById('swoInfoBar').innerHTML =
             `Type: <strong>${escapeHtml(s.swo_type)}</strong> | 
              Status: ${getStatusBadge(s.status)} | 
-             Assigned To: <strong>${escapeHtml(s.assigned_to_name || '—')}</strong> | 
+             Assigned To: <strong>${escapeHtml(s.assigned_to_name || '"”')}</strong> | 
              Submitted: <strong>${formatDate(s.submitted_at)}</strong>`;
     }
 
@@ -140,7 +139,7 @@ async function loadSubmissions() {
             <td><strong>${escapeHtml(s.swo_number)}</strong></td>
             <td>${escapeHtml(s.station_name)}</td>
             <td>${escapeHtml(s.swo_type)}</td>
-            <td>${escapeHtml(s.assigned_to_name || '—')}</td>
+            <td>${escapeHtml(s.assigned_to_name || '"”')}</td>
             <td>${formatDate(s.submitted_at)}</td>
             <td>
                 <a href="?swo_id=${s.id}" class="btn btn-primary btn-sm">Review</a>

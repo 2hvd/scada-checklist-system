@@ -37,19 +37,21 @@ if (!$item) {
 }
 
 // Check if this item has been used in any checklist_status records
-$usageChk = $conn->prepare("SELECT COUNT(*) AS cnt FROM checklist_status WHERE item_key = ?");
+$usageChk = $conn->prepare("SELECT COUNT(DISTINCT swo_id) AS cnt FROM checklist_status WHERE item_key = ?");
 $usageChk->bind_param('s', $item['item_key']);
 $usageChk->execute();
 $usage = $usageChk->get_result()->fetch_assoc();
 $usageChk->close();
 
-if (intval($usage['cnt']) > 0) {
+$usage_count = intval($usage['cnt'] ?? 0);
+
+if ($usage_count > 0) {
     // Soft delete — item has been used in SWOs
     $stmt = $conn->prepare("UPDATE checklist_items SET is_deleted = 1, is_active = 0 WHERE id = ?");
     $stmt->bind_param('i', $item_id);
     $stmt->execute();
     $stmt->close();
-    $message = 'Item deactivated and hidden (used in existing SWOs — soft deleted)';
+    $message = "Item soft-deleted (used in $usage_count SWO(s) — data preserved)";
 } else {
     // Permanently delete — never used
     $stmt = $conn->prepare("DELETE FROM checklist_items WHERE id = ?");

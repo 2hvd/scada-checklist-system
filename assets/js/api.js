@@ -7,7 +7,7 @@ const API = {
         Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, v));
         const response = await fetch(url.toString());
         if (response.status === 401 || response.redirected) {
-            window.location.href = '/scada-checklist-system/index.php?timeout=1';
+            window.location.href = '/scada-checklist-system/index.php';
             return;
         }
         return response.json();
@@ -20,7 +20,7 @@ const API = {
             body: JSON.stringify(data)
         });
         if (response.status === 401 || response.redirected) {
-            window.location.href = '/scada-checklist-system/index.php?timeout=1';
+            window.location.href = '/scada-checklist-system/index.php';
             return;
         }
         return response.json();

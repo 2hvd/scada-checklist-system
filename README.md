@@ -12,7 +12,7 @@ A complete web-based SCADA commissioning checklist management system built with 
 - **Comments system** for collaboration and review notes
 - **CSV export** for checklist reporting
 - **Audit logging** for all status changes
-- **Session management** with 15-minute timeout
+- **Session management** for authenticated access
 - **Responsive design** — works on desktop and mobile
 
 ## Quick Start (XAMPP)
@@ -129,5 +129,5 @@ define('DB_NAME', 'scada_checklist');
 - All API endpoints use prepared statements (SQL injection protection)
 - Passwords stored as bcrypt hashes
 - Role-based access control on all endpoints
-- 15-minute session timeout
+- Active session validation on protected pages
 - Delete `setup_passwords.php` after initial setup

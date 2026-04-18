@@ -4,14 +4,19 @@ const ChecklistPage = {
     swoId: null,
     readOnly: false,
     supportMode: false,
+    swoStatus: '',
+    hasRejectionReason: false,
+    swoTypeId: null,
     _savedTimer: null,
 
-    async init(swoId, readOnly = false) {
+    async init(swoId, readOnly = false, swoStatus = '', hasRejectionReason = false, swoTypeId = null) {
         this.swoId = swoId;
         this.readOnly = readOnly;
+        this.swoStatus = swoStatus;
+        this.hasRejectionReason = hasRejectionReason;
+        this.swoTypeId = swoTypeId;
         await this.loadChecklist();
         if (!readOnly) {
-            await this.loadUserItemComments();
             this.bindCommentAutoSave();
         }
         await this.loadComments();
@@ -24,7 +29,11 @@ const ChecklistPage = {
         container.innerHTML = '<div class="loading-overlay"><div class="loading-spinner"></div></div>';
 
         try {
-            const data = await API.get('/checklist/get_checklist.php', {swo_id: this.swoId});
+            const params = {swo_id: this.swoId};
+            if (this.swoTypeId) {
+                params.swo_type_id = this.swoTypeId;
+            }
+            const data = await API.get('/checklist/get_checklist.php', params);
             if (!data || !data.success) {
                 container.innerHTML = '<div class="alert alert-danger">Failed to load checklist.</div>';
                 return;
@@ -32,6 +41,7 @@ const ChecklistPage = {
 
             this.renderChecklist(data.data, container);
             this.updateProgress(data.data.progress, data.data.counts);
+            await this.loadExtraComments();
         } catch (err) {
             container.innerHTML = '<div class="alert alert-danger">Error loading checklist.</div>';
         }
@@ -41,40 +51,52 @@ const ChecklistPage = {
         const sections = data.sections || [];
         let html = '';
 
+        const showSupportComment = this.swoStatus === 'In Progress' && this.hasRejectionReason;
+        const showControlComment = this.swoStatus === 'Returned from Control';
+
         sections.forEach(section => {
             const extraHeads = this.supportMode
                 ? '<th class="col-decision">Support Decision</th><th class="col-comment">Support Comment</th>'
                 : '';
-            const commentHead = !this.readOnly
-                ? '<th class="col-comment">Comment</th>'
-                : '';
+
+            const feedbackHead = showSupportComment
+                ? '<th class="col-comment">Support Comment</th>'
+                : showControlComment
+                    ? '<th class="col-comment">Control Comment</th>'
+                    : '';
 
             html += `
-                <div class="checklist-section">
-                    <div class="checklist-section-header">${escapeHtml(section.label)}</div>
-                    <table class="checklist-table">
+                <div class="review-section">
+                    <div class="review-section-header">${escapeHtml(section.label)}</div>
+                    <table class="review-table">
                         <thead>
                             <tr>
                                 <th class="col-number">#</th>
                                 <th>Item</th>
                                 <th class="col-status">Status</th>
-                                ${commentHead}
+                                <th class="col-comment">Comment</th>
                                 ${extraHeads}
+                                ${feedbackHead}
                             </tr>
                         </thead>
                         <tbody>
             `;
             section.items.forEach((item, idx) => {
-                const num = idx + 1;
+                const num = this.getDisplayNumber(item) || (idx + 1);
                 const disabled = this.readOnly ? 'disabled' : '';
-                const commentCell = !this.readOnly
+                const isChild = !!item.parent_item_id;
+                const commentCell = this.readOnly
                     ? `<td class="col-comment">
+                           ${item.user_comment
+                               ? `<span class="user-comment-readonly">${escapeHtml(item.user_comment)}</span>`
+                               : '<span class="text-muted">—</span>'}
+                       </td>`
+                    : `<td class="col-comment">
                            <textarea class="user-comment-textarea"
                                      data-key="${escapeHtml(item.key)}"
                                      rows="2"
-                                     placeholder="Add comment..."></textarea>
-                       </td>`
-                    : '';
+                                     placeholder="Add comment...">${escapeHtml(item.user_comment || '')}</textarea>
+                       </td>`;
                 const supportCells = this.supportMode ? `
                     <td class="col-decision">
                         <select class="item-status-select support-decision"
@@ -95,17 +117,23 @@ const ChecklistPage = {
                                   placeholder="Add comments..."></textarea>
                     </td>` : '';
 
+                const feedbackCell = (showSupportComment || showControlComment)
+                    ? `<td class="col-comment reviewer-comment-cell" data-key="${escapeHtml(item.key)}"><span class="text-muted">—</span></td>`
+                    : '';
+
                 html += `
-                    <tr class="checklist-item${this.supportMode ? ' checklist-item--support' : ''}" data-key="${escapeHtml(item.key)}">
+                    <tr data-key="${escapeHtml(item.key)}">
                         <td class="col-number"><div class="item-number">${num}</div></td>
-                        <td class="item-label">${escapeHtml(item.label)}</td>
+                        <td class="item-label">${isChild ? '<span style="color:#aaa;margin-right:4px;">↳</span>' : ''}${escapeHtml(item.label)}</td>
                         <td class="col-status">
                             ${this.readOnly
                                 ? `<div class="item-user-status">${getChecklistStatusBadge(item.status)}</div>`
                                 : `<select class="item-status-select status-${item.status}"
                                        data-key="${escapeHtml(item.key)}"
-                                       onchange="ChecklistPage.updateStatus('${escapeHtml(item.key)}', this.value, this)"
-                                       ${disabled}>
+                                       data-parent-key="${escapeHtml(item.parent_key || '')}"
+                                        data-is-parent="${item.is_parent ? '1' : '0'}"
+                                        onchange="ChecklistPage.updateStatus('${escapeHtml(item.key)}', this.value, this)"
+                                        ${disabled}>
                                        <option value="empty"   ${item.status==='empty'   ?'selected':''}>— Select —</option>
                                        <option value="done"    ${item.status==='done'    ?'selected':''}>Done</option>
                                        <option value="na"      ${item.status==='na'      ?'selected':''}>N/A</option>
@@ -116,6 +144,7 @@ const ChecklistPage = {
                         </td>
                         ${commentCell}
                         ${supportCells}
+                        ${feedbackCell}
                     </tr>
                 `;
             });
@@ -138,6 +167,7 @@ const ChecklistPage = {
 
             if (data && data.success) {
                 selectEl.className = `item-status-select status-${newStatus}`;
+                await this.syncHierarchyStatus(selectEl, newStatus);
                 await this.refreshProgress();
             } else {
                 showError(data?.message || 'Failed to update status');
@@ -151,8 +181,54 @@ const ChecklistPage = {
         }
     },
 
+    async syncHierarchyStatus(selectEl, newStatus) {
+        if (!selectEl) return;
+        const isParent = selectEl.dataset.isParent === '1';
+        const itemKey = selectEl.dataset.key;
+
+        if (isParent && newStatus && newStatus !== 'empty') {
+            const childSelects = document.querySelectorAll(`.item-status-select[data-parent-key="${CSS.escape(itemKey)}"]`);
+            for (const child of childSelects) {
+                if (child.value !== newStatus) {
+                    child.value = newStatus;
+                    child.className = `item-status-select status-${newStatus}`;
+                    await API.post('/checklist/update_status.php', {
+                        swo_id: this.swoId,
+                        item_key: child.dataset.key,
+                        status: newStatus,
+                    });
+                }
+            }
+        }
+
+        const parentKey = selectEl.dataset.parentKey;
+        if (parentKey && (!newStatus || newStatus === 'empty')) {
+            const parentSelect = document.querySelector(`.item-status-select[data-key="${CSS.escape(parentKey)}"]`);
+            if (parentSelect && parentSelect.value !== 'empty') {
+                parentSelect.value = 'empty';
+                parentSelect.className = 'item-status-select status-empty';
+                await API.post('/checklist/update_status.php', {
+                    swo_id: this.swoId,
+                    item_key: parentKey,
+                    status: 'empty',
+                });
+            }
+        }
+    },
+
+    getDisplayNumber(item) {
+        if (!item || !item.key) return '';
+        const m = String(item.key).match(/_(\d+)(?:_(\d+))?(?:_t\d+)?$/);
+        if (!m) return '';
+        return m[2] ? `${parseInt(m[1], 10)}.${parseInt(m[2], 10)}` : String(parseInt(m[1], 10));
+    },
+
     async refreshProgress() {
-        const data = await API.get('/checklist/get_checklist.php', {swo_id: this.swoId});
+        const params = {swo_id: this.swoId};
+        if (this.swoTypeId) {
+            params.swo_type_id = this.swoTypeId;
+        }
+        const data = await API.get('/checklist/get_checklist.php', params);
         if (data && data.success) {
             this.updateProgress(data.data.progress, data.data.counts);
         }
@@ -282,6 +358,43 @@ const ChecklistPage = {
             }
         } catch (err) {
             console.error('Failed to load user item comments:', err);
+        }
+    },
+
+    async loadExtraComments() {
+        const showSupportComment = this.swoStatus === 'In Progress' && this.hasRejectionReason;
+        const showControlComment = this.swoStatus === 'Returned from Control';
+
+        if (!showSupportComment && !showControlComment) return;
+
+        try {
+            if (showSupportComment) {
+                const data = await API.get('/swo/get_support_item_reviews.php', { swo_id: this.swoId });
+                if (data && data.success) {
+                    (data.data || []).forEach(r => {
+                        const cell = document.querySelector(`.reviewer-comment-cell[data-key="${CSS.escape(r.item_key)}"]`);
+                        if (cell) {
+                            cell.innerHTML = r.support_comment
+                                ? `<span class="reviewer-comment-readonly">${escapeHtml(r.support_comment)}</span>`
+                                : '<span class="text-muted">—</span>';
+                        }
+                    });
+                }
+            } else if (showControlComment) {
+                const data = await API.get('/swo/get_control_item_reviews.php', { swo_id: this.swoId });
+                if (data && data.success) {
+                    (data.data || []).forEach(r => {
+                        const cell = document.querySelector(`.reviewer-comment-cell[data-key="${CSS.escape(r.item_key)}"]`);
+                        if (cell) {
+                            cell.innerHTML = r.control_comment
+                                ? `<span class="reviewer-comment-readonly">${escapeHtml(r.control_comment)}</span>`
+                                : '<span class="text-muted">—</span>';
+                        }
+                    });
+                }
+            }
+        } catch (err) {
+            console.error('Failed to load extra comments:', err);
         }
     },
 

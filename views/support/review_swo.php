@@ -15,12 +15,12 @@ require_once __DIR__ . '/../components/sidebar.php';
 <link rel="stylesheet" href="/scada-checklist-system/assets/css/review_page.css">
 
 <div class="main-content">
-    <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+    <div class="topbar checklist-topbar">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="topbar-title" id="reviewTitle">Loading…</h1>
         </div>
-        <div class="topbar-actions" style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-actions">
             <span class="save-indicator hidden" id="saveIndicator"></span>
             <a href="/scada-checklist-system/views/support/index.php" class="btn btn-secondary btn-sm">← Dashboard</a>
         </div>
@@ -37,7 +37,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                 </div>
                 <div class="info-item">
                     <span>Status:</span>
-                    <span class="badge badge-submitted">Pending Support Review</span>
+                    <span id="reviewStatusWrap" class="badge badge-submitted">Pending Support Review</span>
                 </div>
             </div>
 

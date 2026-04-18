@@ -15,7 +15,7 @@ require_once __DIR__ . '/../components/sidebar.php';
 
 <div class="main-content">
     <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="topbar-title" id="feedbackTitle">Loading…</h1>
         </div>
@@ -25,19 +25,19 @@ require_once __DIR__ . '/../components/sidebar.php';
     </div>
 
     <div class="page-content">
-        <div id="feedbackAlert" style="display:none;"></div>
+        <div id="feedbackAlert" class="hidden"></div>
 
-        <div id="swoInfoBar" style="background:#fff;border-radius:8px;padding:16px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.08);display:flex;gap:20px;flex-wrap:wrap;font-size:14px;">
+        <div id="swoInfoBar" class="info-bar">
             <div><strong>SWO:</strong> <span id="infoSwoNumber">—</span></div>
             <div><strong>Station:</strong> <span id="infoStation">—</span></div>
             <div><strong>Status:</strong> <span id="infoStatus">—</span></div>
         </div>
 
         <div id="feedbackContent">
-            <div class="loading-overlay" style="position:relative;height:100px;"><div class="loading-spinner"></div></div>
+            <div class="loading-overlay loading-overlay-fixed"><div class="loading-spinner"></div></div>
         </div>
 
-        <div id="feedbackActions" style="margin-top:20px;display:flex;gap:10px;" class="hidden">
+        <div id="feedbackActions" class="inline-actions-row hidden">
             <a href="/scada-checklist-system/views/user/index.php" class="btn btn-secondary">← Back</a>
             <a id="editChecklistBtn" href="#" class="btn btn-primary">✏️ Edit Checklist</a>
         </div>
@@ -84,7 +84,7 @@ async function loadFeedback() {
         if (swo.status === 'In Progress' && swo.rejection_reason) {
             alertEl.style.display = 'block';
             alertEl.className = 'alert alert-warning';
-            alertEl.innerHTML = `<strong>⚠️ Rejected by Support</strong><p style="margin:4px 0 0">Please review the comments below and make the necessary changes before resubmitting.</p>`;
+            alertEl.innerHTML = `<strong>⚠️ Rejected by Support</strong><p style="margin:4px 0 0">${escapeHtml(swo.rejection_reason)}</p><p style="margin:4px 0 0">Please review the item-level comments below and make the necessary changes before resubmitting.</p>`;
         } else if (swo.status === 'Returned from Control') {
             alertEl.style.display = 'block';
             alertEl.className = 'alert alert-warning';
@@ -141,6 +141,10 @@ async function loadFeedback() {
                         <td style="text-align:center">${rowNum}</td>
                         <td>${escapeHtml(item.label)}</td>
                         <td>${getChecklistStatusBadge(item.status)}</td>
+                        <td>${item.user_comment
+                            ? `<span class="user-comment-readonly">${escapeHtml(item.user_comment)}</span>`
+                            : '<span class="text-muted">—</span>'
+                        }</td>
                         <td>${feedbackComment
                             ? `<div class="feedback-alert"><strong>Feedback:</strong> ${escapeHtml(feedbackComment)}</div>`
                             : '<span class="text-muted">—</span>'
@@ -161,6 +165,7 @@ async function loadFeedback() {
                                     <th style="width:40px">#</th>
                                     <th>Item</th>
                                     <th style="width:110px">Your Status</th>
+                                    <th>Your Comment</th>
                                     <th>Reviewer Feedback</th>
                                 </tr>
                             </thead>

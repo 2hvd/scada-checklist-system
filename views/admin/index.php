@@ -7,48 +7,49 @@ require_once __DIR__ . '/../components/sidebar.php';
 ?>
 <div class="main-content">
     <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="topbar-title">Admin Dashboard</h1>
         </div>
         <div class="topbar-actions">
-            <span style="font-size:13px;color:#666;">Welcome, <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong></span>
+            <span class="welcome-text">Welcome, <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong></span>
         </div>
     </div>
 
     <div class="page-content">
-        <!-- Summary Stats -->
-        <div class="stats-grid" id="adminStatsContainer">
-            <div class="stat-card">
-                <div class="stat-value" id="statTotal">—</div>
-                <div class="stat-label">Total SWOs</div>
-            </div>
-            <div class="stat-card border-warning">
-                <div class="stat-value" id="statPending">—</div>
-                <div class="stat-label">Pending Approval</div>
-            </div>
-            <div class="stat-card border-success">
-                <div class="stat-value" id="statInProgress">—</div>
-                <div class="stat-label">In Progress</div>
-            </div>
-            <div class="stat-card border-info">
-                <div class="stat-value" id="statSubmitted">—</div>
-                <div class="stat-label">Submitted</div>
-            </div>
-        </div>
-
         <!-- Tabs -->
         <div id="mainTabs">
-            <div class="tabs">
+            <div class="tabs" style="display:none;">
                 <button class="tab-btn active" data-tab="tab-statistics">📈 Statistics</button>
                 <button class="tab-btn" data-tab="tab-swo">📋 SWO Management</button>
                 <button class="tab-btn" data-tab="tab-activity">🕐 Recent Activity</button>
                 <button class="tab-btn" data-tab="tab-checklist-items">📝 Manage Checklist Items</button>
+                <button class="tab-btn" data-tab="tab-swo-types">📌 Manage SWO Types</button>
                 <button class="tab-btn" data-tab="tab-timeline">📊 SWO Timeline</button>
             </div>
 
             <!-- Tab: Statistics -->
             <div class="tab-content active" id="tab-statistics">
+                <!-- Summary Stats -->
+                <div class="stats-grid" id="adminStatsContainer">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statTotal">—</div>
+                        <div class="stat-label">Total SWOs</div>
+                    </div>
+                    <div class="stat-card border-warning">
+                        <div class="stat-value" id="statPending">—</div>
+                        <div class="stat-label">Pending Approval</div>
+                    </div>
+                    <div class="stat-card border-success">
+                        <div class="stat-value" id="statInProgress">—</div>
+                        <div class="stat-label">In Progress</div>
+                    </div>
+                    <div class="stat-card border-info">
+                        <div class="stat-value" id="statSubmitted">—</div>
+                        <div class="stat-label">Pending Support Review</div>
+                    </div>
+                </div>
+
                 <h3>System User Performance</h3>
                 <div class="user-cards-grid" id="userCardsGrid">
                     <div class="loading-overlay"><div class="loading-spinner"></div></div>
@@ -60,18 +61,21 @@ require_once __DIR__ . '/../components/sidebar.php';
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">All SWOs</h3>
-                        <div class="filter-bar" style="margin:0">
-                            <select id="statusFilter" class="form-control" style="width:auto">
+                        <div class="filter-bar filter-bar-compact">
+                            <select id="statusFilter" class="form-control form-control-auto">
                                 <option value="">All Statuses</option>
-                                <option value="Draft">Draft</option>
+                                <option value="Rejected">Rejected</option>
                                 <option value="Pending">Pending</option>
                                 <option value="Registered">Registered</option>
                                 <option value="In Progress">In Progress</option>
+                                <option value="Pending Support Review">Pending Support Review</option>
+                                <option value="Pending Control Review">Pending Control Review</option>
+                                <option value="Returned from Control">Returned from Control</option>
                                 <option value="Submitted">Submitted</option>
                                 <option value="Completed">Completed</option>
                                 <option value="Closed">Closed</option>
                             </select>
-                            <button class="btn btn-primary btn-sm" onclick="AdminDashboard.loadSWOTable(document.getElementById('statusFilter').value)">🔄 Refresh</button>
+
                         </div>
                     </div>
                     <div class="table-wrapper">
@@ -110,7 +114,7 @@ require_once __DIR__ . '/../components/sidebar.php';
             <!-- Tab: Manage Checklist Items -->
             <div class="tab-content" id="tab-checklist-items">
                 <!-- Statistics Cards -->
-                <div class="stats-grid" id="checklistItemsStats" style="margin-bottom:20px;">
+                <div class="stats-grid" id="checklistItemsStats">
                     <div class="stat-card">
                         <div class="stat-value" id="ciStatTotal">—</div>
                         <div class="stat-label">Total Items</div>
@@ -130,41 +134,73 @@ require_once __DIR__ . '/../components/sidebar.php';
                 </div>
 
                 <div class="card">
-                    <div class="card-header" style="flex-wrap:wrap;gap:10px;">
-                        <h3 class="card-title" style="margin:0;">Checklist Items</h3>
-                        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-                            <select id="ciSectionFilter" class="form-control" style="width:auto;">
+                    <div class="card-header ci-card-header">
+                        <h3 class="card-title">Checklist Items</h3>
+                        <div class="ci-card-actions">
+                            <select id="ciSectionFilter" class="form-control form-control-auto">
                                 <option value="">All Sections</option>
                                 <option value="during_config">During Configuration</option>
                                 <option value="during_commissioning">During Commissioning</option>
                                 <option value="after_commissioning">After Commissioning</option>
                             </select>
-                            <select id="ciStatusFilter" class="form-control" style="width:auto;">
+                            <select id="ciStatusFilter" class="form-control form-control-auto">
+                                <option value="all">All Items</option>
                                 <option value="active">Active Only</option>
                                 <option value="inactive">Inactive Only</option>
-                                <option value="all">All Items</option>
                             </select>
-                            <input type="text" id="ciSearchFilter" class="form-control" placeholder="🔍 Search description…" style="width:220px;">
+                            <select id="ciSwoTypeFilter" class="form-control form-control-auto">
+                                <option value="">All Types</option>
+                            </select>
+                            <input type="text" id="ciSearchFilter" class="form-control search-control-wide" placeholder="🔍 Search description…">
                             <button class="btn btn-primary btn-sm" onclick="ChecklistItems.openAddModal()">+ Add Item</button>
-                            <button class="btn btn-secondary btn-sm" onclick="ChecklistItems.load()">🔄 Refresh</button>
+
                         </div>
                     </div>
                     <div class="table-wrapper">
-                        <table>
+                        <table class="ci-items-table">
                             <thead>
                                 <tr>
                                     <th>Section</th>
                                     <th>#</th>
                                     <th>Description</th>
                                     <th>Key</th>
+                                    <th>SWO Type</th>
                                     <th>Status</th>
                                     <th>Created By</th>
                                     <th>Created</th>
+                                    <th>Used In</th>
+                                    <th>Role Mapping</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="ciTableBody">
-                                <tr><td colspan="8" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
+                                <tr><td colspan="11" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Manage SWO Types -->
+            <div class="tab-content" id="tab-swo-types">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">SWO Types</h3>
+                        <button class="btn btn-primary btn-sm" onclick="SWOTypes.openAddModal()">+ Add Type</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="swoTypesTableBody">
+                                <tr><td colspan="5" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -196,7 +232,48 @@ require_once __DIR__ . '/../components/sidebar.php';
             </select>
         </div>
         <div class="form-group">
-            <label>Item Number * <small style="color:#999;">(auto-suggested)</small></label>
+            <label>SWO Type <small class="text-muted">(Optional)</small></label>
+            <select id="ciAddSwoType" class="form-control" onchange="ChecklistItems.onSwoTypeChange()">
+                <option value="">-- Select SWO Type --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Role Visibility & Child Mapping *</label>
+            <div class="ci-role-grid">
+                <div class="ci-role-card">
+                    <label class="ci-role-title">
+                        <input type="checkbox" id="ciAddRoleUserVisible" checked>
+                        <span>User</span>
+                    </label>
+                    <label class="ci-role-child-label">Child</label>
+                    <select id="ciAddRoleUserParent" class="form-control">
+                        <option value="">-- No Parent (Top-level) --</option>
+                    </select>
+                </div>
+                <div class="ci-role-card">
+                    <label class="ci-role-title">
+                        <input type="checkbox" id="ciAddRoleSupportVisible" checked>
+                        <span>Support</span>
+                    </label>
+                    <label class="ci-role-child-label">Child</label>
+                    <select id="ciAddRoleSupportParent" class="form-control">
+                        <option value="">-- No Parent (Top-level) --</option>
+                    </select>
+                </div>
+                <div class="ci-role-card">
+                    <label class="ci-role-title">
+                        <input type="checkbox" id="ciAddRoleControlVisible" checked>
+                        <span>Control</span>
+                    </label>
+                    <label class="ci-role-child-label">Child</label>
+                    <select id="ciAddRoleControlParent" class="form-control">
+                        <option value="">-- No Parent (Top-level) --</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Item Number * <small class="text-muted">(auto-suggested)</small></label>
             <input type="number" id="ciAddNumber" class="form-control" min="1" max="99" placeholder="e.g. 9">
         </div>
         <div class="form-group">
@@ -210,25 +287,50 @@ require_once __DIR__ . '/../components/sidebar.php';
     </div>
 </div>
 
-<!-- Edit Checklist Item Modal -->
-<div class="modal-overlay" id="editChecklistItemModal">
-    <div class="modal">
+<!-- Checklist Item Role Mapping Modal -->
+<div class="modal-overlay" id="checklistItemRoleMapModal">
+    <div class="modal ci-role-map-modal">
         <div class="modal-header">
-            <span class="modal-title">Edit Checklist Item</span>
-            <button class="modal-close" onclick="closeModal('editChecklistItemModal')">×</button>
+            <span class="modal-title">Role Mapping</span>
+            <button class="modal-close" onclick="closeModal('checklistItemRoleMapModal')">×</button>
         </div>
-        <input type="hidden" id="ciEditId">
-        <div class="form-group">
-            <label>Item Key</label>
-            <input type="text" id="ciEditKey" class="form-control" disabled>
-        </div>
-        <div class="form-group">
-            <label>Description *</label>
-            <textarea id="ciEditDescription" class="form-control" rows="3"></textarea>
+        <input type="hidden" id="ciRoleMapItemId">
+        <div class="ci-role-map-title" id="ciRoleMapItemTitle"></div>
+        <div class="ci-role-grid">
+            <div class="ci-role-card">
+                <label class="ci-role-title">
+                    <input type="checkbox" id="ciRoleMapUserVisible" checked>
+                    <span>User</span>
+                </label>
+                <label class="ci-role-child-label">Child</label>
+                <select id="ciRoleMapUserParent" class="form-control">
+                    <option value="">-- No Parent (Top-level) --</option>
+                </select>
+            </div>
+            <div class="ci-role-card">
+                <label class="ci-role-title">
+                    <input type="checkbox" id="ciRoleMapSupportVisible" checked>
+                    <span>Support</span>
+                </label>
+                <label class="ci-role-child-label">Child</label>
+                <select id="ciRoleMapSupportParent" class="form-control">
+                    <option value="">-- No Parent (Top-level) --</option>
+                </select>
+            </div>
+            <div class="ci-role-card">
+                <label class="ci-role-title">
+                    <input type="checkbox" id="ciRoleMapControlVisible" checked>
+                    <span>Control</span>
+                </label>
+                <label class="ci-role-child-label">Child</label>
+                <select id="ciRoleMapControlParent" class="form-control">
+                    <option value="">-- No Parent (Top-level) --</option>
+                </select>
+            </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('editChecklistItemModal')">Cancel</button>
-            <button class="btn btn-primary" onclick="ChecklistItems.submitEdit()">Update Item</button>
+            <button class="btn btn-secondary" onclick="closeModal('checklistItemRoleMapModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="ChecklistItems.submitRoleMapping()">Save</button>
         </div>
     </div>
 </div>
@@ -287,12 +389,58 @@ require_once __DIR__ . '/../components/sidebar.php';
     </div>
 </div>
 
+<!-- Add SWO Type Modal -->
+<div class="modal-overlay" id="addSwoTypeModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">Add SWO Type</span>
+            <button class="modal-close" onclick="closeModal('addSwoTypeModal')">×</button>
+        </div>
+        <div class="form-group">
+            <label>Name *</label>
+            <input type="text" id="swoTypeAddName" class="form-control" placeholder="e.g., S/S, Power Plant" maxlength="100">
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <textarea id="swoTypeAddDescription" class="form-control" rows="3" placeholder="Optional description…"></textarea>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('addSwoTypeModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="SWOTypes.submitAdd()">Add Type</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit SWO Type Modal -->
+<div class="modal-overlay" id="editSwoTypeModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">Edit SWO Type</span>
+            <button class="modal-close" onclick="closeModal('editSwoTypeModal')">×</button>
+        </div>
+        <input type="hidden" id="swoTypeEditId">
+        <div class="form-group">
+            <label>Name *</label>
+            <input type="text" id="swoTypeEditName" class="form-control" maxlength="100">
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <textarea id="swoTypeEditDescription" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('editSwoTypeModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="SWOTypes.submitEdit()">Update Type</button>
+        </div>
+    </div>
+</div>
+
 <?php require_once __DIR__ . '/../components/footer.php'; ?>
 <script src="/scada-checklist-system/assets/js/utils.js"></script>
 <script src="/scada-checklist-system/assets/js/notifications.js"></script>
 <script src="/scada-checklist-system/assets/js/api.js"></script>
 <script src="/scada-checklist-system/assets/js/dashboard.js"></script>
 <script src="/scada-checklist-system/assets/js/checklist_items.js"></script>
+<script src="/scada-checklist-system/assets/js/swo_types.js"></script>
 <script>
 document.body.dataset.page = 'admin';
 function toggleSidebar() {
@@ -325,12 +473,21 @@ const AdminTimeline = {
                     <td>${getStatusBadge(s.status)}</td>
                     <td>${s.created_at ? formatDateShort(s.created_at) : '—'}</td>
                     <td>${escapeHtml(s.created_by_name || '—')}</td>
-                    <td>${s.approved_at ? formatDateShort(s.approved_at) : '—'}</td>
+                    <td>
+                        ${s.approved_at ? formatDateShort(s.approved_at) : '—'}
+                        <div class="text-muted" style="font-size:11px;">${escapeHtml(s.approved_by_name || '—')}</div>
+                    </td>
                     <td>${escapeHtml(s.assigned_to_name || '—')}</td>
                     <td>${s.started_at ? formatDateShort(s.started_at) : '—'}</td>
                     <td>${s.submitted_at ? formatDateShort(s.submitted_at) : '—'}</td>
-                    <td>${s.support_reviewed_at ? formatDateShort(s.support_reviewed_at) : '—'}</td>
-                    <td>${s.control_reviewed_at ? formatDateShort(s.control_reviewed_at) : '—'}</td>
+                    <td>
+                        ${s.support_reviewed_at ? formatDateShort(s.support_reviewed_at) : '—'}
+                        <div class="text-muted" style="font-size:11px;">${escapeHtml(s.support_reviewer_name || '—')}</div>
+                    </td>
+                    <td>
+                        ${s.control_reviewed_at ? formatDateShort(s.control_reviewed_at) : '—'}
+                        <div class="text-muted" style="font-size:11px;">${escapeHtml(s.control_reviewer_name || '—')}</div>
+                    </td>
                     <td>
                         <button class="btn btn-sm btn-secondary" onclick="AdminDashboard.viewSWO(${s.id})">View</button>
                     </td>

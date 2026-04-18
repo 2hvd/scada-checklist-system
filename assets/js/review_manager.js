@@ -3,11 +3,14 @@
 const ReviewManager = {
     swoId: null,
     role: null,      // 'user', 'support', 'control'
+    swoStatus: null,
+    readOnly: false,
     saveTimers: {},
 
-    async init(swoId, role) {
+    async init(swoId, role, readOnly = false) {
         this.swoId = swoId;
         this.role  = role;
+        this.readOnly = !!readOnly;
         await this.load();
         this.attachEventListeners();
     },
@@ -38,9 +41,17 @@ const ReviewManager = {
 
     renderPage(data) {
         const swo      = data.swo;
-        const sections = data.sections || [];
+        const sections = (data.sections || []).map(section => ({
+            ...section,
+            items: this.orderSectionItems(section.items || []),
+        }));
         const counts   = data.counts   || {};
         const progress = data.progress || 0;
+
+        this.swoStatus = swo.status;
+        if (this.role === 'control' && this.swoStatus !== 'Pending Control Review') {
+            this.readOnly = true;
+        }
 
         // Header title
         const titleEl = document.getElementById('reviewTitle');
@@ -50,18 +61,12 @@ const ReviewManager = {
         if (stationEl) stationEl.textContent = swo.station_name;
 
         const statusWrap = document.getElementById('reviewStatusWrap');
-        if (statusWrap) statusWrap.innerHTML = getStatusBadge(swo.status);
+        if (statusWrap) {
+            statusWrap.className = `badge ${getStatusBadgeClass(swo.status)}`;
+            statusWrap.textContent = swo.status;
+        }
 
-        // Progress
-        const progressColor = progress >= 80 ? '#27ae60' : (progress >= 50 ? '#f39c12' : '#e74c3c');
-        const barEl = document.getElementById('reviewProgressBar');
-        if (barEl) { barEl.style.width = progress + '%'; barEl.style.background = progressColor; }
-        const pctEl = document.getElementById('reviewProgressPct');
-        if (pctEl) pctEl.textContent = progress + '%';
-        const textEl = document.getElementById('reviewProgressText');
-        if (textEl) textEl.textContent =
-            `${counts.done || 0} Done, ${counts.na || 0} N/A, ${counts.still || 0} Still, ` +
-            `${counts.not_yet || 0} Not Yet, ${counts.empty || 0} Empty`;
+        this.updateProgress(progress, counts);
 
         // Sections
         const container = document.getElementById('reviewSections');
@@ -78,6 +83,7 @@ const ReviewManager = {
                             <th scope="col" class="col-status">User Status</th>
                             ${this.role !== 'user' ? '<th scope="col" class="col-comment user-col-readonly">User Comment</th>' : ''}
                             ${this.role === 'control' ? '<th scope="col" class="col-status">Support Decision</th><th scope="col" class="col-comment support-col-readonly">Support Comment</th>' : ''}
+                            ${this.role === 'support' && this.swoStatus === 'Returned from Control' ? '<th scope="col" class="col-comment control-col-readonly">Control Comment</th>' : ''}
                             ${this.role !== 'user' ? '<th scope="col" class="col-decision">Decision</th>' : ''}
                             <th scope="col" class="col-comment">Comment</th>
                         </tr>
@@ -88,20 +94,44 @@ const ReviewManager = {
                 </table>
             </div>
         `).join('');
+
+        if (this.role === 'control' && this.readOnly) {
+            const returnBtn = document.getElementById('returnBtn');
+            const approveBtn = document.getElementById('approveBtn');
+            if (returnBtn) returnBtn.style.display = 'none';
+            if (approveBtn) approveBtn.style.display = 'none';
+        }
     },
 
     renderRow(item, num) {
-        const decisionHtml = this.role !== 'user' ? `
-            <td class="col-decision">
-                <select class="review-decision-select"
-                        data-item-key="${escapeHtml(item.key)}">
-                    <option value="">—</option>
-                    <option value="done"    ${item.decision === 'done'    ? 'selected' : ''}>Done</option>
-                    <option value="na"      ${item.decision === 'na'      ? 'selected' : ''}>N/A</option>
-                    <option value="still"   ${item.decision === 'still'   ? 'selected' : ''}>Still</option>
-                    <option value="not_yet" ${item.decision === 'not_yet' ? 'selected' : ''}>Not Yet</option>
-                </select>
-            </td>` : '';
+        const parsedNumber = this.getDisplayNumber(item);
+        const isChild = !!item.parent_item_id;
+
+        // Comment-only rows: hidden from this role but user left a comment — render like normal child rows
+        if (item.comment_only) {
+            const colspan = this.role === 'control' ? 3 : 1; // spans decision + comment columns
+            return `
+                <tr data-item-key="${escapeHtml(item.key)}">
+                    <td>${escapeHtml(parsedNumber || String(num))}</td>
+                    <td><span style="color:#aaa;margin-right:4px;">↳</span>${escapeHtml(item.label)}</td>
+                    <td class="col-status">${getChecklistStatusBadge(item.status)}</td>
+                    <td class="col-comment user-col-readonly">${escapeHtml(item.user_comment || '—')}</td>
+                    <td class="col-comment text-muted" colspan="${colspan}" style="color:#bbb;font-style:italic;font-size:12px;">—</td>
+                </tr>`;
+        }
+
+        const userStatusHidden = item.user_status_hidden === true
+            || item.user_status_hidden === 1
+            || item.user_status_hidden === '1';
+        const hasChildProgress = this.role !== 'user'
+            && item.is_parent
+            && Number(item.child_total_count || 0) > 0;
+        const statusHtml = hasChildProgress
+            ? `<span class="badge" style="background:#3498db;color:#fff;">${escapeHtml(String(item.child_completion_pct ?? 0))}% (${escapeHtml(String(item.child_completed_count || 0))}/${escapeHtml(String(item.child_total_count || 0))})</span>`
+            : (userStatusHidden
+                ? '<span class="text-muted">Hidden from User</span>'
+                : getChecklistStatusBadge(item.status));
+        const decisionHtml = this.buildDecisionCell(item);
 
         const userCommentColHtml = this.role !== 'user' ? `
             <td class="col-comment user-col-readonly">
@@ -114,19 +144,26 @@ const ReviewManager = {
                 <span class="support-comment-readonly">${escapeHtml(item.support_comment || '—')}</span>
             </td>` : '';
 
+        const controlFeedbackHtml = this.role === 'support' && this.swoStatus === 'Returned from Control' ? `
+            <td class="col-comment control-col-readonly">
+                <span class="control-comment-readonly">${escapeHtml(item.control_comment || '—')}</span>
+            </td>` : '';
+
         return `
             <tr data-item-key="${escapeHtml(item.key)}">
-                <td>${num}</td>
-                <td>${escapeHtml(item.label)}</td>
-                <td class="col-status">${getChecklistStatusBadge(item.status)}</td>
+                <td>${escapeHtml(parsedNumber || String(num))}</td>
+                <td>${isChild ? '<span style="color:#aaa;margin-right:4px;">↳</span>' : ''}${escapeHtml(item.label)}</td>
+                <td class="col-status">${statusHtml}</td>
                 ${userCommentColHtml}
                 ${supportColsHtml}
+                ${controlFeedbackHtml}
                 ${decisionHtml}
                 <td class="col-comment">
                     <textarea class="review-comment-textarea"
                               data-item-key="${escapeHtml(item.key)}"
                               rows="2"
-                              placeholder="Add comment...">${escapeHtml(item.comment || '')}</textarea>
+                              placeholder="Add comment..."
+                              ${this.readOnly ? 'disabled' : ''}>${escapeHtml(item.comment || '')}</textarea>
                 </td>
             </tr>`;
     },
@@ -134,11 +171,13 @@ const ReviewManager = {
     attachEventListeners() {
         const content = document.getElementById('reviewContent');
         if (!content) return;
+        if (this.readOnly) return;
 
         // Decision dropdowns – auto-save on change (support / control only)
         if (this.role !== 'user') {
             content.addEventListener('change', (e) => {
                 if (e.target.classList.contains('review-decision-select')) {
+                    this.syncHierarchyDecision(e.target);
                     const itemKey = e.target.dataset.itemKey;
                     this.scheduleItemSave(itemKey);
                 }
@@ -154,12 +193,172 @@ const ReviewManager = {
         }, true);
     },
 
+    buildDecisionCell(item) {
+        if (this.role === 'user') return '';
+
+        if (this.readOnly) {
+            return `<td class="col-decision">${item.decision ? getChecklistStatusBadge(item.decision) : '<span class="text-muted">—</span>'}</td>`;
+        }
+
+        return `
+            <td class="col-decision">
+                <select class="review-decision-select"
+                        data-item-key="${escapeHtml(item.key)}"
+                        data-parent-key="${escapeHtml(item.parent_key || '')}"
+                        data-is-parent="${item.is_parent ? '1' : '0'}">
+                    <option value="">—</option>
+                    <option value="done"    ${item.decision === 'done'    ? 'selected' : ''}>Done</option>
+                    <option value="na"      ${item.decision === 'na'      ? 'selected' : ''}>N/A</option>
+                    <option value="still"   ${item.decision === 'still'   ? 'selected' : ''}>Still</option>
+                    <option value="not_yet" ${item.decision === 'not_yet' ? 'selected' : ''}>Not Yet</option>
+                </select>
+            </td>`;
+    },
+
+    syncHierarchyDecision(selectEl) {
+        if (!selectEl) return;
+        const isParent = selectEl.dataset.isParent === '1';
+        const itemKey = selectEl.dataset.itemKey;
+        const selected = selectEl.value;
+
+        if (isParent && selected) {
+            document.querySelectorAll(`.review-decision-select[data-parent-key="${CSS.escape(itemKey)}"]`).forEach(childSelect => {
+                childSelect.value = selected;
+                this.scheduleItemSave(childSelect.dataset.itemKey);
+            });
+        }
+
+        const parentKey = selectEl.dataset.parentKey;
+        if (parentKey && !selected) {
+            const parentSelect = document.querySelector(`.review-decision-select[data-item-key="${CSS.escape(parentKey)}"]`);
+            if (parentSelect && parentSelect.value) {
+                parentSelect.value = '';
+                this.scheduleItemSave(parentKey);
+            }
+        }
+    },
+
+    getDisplayNumber(item) {
+        if (!item || !item.key) return '';
+        const m = String(item.key).match(/_(\d+)(?:_(\d+))?(?:_t\d+)?(?:_\d+)?$/);
+        if (!m) return '';
+        return m[2] ? `${parseInt(m[1], 10)}.${parseInt(m[2], 10)}` : String(parseInt(m[1], 10));
+    },
+
+    orderSectionItems(items) {
+        if (!Array.isArray(items) || items.length < 2) return items || [];
+
+        const itemId = (item) => String(item?.item_id ?? item?.key ?? '');
+        const itemMap = new Map();
+        items.forEach(item => {
+            const id = itemId(item);
+            if (id) itemMap.set(id, item);
+            const key = String(item?.key ?? '');
+            if (key) itemMap.set(key, item);
+        });
+
+        const resolveParentRef = (item) => {
+            const parentId = item?.parent_item_id;
+            const parentIdRef = parentId == null ? '' : String(parentId);
+            if (parentIdRef && itemMap.has(parentIdRef)) return parentIdRef;
+            const parentKeyRef = String(item?.parent_key ?? '');
+            if (parentKeyRef && itemMap.has(parentKeyRef)) return parentKeyRef;
+            return '';
+        };
+
+        const childrenByParent = new Map();
+        items.forEach(item => {
+            const parentRef = resolveParentRef(item);
+            if (!parentRef) return;
+            if (!childrenByParent.has(parentRef)) childrenByParent.set(parentRef, []);
+            childrenByParent.get(parentRef).push(item);
+        });
+
+        const roots = items.filter(item => !resolveParentRef(item));
+
+        const getOrderTuple = (item) => {
+            const m = String(item?.key || '').match(/_(\d+)(?:_(\d+))?(?:_t\d+)?(?:_\d+)?$/);
+            if (!m) return null;
+            return [parseInt(m[1], 10), m[2] ? parseInt(m[2], 10) : 0];
+        };
+        const compareItems = (a, b) => {
+            const aTuple = getOrderTuple(a);
+            const bTuple = getOrderTuple(b);
+            if (aTuple && !bTuple) return -1;
+            if (!aTuple && bTuple) return 1;
+            if (!aTuple && !bTuple) {
+                const labelCmp = String(a?.label || '').localeCompare(String(b?.label || ''));
+                if (labelCmp !== 0) return labelCmp;
+                return itemId(a).localeCompare(itemId(b));
+            }
+            const [aMain, aSub] = aTuple;
+            const [bMain, bSub] = bTuple;
+            if (aMain !== bMain) return aMain - bMain;
+            if (aSub !== bSub) return aSub - bSub;
+            return itemId(a).localeCompare(itemId(b));
+        };
+
+        roots.sort(compareItems);
+        childrenByParent.forEach(list => list.sort(compareItems));
+
+        const ordered = [];
+        const pushed = new Set();
+        const pushItem = (item) => {
+            const id = itemId(item);
+            if (pushed.has(id)) return;
+            ordered.push(item);
+            pushed.add(id);
+            const childList = childrenByParent.get(id) || [];
+            childList.forEach(pushItem);
+        };
+
+        roots.forEach(pushItem);
+        items.filter(item => !pushed.has(itemId(item))).sort(compareItems).forEach(pushItem);
+        return ordered;
+    },
+
+    async refreshProgress() {
+        if (this.role === 'user') return;
+        const endpointMap = {
+            support: '/swo/get_support_review.php',
+            control: '/swo/get_control_review.php',
+        };
+        const endpoint = endpointMap[this.role];
+        if (!endpoint) return;
+
+        try {
+            const data = await API.get(endpoint, { swo_id: this.swoId });
+            if (!data || !data.success) return;
+            this.updateProgress(data.data?.progress || 0, data.data?.counts || {});
+        } catch (err) {
+            console.error('ReviewManager.refreshProgress error:', err);
+        }
+    },
+
+    updateProgress(progress, counts) {
+        const safeProgress = Math.max(0, Math.min(100, Number(progress) || 0));
+        const progressColor = safeProgress >= 80 ? '#27ae60' : (safeProgress >= 50 ? '#f39c12' : '#e74c3c');
+        const barEl = document.getElementById('reviewProgressBar');
+        if (barEl) {
+            barEl.style.width = safeProgress + '%';
+            barEl.style.background = progressColor;
+        }
+        const pctEl = document.getElementById('reviewProgressPct');
+        if (pctEl) pctEl.textContent = safeProgress + '%';
+        const textEl = document.getElementById('reviewProgressText');
+        if (textEl) {
+            textEl.textContent =
+                `${counts.done || 0} Done, ${counts.na || 0} N/A, ${counts.still || 0} Still, ` +
+                `${counts.not_yet || 0} Not Yet, ${counts.empty || 0} Empty`;
+        }
+    },
+
     scheduleItemSave(itemKey) {
         if (this.saveTimers[itemKey]) {
             clearTimeout(this.saveTimers[itemKey]);
         }
         this.showSaving();
-        this.saveTimers[itemKey] = setTimeout(() => this.saveItemReview(itemKey), 400);
+        this.saveTimers[itemKey] = setTimeout(() => this.saveItemReview(itemKey), 150);
     },
 
     async saveItemReview(itemKey) {
@@ -190,6 +389,7 @@ const ReviewManager = {
         try {
             const data = await API.post(endpoint, payload);
             if (data && data.success) {
+                await this.refreshProgress();
                 this.showSaved();
             } else {
                 this.showError('Save failed');
@@ -233,6 +433,7 @@ const ReviewManager = {
         // Validate all items have a decision
         const decisions = document.querySelectorAll('.review-decision-select');
         for (const dropdown of decisions) {
+            if (dropdown.dataset.isParent === '1') continue;
             if (!dropdown.value || dropdown.value.trim() === '') {
                 showError('All items must have a decision before accepting');
                 return;
@@ -289,6 +490,7 @@ const ReviewManager = {
         // Validate all items have a decision
         const decisions = document.querySelectorAll('.review-decision-select');
         for (const dropdown of decisions) {
+            if (dropdown.dataset.isParent === '1') continue;
             if (!dropdown.value || dropdown.value.trim() === '') {
                 showError('All items must have a decision before approving');
                 return;

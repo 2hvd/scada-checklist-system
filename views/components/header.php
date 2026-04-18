@@ -16,6 +16,7 @@ $pageTitle = $pageTitle ?? 'SCADA Checklist System';
     <link rel="stylesheet" href="/scada-checklist-system/assets/css/style.css">
     <link rel="stylesheet" href="/scada-checklist-system/assets/css/dashboard.css">
     <link rel="stylesheet" href="/scada-checklist-system/assets/css/responsive.css">
+    <script src="/scada-checklist-system/assets/js/auto_refresh.js" defer></script>
 </head>
 <body data-page="<?php echo htmlspecialchars($role); ?>" data-user-id="<?php echo (int)$_SESSION['user_id']; ?>">
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>

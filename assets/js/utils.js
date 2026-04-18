@@ -18,8 +18,13 @@ function formatDateShort(dateStr) {
 }
 
 function getStatusBadge(status) {
+    const cls = getStatusBadgeClass(status);
+    return `<span class="badge ${cls}">${escapeHtml(status)}</span>`;
+}
+
+function getStatusBadgeClass(status) {
     const statusMap = {
-        'Draft':                    'badge-draft',
+        'Rejected':                 'badge-rejected',
         'Pending':                  'badge-pending',
         'Registered':               'badge-registered',
         'In Progress':              'badge-inprogress',
@@ -30,8 +35,7 @@ function getStatusBadge(status) {
         'Completed':                'badge-completed',
         'Closed':                   'badge-closed',
     };
-    const cls = statusMap[status] || 'badge-draft';
-    return `<span class="badge ${cls}">${escapeHtml(status)}</span>`;
+    return statusMap[status] || 'badge-pending';
 }
 
 function getChecklistStatusBadge(status) {
@@ -61,7 +65,7 @@ function formatProgress(done, na, total) {
 function confirmDialog(message) {
     return new Promise(resolve => {
         const overlay = document.createElement('div');
-        overlay.className = 'modal-overlay active';
+        overlay.className = 'modal-overlay';
         overlay.innerHTML = `
             <div class="modal" style="max-width:400px">
                 <div class="modal-header">
@@ -75,9 +79,17 @@ function confirmDialog(message) {
             </div>
         `;
         document.body.appendChild(overlay);
-        overlay.querySelector('#confirmOk').onclick = () => { overlay.remove(); resolve(true); };
-        overlay.querySelector('#confirmCancel').onclick = () => { overlay.remove(); resolve(false); };
-        overlay.addEventListener('click', (e) => { if (e.target === overlay) { overlay.remove(); resolve(false); } });
+        // Trigger transition on next frame so CSS opacity transition fires
+        requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('active')));
+
+        const close = (result) => {
+            overlay.classList.remove('active');
+            overlay.addEventListener('transitionend', () => overlay.remove(), { once: true });
+            resolve(result);
+        };
+        overlay.querySelector('#confirmOk').onclick = () => close(true);
+        overlay.querySelector('#confirmCancel').onclick = () => close(false);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
     });
 }
 
@@ -99,6 +111,13 @@ function renderProgressBar(pct, showText = true) {
         </div>
         ${showText ? `<div class="progress-text">${pct}% complete</div>` : ''}
     `;
+}
+
+function getDashboardRefreshMs(defaultMs = 10000) {
+    const raw = document.body?.dataset?.dashboardRefreshMs;
+    if (raw == null || raw === '') return defaultMs;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : defaultMs;
 }
 
 function openModal(id) {
@@ -131,4 +150,14 @@ function initTabs(tabsId) {
             if (content) content.classList.add('active');
         });
     });
+
+    // Auto-select tab from URL ?tab= parameter (deferred so all listeners are ready)
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam) {
+        setTimeout(() => {
+            const targetBtn = container.querySelector(`.tab-btn[data-tab="${tabParam}"]`);
+            if (targetBtn) targetBtn.click();
+        }, 0);
+    }
 }

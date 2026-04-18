@@ -15,7 +15,7 @@ require_once __DIR__ . '/../components/sidebar.php';
 
 <div class="main-content">
     <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="topbar-title" id="viewTitle">Loading…</h1>
         </div>
@@ -25,7 +25,7 @@ require_once __DIR__ . '/../components/sidebar.php';
     </div>
 
     <div class="page-content">
-        <div id="swoInfoBar" style="background:#fff;border-radius:8px;padding:16px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.08);display:flex;gap:20px;flex-wrap:wrap;font-size:14px;">
+        <div id="swoInfoBar" class="info-bar">
             <div><strong>SWO:</strong> <span id="infoSwoNumber">—</span></div>
             <div><strong>Station:</strong> <span id="infoStation">—</span></div>
             <div><strong>Status:</strong> <span id="infoStatus">—</span></div>
@@ -35,10 +35,10 @@ require_once __DIR__ . '/../components/sidebar.php';
         </div>
 
         <div id="swoFeedbackContent">
-            <div class="loading-overlay" style="position:relative;height:100px;"><div class="loading-spinner"></div></div>
+            <div class="loading-overlay loading-overlay-fixed"><div class="loading-spinner"></div></div>
         </div>
 
-        <div id="swoActions" style="margin-top:20px;display:flex;gap:10px;" class="hidden">
+        <div id="swoActions" class="inline-actions-row hidden">
             <a href="/scada-checklist-system/views/support/index.php" class="btn btn-secondary">← Back</a>
             <a id="editSwoBtn" href="#" class="btn btn-warning" style="display:none;">✏️ Edit &amp; Resubmit</a>
         </div>
@@ -126,6 +126,10 @@ async function loadSWOView() {
                         <td style="text-align:center">${rowNum}</td>
                         <td>${escapeHtml(item.label)}</td>
                         <td>${getChecklistStatusBadge(item.status)}</td>
+                        <td>${item.user_comment
+                            ? `<span class="user-comment-readonly">${escapeHtml(item.user_comment)}</span>`
+                            : '<span class="text-muted">—</span>'
+                        }</td>
                         <td>${sr.support_decision ? getChecklistStatusBadge(sr.support_decision) : '<span class="text-muted">—</span>'}</td>
                         <td style="font-size:13px">${escapeHtml(sr.support_comment || '—')}</td>
                         <td>${cr.control_decision ? getChecklistStatusBadge(cr.control_decision) : '<span class="text-muted">—</span>'}</td>
@@ -149,6 +153,7 @@ async function loadSWOView() {
                                     <th style="width:40px">#</th>
                                     <th>Item</th>
                                     <th style="width:110px">User Status</th>
+                                    <th>User Comment</th>
                                     <th style="width:110px">Your Decision</th>
                                     <th>Your Comment</th>
                                     <th style="width:110px">Control Decision</th>

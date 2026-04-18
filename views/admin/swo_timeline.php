@@ -1,7 +1,6 @@
-<div class="card">
+﻿<div class="card">
     <div class="card-header">
         <h3 class="card-title">SWO Complete Timeline</h3>
-        <button class="btn btn-secondary btn-sm" onclick="AdminTimeline.load()">🔄 Refresh</button>
     </div>
     <div class="table-wrapper" style="overflow-x:auto;">
         <table class="swo-complete-timeline-table">

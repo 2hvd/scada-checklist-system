@@ -78,15 +78,43 @@ CREATE TABLE IF NOT EXISTS submissions_history (
     FOREIGN KEY (swo_id) REFERENCES swo_list(id)
 );
 
+CREATE TABLE IF NOT EXISTS swo_types (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    is_active TINYINT(1) DEFAULT 1,
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+INSERT IGNORE INTO swo_types (name, description, is_active, created_by) VALUES
+('S/S', 'Substation', 1, NULL),
+('Power Plant', 'Power Generation Plant', 1, NULL),
+('Line', 'Transmission/Distribution Line', 1, NULL);
+
 CREATE TABLE IF NOT EXISTS checklist_items (
     id INT PRIMARY KEY AUTO_INCREMENT,
     section VARCHAR(50) NOT NULL,
     section_number INT NOT NULL,
     description TEXT NOT NULL,
     item_key VARCHAR(50) UNIQUE NOT NULL,
+    swo_type_id INT,
+    parent_item_id INT,
+    visible_user TINYINT(1) NOT NULL DEFAULT 1,
+    visible_support TINYINT(1) NOT NULL DEFAULT 1,
+    visible_control TINYINT(1) NOT NULL DEFAULT 1,
+    user_parent_item_id INT NULL,
+    support_parent_item_id INT NULL,
+    control_parent_item_id INT NULL,
     is_active TINYINT(1) DEFAULT 1,
     is_deleted TINYINT(1) DEFAULT 0,
     created_by INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (swo_type_id) REFERENCES swo_types(id),
+    FOREIGN KEY (parent_item_id) REFERENCES checklist_items(id),
+    FOREIGN KEY (user_parent_item_id) REFERENCES checklist_items(id) ON DELETE SET NULL,
+    FOREIGN KEY (support_parent_item_id) REFERENCES checklist_items(id) ON DELETE SET NULL,
+    FOREIGN KEY (control_parent_item_id) REFERENCES checklist_items(id) ON DELETE SET NULL,
     FOREIGN KEY (created_by) REFERENCES users(id)
 );

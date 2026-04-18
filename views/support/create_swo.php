@@ -7,7 +7,7 @@ require_once __DIR__ . '/../components/sidebar.php';
 ?>
 <div class="main-content">
     <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="topbar-title">Create New SWO</h1>
         </div>
@@ -17,7 +17,7 @@ require_once __DIR__ . '/../components/sidebar.php';
     </div>
 
     <div class="page-content">
-        <div class="card" style="max-width:700px;margin:0 auto;">
+        <div class="card card-form-centered">
             <div class="card-header">
                 <h3 class="card-title">SWO Details</h3>
             </div>
@@ -40,11 +40,6 @@ require_once __DIR__ . '/../components/sidebar.php';
                         <label for="swo_type">SWO Type *</label>
                         <select id="swo_type" class="form-control" required>
                             <option value="">-- Select Type --</option>
-                            <option value="Configuration">Configuration</option>
-                            <option value="Commissioning">Commissioning</option>
-                            <option value="Maintenance">Maintenance</option>
-                            <option value="Upgrade">Upgrade</option>
-                            <option value="Troubleshooting">Troubleshooting</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -58,7 +53,6 @@ require_once __DIR__ . '/../components/sidebar.php';
                 </div>
 
                 <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="submitSWO('draft')">💾 Save as Draft</button>
                     <button type="button" class="btn btn-primary" onclick="submitSWO('submit')">📤 Submit for Approval</button>
                 </div>
             </form>
@@ -80,9 +74,9 @@ async function submitSWO(action) {
     const form = document.getElementById('createSwoForm');
     const swo_number = document.getElementById('swo_number').value.trim();
     const station_name = document.getElementById('station_name').value.trim();
-    const swo_type = document.getElementById('swo_type').value;
+    const swo_type_id = parseInt(document.getElementById('swo_type').value) || 0;
 
-    if (!swo_number || !station_name || !swo_type) {
+    if (!swo_number || !station_name || !swo_type_id) {
         showError('Please fill in all required fields.');
         return;
     }
@@ -90,7 +84,7 @@ async function submitSWO(action) {
     const payload = {
         swo_number,
         station_name,
-        swo_type,
+        swo_type_id,
         kcor: document.getElementById('kcor').value.trim(),
         description: document.getElementById('description').value.trim(),
         action
@@ -102,7 +96,7 @@ async function submitSWO(action) {
     try {
         const data = await API.post('/swo/create_swo.php', payload);
         if (data && data.success) {
-            showSuccess(action === 'submit' ? 'SWO submitted for approval!' : 'SWO saved as draft!');
+            showSuccess('SWO submitted for approval!');
             setTimeout(() => window.location.href = '/scada-checklist-system/views/support/my_swo.php', 1500);
         } else {
             showError(data?.message || 'Failed to create SWO');
@@ -113,4 +107,18 @@ async function submitSWO(action) {
         btns.forEach(b => b.disabled = false);
     }
 }
+
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const data = await API.get('/swo/get_swo_types.php');
+        if (data && data.success) {
+            const select = document.getElementById('swo_type');
+            const types = data.data || [];
+            select.innerHTML = '<option value="">-- Select Type --</option>' +
+                types.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('');
+        }
+    } catch (err) {
+        console.error('Failed to load SWO types:', err);
+    }
+});
 </script>

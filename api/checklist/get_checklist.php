@@ -15,8 +15,8 @@ if (!$swo_id) {
 $conn = getDBConnection();
 $user_id = $_SESSION['user_id'];
 
-// Get SWO info
-$stmt = $conn->prepare("SELECT id, status, assigned_to FROM swo_list WHERE id = ?");
+// Get SWO info including swo_type_id
+$stmt = $conn->prepare("SELECT id, status, assigned_to, swo_type_id FROM swo_list WHERE id = ?");
 $stmt->bind_param('i', $swo_id);
 $stmt->execute();
 $swo = $stmt->get_result()->fetch_assoc();
@@ -27,34 +27,98 @@ if (!$swo) {
     jsonResponse(false, 'SWO not found');
 }
 
-$assigned_id = $swo['assigned_to'];
+$assigned_id  = $swo['assigned_to'];
+$swo_type_id  = $swo['swo_type_id'] ? intval($swo['swo_type_id']) : null;
+$requested_swo_type_id = intval($_GET['swo_type_id'] ?? 0);
+if ($swo_type_id === null && $requested_swo_type_id > 0) {
+    $swo_type_id = $requested_swo_type_id;
+}
 
-// Always load ALL active items from checklist_items, left-joined with this SWO's saved statuses
-$stmt = $conn->prepare(
-    "SELECT ci.section, ci.section_number, ci.item_key, ci.description,
-            COALESCE(cs.status, 'empty') AS status,
-            cs.updated_at AS status_updated_at
-     FROM checklist_items ci
-     LEFT JOIN checklist_status cs
-           ON cs.item_key = ci.item_key
-          AND cs.swo_id   = ?
-          AND cs.user_id  = ?
-     WHERE (ci.is_active = 1 AND ci.is_deleted = 0)
-        OR (cs.id IS NOT NULL)
-     ORDER BY ci.section, ci.section_number"
-);
-$stmt->bind_param('ii', $swo_id, $assigned_id);
+// Check if this SWO has a snapshot of items (set at approval time)
+$snapStmt = $conn->prepare("SELECT COUNT(*) as cnt FROM swo_checklist_items WHERE swo_id = ?");
+$snapStmt->bind_param('i', $swo_id);
+$snapStmt->execute();
+$snapCount = intval($snapStmt->get_result()->fetch_assoc()['cnt']);
+$snapStmt->close();
+
+$hasSnapshot = $snapCount > 0;
+
+if ($hasSnapshot) {
+    // Use snapshot: join only items that were locked in at approval time
+    $sql = "SELECT ci.id, ci.section, ci.section_number, ci.item_key, ci.description,
+                   ci.parent_item_id, ci.swo_type_id,
+                   ci.visible_user, ci.user_parent_item_id,
+                   COALESCE(cs.status, 'empty') AS status,
+                   cs.updated_at AS status_updated_at,
+                   uic.comment AS user_comment
+            FROM swo_checklist_items sci
+            JOIN checklist_items ci ON ci.id = sci.item_id
+            LEFT JOIN checklist_status cs
+                  ON cs.item_key = ci.item_key
+                 AND cs.swo_id   = ?
+                 AND cs.user_id  = ?
+            LEFT JOIN user_item_comments uic
+                  ON uic.item_key = ci.item_key
+                 AND uic.swo_id   = ?
+                 AND uic.user_id  = ?
+            WHERE sci.swo_id = ?
+            ORDER BY ci.section, COALESCE(ci.parent_item_id, ci.id), ci.parent_item_id IS NOT NULL, ci.section_number";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('iiiii', $swo_id, $assigned_id, $swo_id, $assigned_id, $swo_id);
+} else {
+    // Fallback: use active items filtered by SWO type (old behaviour)
+    $sql = "SELECT ci.id, ci.section, ci.section_number, ci.item_key, ci.description,
+                   ci.parent_item_id, ci.swo_type_id,
+                   ci.visible_user, ci.user_parent_item_id,
+                   COALESCE(cs.status, 'empty') AS status,
+                   cs.updated_at AS status_updated_at,
+                   uic.comment AS user_comment
+            FROM checklist_items ci
+            LEFT JOIN checklist_status cs
+                  ON cs.item_key = ci.item_key
+                 AND cs.swo_id   = ?
+                 AND cs.user_id  = ?
+            LEFT JOIN user_item_comments uic
+                  ON uic.item_key = ci.item_key
+                 AND uic.swo_id   = ?
+                 AND uic.user_id  = ?
+            WHERE ((ci.is_active = 1 AND ci.is_deleted = 0)
+                   OR (cs.id IS NOT NULL))";
+
+    $bind_types  = 'iiii';
+    $bind_values = [$swo_id, $assigned_id, $swo_id, $assigned_id];
+
+    if ($swo_type_id !== null) {
+        $sql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
+        $bind_types  .= 'i';
+        $bind_values[] = $swo_type_id;
+    }
+
+    $sql .= " ORDER BY ci.section, COALESCE(ci.parent_item_id, ci.id), ci.parent_item_id IS NOT NULL, ci.section_number";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param($bind_types, ...$bind_values);
+}
+
 $stmt->execute();
 $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 
-$sections = [];
-$total = 0;
-$done = 0;
-$na = 0;
-$not_yet = 0;
-$still = 0;
-$empty_count = 0;
+$filteredRows = [];
+foreach ($rows as $row) {
+    $isVisible = intval($row['visible_user'] ?? 1) === 1;
+    if (!$isVisible) {
+        continue;
+    }
+    $roleParent = $row['user_parent_item_id'] !== null ? intval($row['user_parent_item_id']) : null;
+    if ($roleParent === null && $row['parent_item_id'] !== null) {
+        $roleParent = intval($row['parent_item_id']);
+    }
+    $row['effective_parent_item_id'] = $roleParent;
+    $filteredRows[] = $row;
+}
+$rows = $filteredRows;
 
 $sectionLabels = [
     'during_config'        => 'During Configuration',
@@ -62,6 +126,13 @@ $sectionLabels = [
     'after_commissioning'  => 'After Commissioning',
 ];
 
+// Build item lookup for hierarchy
+$itemById = [];
+foreach ($rows as $row) {
+    $itemById[$row['id']] = $row;
+}
+
+// Organize into sections with hierarchy
 $grouped = [];
 foreach ($rows as $row) {
     $sec = $row['section'];
@@ -80,23 +151,114 @@ uksort($grouped, function($a, $b) use ($sectionOrder) {
     return $ai - $bi;
 });
 
+$sections = [];
+$total = 0;
+$done = 0;
+$na = 0;
+$not_yet = 0;
+$still = 0;
+$empty_count = 0;
+
 foreach ($grouped as $section_key => $sectionRows) {
-    $items = [];
-    foreach ($sectionRows as $row) {
-        $st = $row['status'];
-        $items[] = [
-            'key'        => $row['item_key'],
-            'label'      => $row['description'],
-            'status'     => $st,
-            'updated_at' => $row['status_updated_at'],
-        ];
-        $total++;
-        if ($st === 'done')        $done++;
-        elseif ($st === 'na')      $na++;
-        elseif ($st === 'not_yet') $not_yet++;
-        elseif ($st === 'still')   $still++;
-        else                       $empty_count++;
+    // Build a set of visible parent IDs to detect orphan children
+    $visibleParentIds = [];
+    foreach ($sectionRows as $r) {
+        if ($r['effective_parent_item_id'] === null) {
+            $visibleParentIds[$r['id']] = true;
+        }
     }
+
+    $items = [];
+    $addedKeys = [];
+    foreach ($sectionRows as $row) {
+        $key = $row['item_key'];
+        if (isset($addedKeys[$key])) continue;
+        $addedKeys[$key] = true;
+
+        $parentId  = $row['effective_parent_item_id'];
+        $isParent  = ($parentId === null);
+        $hasVisibleChildren = false;
+
+        if ($isParent) {
+            // Check if any visible child references this parent
+            foreach ($sectionRows as $r2) {
+                if ($r2['effective_parent_item_id'] === $row['id']) {
+                    $hasVisibleChildren = true;
+                    break;
+                }
+            }
+        }
+
+        $st = $row['status'];
+        $entry = [
+            'key'            => $key,
+            'label'          => $row['description'],
+            'status'         => $st,
+            'user_comment'   => $row['user_comment'] ?? '',
+            'updated_at'     => $row['status_updated_at'],
+            'is_parent'      => $isParent && $hasVisibleChildren,
+            'parent_item_id' => $isParent ? null : $parentId,
+            'item_id'        => $row['id'],
+        ];
+        if (!$isParent && isset($visibleParentIds[$parentId])) {
+            // Find parent key
+            foreach ($sectionRows as $r2) {
+                if ($r2['id'] === $parentId) {
+                    $entry['parent_key'] = $r2['item_key'];
+                    break;
+                }
+            }
+        }
+        $items[] = $entry;
+
+        // Count progress
+        if (!$isParent || !$hasVisibleChildren) {
+            if ($isParent) {
+                // parent with no visible children counts itself
+                $total++;
+                if ($st === 'done')        $done++;
+                elseif ($st === 'na')      $na++;
+                elseif ($st === 'not_yet') $not_yet++;
+                elseif ($st === 'still')   $still++;
+                else                       $empty_count++;
+            } else {
+                // child item
+                $total++;
+                if ($st === 'done')        $done++;
+                elseif ($st === 'na')      $na++;
+                elseif ($st === 'not_yet') $not_yet++;
+                elseif ($st === 'still')   $still++;
+                else                       $empty_count++;
+            }
+        }
+    }
+
+
+    // Add orphan children (items with parent_item_id but parent not in result set AND not yet added)
+    foreach ($sectionRows as $row) {
+        if (isset($addedKeys[$row['item_key']])) continue; // already added
+        if ($row['effective_parent_item_id'] !== null && !isset($itemById[$row['effective_parent_item_id']])) {
+            $st = $row['status'];
+            $addedKeys[$row['item_key']] = true;
+            $items[] = [
+                'key'           => $row['item_key'],
+                'label'         => $row['description'],
+                'status'        => $st,
+                'user_comment'  => $row['user_comment'] ?? '',
+                'updated_at'    => $row['status_updated_at'],
+                'is_parent'     => false,
+                'parent_item_id' => $row['effective_parent_item_id'],
+                'item_id'       => $row['id'],
+            ];
+            $total++;
+            if ($st === 'done')        $done++;
+            elseif ($st === 'na')      $na++;
+            elseif ($st === 'not_yet') $not_yet++;
+            elseif ($st === 'still')   $still++;
+            else                       $empty_count++;
+        }
+    }
+
     $sections[] = [
         'key'   => $section_key,
         'label' => $sectionLabels[$section_key] ?? ucwords(str_replace('_', ' ', $section_key)),

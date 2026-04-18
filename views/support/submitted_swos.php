@@ -1,7 +1,6 @@
-<div class="card">
+﻿﻿<div class="card">
     <div class="card-header">
         <h3 class="card-title">Submitted SWOs</h3>
-        <button class="btn btn-secondary btn-sm" onclick="loadSubmittedSWOs()">🔄 Refresh</button>
     </div>
     <div class="table-wrapper" style="overflow-x:auto;">
         <table class="swo-submitted-table">
@@ -54,11 +53,11 @@ async function loadSubmittedSWOs() {
                 <tr>
                     <td><strong>${escapeHtml(s.swo_number)}</strong></td>
                     <td>${escapeHtml(s.station_name)}</td>
-                    <td>${escapeHtml(s.assigned_to_name || '—')}</td>
+                    <td>${escapeHtml(s.assigned_to_name || '"”')}</td>
                     <td>${getStatusBadge(s.status)}</td>
-                    <td>${s.submitted_at ? formatDateShort(s.submitted_at) : '—'}</td>
-                    <td>${s.support_reviewed_at ? formatDateShort(s.support_reviewed_at) : '—'}</td>
-                    <td>${s.control_reviewed_at ? formatDateShort(s.control_reviewed_at) : '—'}</td>
+                    <td>${s.submitted_at ? formatDateShort(s.submitted_at) : '"”'}</td>
+                    <td>${s.support_reviewed_at ? formatDateShort(s.support_reviewed_at) : '"”'}</td>
+                    <td>${s.control_reviewed_at ? formatDateShort(s.control_reviewed_at) : '"”'}</td>
                     <td style="display:flex;gap:6px;flex-wrap:wrap;">
                         <a class="btn btn-info btn-sm" href="/scada-checklist-system/views/support/view_submitted_swo.php?swo_id=${s.id}">View</a>
                         ${editBtn}
