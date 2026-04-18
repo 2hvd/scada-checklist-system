@@ -170,6 +170,22 @@ foreach ($bySection as $secKey => $rows) {
         $parentStatus = $parentUserStatusHidden ? 'empty' : ($userStatuses[$parentKey] ?? 'empty');
         $supportReview = $supportReviews[$parentKey] ?? ['support_decision' => '', 'support_comment' => ''];
         $controlReview = $controlReviews[$parentKey] ?? ['decision' => '', 'comment' => ''];
+        $childRows = $children[$parent['id']] ?? [];
+        $hasChildren = !empty($childRows);
+
+        $childTotal = 0;
+        $childCompleted = 0;
+        foreach ($childRows as $child) {
+            if (intval($child['visible_user'] ?? 1) !== 1) {
+                continue;
+            }
+            $childStatus = $userStatuses[$child['item_key']] ?? 'empty';
+            $childTotal++;
+            if ($childStatus === 'done' || $childStatus === 'na') {
+                $childCompleted++;
+            }
+        }
+        $childCompletionPct = $childTotal > 0 ? round(($childCompleted / $childTotal) * 100, 1) : null;
 
         $sectionData['items'][] = [
             'key'              => $parentKey,
@@ -180,13 +196,16 @@ foreach ($bySection as $secKey => $rows) {
             'support_comment'  => $supportReview['support_comment'],
             'decision'         => $controlReview['decision'],
             'comment'          => $controlReview['comment'],
-            'is_parent'        => isset($children[$parent['id']]),
+            'is_parent'        => $hasChildren,
             'user_status_hidden' => $parentUserStatusHidden,
             'parent_item_id'   => null,
             'item_id'          => intval($parent['id']),
+            'child_total_count' => $childTotal,
+            'child_completed_count' => $childCompleted,
+            'child_completion_pct' => $childCompletionPct,
         ];
 
-        if (!isset($children[$parent['id']]) && !$parentUserStatusHidden) {
+        if (!$hasChildren && !$parentUserStatusHidden) {
             $totalItems++;
             switch ($parentStatus) {
                 case 'done':    $doneCount++;    break;
@@ -197,7 +216,7 @@ foreach ($bySection as $secKey => $rows) {
             }
         }
 
-        foreach ($children[$parent['id']] ?? [] as $child) {
+        foreach ($childRows as $child) {
             $childKey = $child['item_key'];
             $childStatusHidden = intval($child['visible_user'] ?? 1) !== 1;
             $childStatus = $childStatusHidden ? 'empty' : ($userStatuses[$childKey] ?? 'empty');
@@ -218,6 +237,9 @@ foreach ($bySection as $secKey => $rows) {
                 'parent_item_id'   => intval($parent['id']),
                 'parent_key'       => $parentKey,
                 'item_id'          => intval($child['id']),
+                'child_total_count' => 0,
+                'child_completed_count' => 0,
+                'child_completion_pct' => null,
             ];
 
             if (!$childStatusHidden) {
@@ -257,6 +279,9 @@ foreach ($bySection as $secKey => $rows) {
             'user_status_hidden' => intval($row['visible_user'] ?? 1) !== 1,
             'parent_item_id'   => intval($parentId),
             'item_id'          => intval($row['id']),
+            'child_total_count' => 0,
+            'child_completed_count' => 0,
+            'child_completion_pct' => null,
         ];
         if (intval($row['visible_user'] ?? 1) === 1) {
             $totalItems++;

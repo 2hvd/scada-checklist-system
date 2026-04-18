@@ -41,7 +41,10 @@ const ReviewManager = {
 
     renderPage(data) {
         const swo      = data.swo;
-        const sections = data.sections || [];
+        const sections = (data.sections || []).map(section => ({
+            ...section,
+            items: this.orderSectionItems(section.items || []),
+        }));
         const counts   = data.counts   || {};
         const progress = data.progress || 0;
 
@@ -115,7 +118,7 @@ const ReviewManager = {
         const userStatusHidden = item.user_status_hidden === true
             || item.user_status_hidden === 1
             || item.user_status_hidden === '1';
-        const hasChildProgress = this.role === 'support'
+        const hasChildProgress = this.role !== 'user'
             && item.is_parent
             && Number(item.child_total_count || 0) > 0;
         const statusHtml = userStatusHidden
@@ -235,6 +238,60 @@ const ReviewManager = {
         const m = String(item.key).match(/_(\d+)(?:_(\d+))?(?:_t\d+)?$/);
         if (!m) return '';
         return m[2] ? `${parseInt(m[1], 10)}.${parseInt(m[2], 10)}` : String(parseInt(m[1], 10));
+    },
+
+    orderSectionItems(items) {
+        if (!Array.isArray(items) || items.length < 2) return items || [];
+
+        const itemId = (item) => String(item?.item_id ?? item?.key ?? '');
+        const itemMap = new Map();
+        items.forEach(item => itemMap.set(itemId(item), item));
+
+        const childrenByParent = new Map();
+        items.forEach(item => {
+            const parentId = item?.parent_item_id;
+            const parentKey = parentId == null ? '' : String(parentId);
+            if (!parentKey || !itemMap.has(parentKey)) return;
+            if (!childrenByParent.has(parentKey)) childrenByParent.set(parentKey, []);
+            childrenByParent.get(parentKey).push(item);
+        });
+
+        const roots = items.filter(item => {
+            const parentId = item?.parent_item_id;
+            const parentKey = parentId == null ? '' : String(parentId);
+            return !parentKey || !itemMap.has(parentKey);
+        });
+
+        const getOrderTuple = (item) => {
+            const m = String(item?.key || '').match(/_(\d+)(?:_(\d+))?(?:_t\d+)?$/);
+            if (!m) return [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER];
+            return [parseInt(m[1], 10), m[2] ? parseInt(m[2], 10) : 0];
+        };
+        const compareItems = (a, b) => {
+            const [aMain, aSub] = getOrderTuple(a);
+            const [bMain, bSub] = getOrderTuple(b);
+            if (aMain !== bMain) return aMain - bMain;
+            if (aSub !== bSub) return aSub - bSub;
+            return itemId(a).localeCompare(itemId(b));
+        };
+
+        roots.sort(compareItems);
+        childrenByParent.forEach(list => list.sort(compareItems));
+
+        const ordered = [];
+        const pushed = new Set();
+        const pushItem = (item) => {
+            const id = itemId(item);
+            if (pushed.has(id)) return;
+            ordered.push(item);
+            pushed.add(id);
+            const childList = childrenByParent.get(id) || [];
+            childList.forEach(pushItem);
+        };
+
+        roots.forEach(pushItem);
+        items.filter(item => !pushed.has(itemId(item))).sort(compareItems).forEach(pushItem);
+        return ordered;
     },
 
     scheduleItemSave(itemKey) {
