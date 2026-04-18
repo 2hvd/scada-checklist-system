@@ -33,6 +33,7 @@ $userStmt = $conn->prepare(
 $userStmt->execute();
 $userResult = $userStmt->get_result();
 $userStats = [];
+$leafKeysByTypeCache = [];
 
 while ($user = $userResult->fetch_assoc()) {
     $userTotalItems = 0;
@@ -51,46 +52,50 @@ while ($user = $userResult->fetch_assoc()) {
     foreach ($assignedSwos as $swoRow) {
         $swoId = intval($swoRow['id']);
         $swoTypeId = !empty($swoRow['swo_type_id']) ? intval($swoRow['swo_type_id']) : null;
-
-        $itemSql = "SELECT id, item_key, parent_item_id, user_parent_item_id, visible_user
-                    FROM checklist_items
-                    WHERE is_active = 1 AND is_deleted = 0";
-        if ($swoTypeId !== null) {
-            $itemSql .= " AND (swo_type_id = ? OR swo_type_id IS NULL)";
-            $itemStmt = $conn->prepare($itemSql);
-            $itemStmt->bind_param('i', $swoTypeId);
-        } else {
-            $itemStmt = $conn->prepare($itemSql);
-        }
-        $itemStmt->execute();
-        $rawItems = $itemStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        $itemStmt->close();
-
-        $visibleItems = [];
-        foreach ($rawItems as $item) {
-            if (intval($item['visible_user'] ?? 1) !== 1) {
-                continue;
+        $cacheKey = $swoTypeId !== null ? strval($swoTypeId) : 'null';
+        if (!isset($leafKeysByTypeCache[$cacheKey])) {
+            $itemSql = "SELECT id, item_key, parent_item_id, user_parent_item_id, visible_user
+                        FROM checklist_items
+                        WHERE is_active = 1 AND is_deleted = 0";
+            if ($swoTypeId !== null) {
+                $itemSql .= " AND (swo_type_id = ? OR swo_type_id IS NULL)";
+                $itemStmt = $conn->prepare($itemSql);
+                $itemStmt->bind_param('i', $swoTypeId);
+            } else {
+                $itemStmt = $conn->prepare($itemSql);
             }
-            $item['effective_parent_item_id'] = $item['user_parent_item_id'] !== null
-                ? intval($item['user_parent_item_id'])
-                : ($item['parent_item_id'] !== null ? intval($item['parent_item_id']) : null);
-            $visibleItems[] = $item;
-        }
+            $itemStmt->execute();
+            $rawItems = $itemStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            $itemStmt->close();
 
-        $hasChildren = [];
-        foreach ($visibleItems as $item) {
-            if ($item['effective_parent_item_id'] !== null) {
-                $hasChildren[intval($item['effective_parent_item_id'])] = true;
+            $visibleItems = [];
+            foreach ($rawItems as $item) {
+                if (intval($item['visible_user'] ?? 1) !== 1) {
+                    continue;
+                }
+                $item['effective_parent_item_id'] = $item['user_parent_item_id'] !== null
+                    ? intval($item['user_parent_item_id'])
+                    : ($item['parent_item_id'] !== null ? intval($item['parent_item_id']) : null);
+                $visibleItems[] = $item;
+            }
+
+            $hasChildren = [];
+            foreach ($visibleItems as $item) {
+                if ($item['effective_parent_item_id'] !== null) {
+                    $hasChildren[intval($item['effective_parent_item_id'])] = true;
+                }
+            }
+
+            $leafKeysByTypeCache[$cacheKey] = [];
+            foreach ($visibleItems as $item) {
+                $itemId = intval($item['id']);
+                if (!isset($hasChildren[$itemId])) {
+                    $leafKeysByTypeCache[$cacheKey][$item['item_key']] = true;
+                }
             }
         }
 
-        $leafKeys = [];
-        foreach ($visibleItems as $item) {
-            $itemId = intval($item['id']);
-            if (!isset($hasChildren[$itemId])) {
-                $leafKeys[$item['item_key']] = true;
-            }
-        }
+        $leafKeys = $leafKeysByTypeCache[$cacheKey];
 
         if (empty($leafKeys)) {
             continue;
