@@ -315,11 +315,11 @@ foreach ($bySection as $secKey => $rows) {
     $sections[] = $sectionData;
 }
 
-$summarySql = "SELECT ci.id, ci.item_key, ci.parent_item_id, ci.user_parent_item_id
-               FROM checklist_items ci
-               WHERE ci.is_deleted = 0
-                 AND ci.is_active = 1
-                 AND COALESCE(ci.visible_user, 1) = 1";
+$summarySql = "SELECT ci.id, ci.item_key, ci.parent_item_id, ci.control_parent_item_id
+                FROM checklist_items ci
+                WHERE ci.is_deleted = 0
+                  AND ci.is_active = 1
+                  AND COALESCE(ci.visible_control, 1) = 1";
 if ($swo_type_id !== null) {
     $summarySql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
     $summaryStmt = $conn->prepare($summarySql);
@@ -333,8 +333,8 @@ $summaryStmt->close();
 
 $summaryHasChildren = [];
 foreach ($summaryRows as $row) {
-    $effectiveParent = $row['user_parent_item_id'] !== null
-        ? intval($row['user_parent_item_id'])
+    $effectiveParent = $row['control_parent_item_id'] !== null
+        ? intval($row['control_parent_item_id'])
         : ($row['parent_item_id'] !== null ? intval($row['parent_item_id']) : null);
     if ($effectiveParent !== null) {
         $summaryHasChildren[$effectiveParent] = true;
@@ -348,7 +348,7 @@ foreach ($summaryRows as $row) {
     if (isset($summaryHasChildren[$itemId])) {
         continue;
     }
-    $status = $userStatuses[$row['item_key']] ?? 'empty';
+    $status = $controlReviews[$row['item_key']]['decision'] ?? 'empty';
     $totalItems++;
     switch ($status) {
         case 'done':    $doneCount++;    break;
@@ -359,7 +359,7 @@ foreach ($summaryRows as $row) {
     }
 }
 
-$completed = $doneCount + $naCount;
+$completed = $totalItems - $emptyCount;
 $progress  = $totalItems > 0 ? round($completed / $totalItems * 100, 1) : 0;
 
 $conn->close();
