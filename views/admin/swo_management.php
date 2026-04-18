@@ -8,7 +8,11 @@ require_once __DIR__ . '/../components/sidebar.php';
 <div class="main-content">
     <div class="topbar">
         <div class="topbar-heading">
+<<<<<<< HEAD
             <button class="sidebar-toggle" onclick="toggleSidebar()">â˜°</button>
+=======
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+>>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
             <h1 class="topbar-title">SWO Management</h1>
         </div>
         <div class="topbar-actions">
@@ -152,6 +156,7 @@ async function loadSWOs() {
                 <td>${escapeHtml(s.swo_type)}</td>
                 <td>${escapeHtml(s.kcor || '"”')}</td>
                 <td>${getStatusBadge(s.status)}</td>
+<<<<<<< HEAD
                 <td>${s.created_at ? formatDateShort(s.created_at) : '"”'}</td>
                 <td>${escapeHtml(s.assigned_to || '"”')}</td>
                 <td>${s.assigned_at ? formatDateShort(s.assigned_at) : '"”'}</td>
@@ -163,6 +168,19 @@ async function loadSWOs() {
                 <td>
                     ${s.control_reviewed_at ? formatDateShort(s.control_reviewed_at) : '"”'}
                     <div class="text-muted" style="font-size:11px;">${escapeHtml(s.control_reviewer_name || '"”')}</div>
+=======
+                <td>${s.created_at ? formatDateShort(s.created_at) : '—'}</td>
+                <td>${escapeHtml(s.assigned_to || '—')}</td>
+                <td>${s.assigned_at ? formatDateShort(s.assigned_at) : '—'}</td>
+                <td>${s.submitted_at ? formatDateShort(s.submitted_at) : '—'}</td>
+                <td>
+                    ${s.support_reviewed_at ? formatDateShort(s.support_reviewed_at) : '—'}
+                    <div class="text-muted" style="font-size:11px;">${escapeHtml(s.support_reviewer_name || '—')}</div>
+                </td>
+                <td>
+                    ${s.control_reviewed_at ? formatDateShort(s.control_reviewed_at) : '—'}
+                    <div class="text-muted" style="font-size:11px;">${escapeHtml(s.control_reviewer_name || '—')}</div>
+>>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
                 </td>
                 <td>
                     <button class="btn btn-secondary btn-sm" onclick="AdminDashboard.viewSWO(${s.id})">View</button>

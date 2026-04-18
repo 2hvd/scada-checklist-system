@@ -17,6 +17,29 @@ require_once __DIR__ . '/../components/sidebar.php';
     </div>
 
     <div class="page-content">
+<<<<<<< HEAD
+=======
+        <!-- Summary Stats -->
+        <div class="stats-grid" id="adminStatsContainer">
+            <div class="stat-card">
+                <div class="stat-value" id="statTotal">—</div>
+                <div class="stat-label">Total SWOs</div>
+            </div>
+            <div class="stat-card border-warning">
+                <div class="stat-value" id="statPending">—</div>
+                <div class="stat-label">Pending Approval</div>
+            </div>
+            <div class="stat-card border-success">
+                <div class="stat-value" id="statInProgress">—</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+            <div class="stat-card border-info">
+                <div class="stat-value" id="statSubmitted">—</div>
+                <div class="stat-label">Pending Support Review</div>
+            </div>
+        </div>
+
+>>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
         <!-- Tabs -->
         <div id="mainTabs">
             <div class="tabs" style="display:none;">
@@ -75,7 +98,11 @@ require_once __DIR__ . '/../components/sidebar.php';
                                 <option value="Completed">Completed</option>
                                 <option value="Closed">Closed</option>
                             </select>
+<<<<<<< HEAD
 
+=======
+                            <button class="btn btn-primary btn-sm ci-refresh-btn" onclick="AdminDashboard.loadSWOTable(document.getElementById('statusFilter').value)">🔄 Refresh</button>
+>>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
                         </div>
                     </div>
                     <div class="table-wrapper">
@@ -153,7 +180,11 @@ require_once __DIR__ . '/../components/sidebar.php';
                             </select>
                             <input type="text" id="ciSearchFilter" class="form-control search-control-wide" placeholder="🔍 Search description…">
                             <button class="btn btn-primary btn-sm" onclick="ChecklistItems.openAddModal()">+ Add Item</button>
+<<<<<<< HEAD
 
+=======
+                            <button class="btn btn-secondary btn-sm ci-refresh-btn" onclick="ChecklistItems.load()">🔄 Refresh</button>
+>>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
                         </div>
                     </div>
                     <div class="table-wrapper">

@@ -35,7 +35,11 @@ function getStatusBadgeClass(status) {
         'Completed':                'badge-completed',
         'Closed':                   'badge-closed',
     };
+<<<<<<< HEAD
     return statusMap[status] || 'badge-pending';
+=======
+    return statusMap[status] || 'badge-draft';
+>>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 
 function getChecklistStatusBadge(status) {

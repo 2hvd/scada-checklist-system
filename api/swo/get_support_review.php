@@ -36,6 +36,7 @@ if (!$swo) {
 }
 
 $swo_type_id = !empty($swo['swo_type_id']) ? intval($swo['swo_type_id']) : null;
+<<<<<<< HEAD
 
 // Check for snapshot
 $snapChk = $conn->prepare("SELECT COUNT(*) as cnt FROM swo_checklist_items WHERE swo_id = ?");
@@ -69,6 +70,22 @@ if ($snapCnt > 0) {
     } else {
         $itemStmt = $conn->prepare($itemSql);
     }
+=======
+$itemSql = "SELECT ci.id, ci.section, ci.section_number, ci.item_key, ci.description, ci.parent_item_id,
+                   ci.visible_support, ci.support_parent_item_id, ci.visible_user, ci.user_parent_item_id
+                 FROM checklist_items ci
+                WHERE ci.is_deleted = 0
+                  AND ci.is_active = 1";
+if ($swo_type_id !== null) {
+    $itemSql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
+}
+$itemSql .= " ORDER BY ci.section, CASE WHEN ci.parent_item_id IS NULL THEN 0 ELSE 1 END, ci.parent_item_id, ci.section_number";
+if ($swo_type_id !== null) {
+    $itemStmt = $conn->prepare($itemSql);
+    $itemStmt->bind_param('i', $swo_type_id);
+} else {
+    $itemStmt = $conn->prepare($itemSql);
+>>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 $itemStmt->execute();
 $itemsRes = $itemStmt->get_result();
@@ -190,6 +207,7 @@ foreach ($bySection as $secKey => $rows) {
             $children[$row['effective_parent_item_id']][] = $row;
         }
     }
+<<<<<<< HEAD
     // Also collect hidden children (visible_support=0) from allItemRows so their user comments are visible
     $hiddenChildrenByParent = [];
     foreach ($allItemRows as $row) {
@@ -199,6 +217,8 @@ foreach ($bySection as $secKey => $rows) {
         if ($row['section'] !== $secKey) continue;
         $hiddenChildrenByParent[$effParent][] = $row;
     }
+=======
+>>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
     $parentIdSet = [];
     foreach ($parents as $p) {
         $parentIdSet[intval($p['id'])] = true;
@@ -305,6 +325,7 @@ foreach ($bySection as $secKey => $rows) {
                     'child_completion_pct' => null,
                 ];
             }
+<<<<<<< HEAD
         } // end if ($hasVisibleChildren)
 
         // Append hidden-from-support children as comment-only rows (always, regardless of hasVisibleChildren)
@@ -336,6 +357,11 @@ foreach ($bySection as $secKey => $rows) {
     } // end foreach ($parents as $parent)
 
 
+=======
+        }
+
+    }
+>>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 
     // Keep orphaned items visible when their role-specific parent is hidden for this role.
     foreach ($rows as $row) {
@@ -377,6 +403,7 @@ foreach ($bySection as $secKey => $rows) {
     $sections[] = $sectionData;
 }
 
+<<<<<<< HEAD
 if ($snapCnt > 0) {
     $summaryStmt = $conn->prepare(
         "SELECT ci.id, ci.item_key, ci.parent_item_id, ci.support_parent_item_id
@@ -398,6 +425,19 @@ if ($snapCnt > 0) {
     } else {
         $summaryStmt = $conn->prepare($summarySql);
     }
+=======
+$summarySql = "SELECT ci.id, ci.item_key, ci.parent_item_id, ci.support_parent_item_id
+                FROM checklist_items ci
+                WHERE ci.is_deleted = 0
+                  AND ci.is_active = 1
+                  AND COALESCE(ci.visible_support, 1) = 1";
+if ($swo_type_id !== null) {
+    $summarySql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
+    $summaryStmt = $conn->prepare($summarySql);
+    $summaryStmt->bind_param('i', $swo_type_id);
+} else {
+    $summaryStmt = $conn->prepare($summarySql);
+>>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
 }
 $summaryStmt->execute();
 $summaryRows = $summaryStmt->get_result()->fetch_all(MYSQLI_ASSOC);

@@ -112,9 +112,12 @@ const ChecklistItems = {
             const parentBadge = (item.sub_items_count > 0)
                 ? '<span class="badge badge-ci-parent">Parent</span>'
                 : '';
+<<<<<<< HEAD
             const childBadge = isChild
                 ? '<span class="badge badge-ci-child">Child</span>'
                 : '';
+=======
+>>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
             const usageCount = parseInt(item.usage_count) || 0;
             const usageBadge = usageCount > 0
                 ? `<span class="badge badge-ci-usage" title="Used in ${usageCount} SWO(s)">Used: ${usageCount} SWO${usageCount > 1 ? 's' : ''}</span>`
@@ -135,7 +138,10 @@ const ChecklistItems = {
                     <div class="ci-status-stack">
                         ${activeBadge}
                         ${parentBadge}
+<<<<<<< HEAD
                         ${childBadge}
+=======
+>>>>>>> 65803cba57c3364051c6904add3c2d520a37afb9
                     </div>
                 </td>
                 <td>${escapeHtml(item.created_by_name || '—')}</td>
