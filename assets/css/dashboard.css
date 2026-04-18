@@ -829,7 +829,7 @@
 }
 
 .ci-role-tag-off {
-    background: #475467;
+    background: var(--ci-role-tag-off-bg);
     color: #fff;
 }
 
@@ -883,7 +883,7 @@
 
 .ci-role-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
     gap: 12px;
 }
 
@@ -924,5 +924,15 @@
 
     .filter-bar .ci-refresh-btn {
         margin-left: 0;
+    }
+
+    .ci-role-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .ci-role-grid {
+        grid-template-columns: 1fr;
     }
 }
