@@ -75,7 +75,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                                 <option value="Completed">Completed</option>
                                 <option value="Closed">Closed</option>
                             </select>
-                            <button class="btn btn-primary btn-sm" onclick="AdminDashboard.loadSWOTable(document.getElementById('statusFilter').value)">🔄 Refresh</button>
+                            <button class="btn btn-primary btn-sm ci-refresh-btn" onclick="AdminDashboard.loadSWOTable(document.getElementById('statusFilter').value)">🔄 Refresh</button>
                         </div>
                     </div>
                     <div class="table-wrapper">
@@ -153,7 +153,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                             </select>
                             <input type="text" id="ciSearchFilter" class="form-control search-control-wide" placeholder="🔍 Search description…">
                             <button class="btn btn-primary btn-sm" onclick="ChecklistItems.openAddModal()">+ Add Item</button>
-                            <button class="btn btn-secondary btn-sm" onclick="ChecklistItems.load()">🔄 Refresh</button>
+                            <button class="btn btn-secondary btn-sm ci-refresh-btn" onclick="ChecklistItems.load()">🔄 Refresh</button>
                         </div>
                     </div>
                     <div class="table-wrapper">
@@ -289,7 +289,7 @@ require_once __DIR__ . '/../components/sidebar.php';
 
 <!-- Checklist Item Role Mapping Modal -->
 <div class="modal-overlay" id="checklistItemRoleMapModal">
-    <div class="modal">
+    <div class="modal ci-role-map-modal">
         <div class="modal-header">
             <span class="modal-title">Role Mapping</span>
             <button class="modal-close" onclick="closeModal('checklistItemRoleMapModal')">×</button>

@@ -873,9 +873,17 @@
     align-items: center;
 }
 
+.ci-card-actions .ci-refresh-btn {
+    margin-left: auto;
+}
+
+.filter-bar .ci-refresh-btn {
+    margin-left: auto;
+}
+
 .ci-role-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(190px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 12px;
 }
 
@@ -901,4 +909,20 @@
     font-size: 12px;
     color: #667085;
     margin-bottom: 10px;
+}
+
+.ci-role-map-modal {
+    width: min(94vw, 860px);
+    max-width: 860px;
+    overflow-x: hidden;
+}
+
+@media (max-width: 900px) {
+    .ci-card-actions .ci-refresh-btn {
+        margin-left: 0;
+    }
+
+    .filter-bar .ci-refresh-btn {
+        margin-left: 0;
+    }
 }
