@@ -15,7 +15,7 @@ require_once __DIR__ . '/../components/sidebar.php';
 
 <div class="main-content">
     <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="topbar-title" id="feedbackTitle">Loading…</h1>
         </div>
@@ -25,19 +25,19 @@ require_once __DIR__ . '/../components/sidebar.php';
     </div>
 
     <div class="page-content">
-        <div id="feedbackAlert" style="display:none;"></div>
+        <div id="feedbackAlert" class="hidden"></div>
 
-        <div id="swoInfoBar" style="background:#fff;border-radius:8px;padding:16px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.08);display:flex;gap:20px;flex-wrap:wrap;font-size:14px;">
+        <div id="swoInfoBar" class="info-bar">
             <div><strong>SWO:</strong> <span id="infoSwoNumber">—</span></div>
             <div><strong>Station:</strong> <span id="infoStation">—</span></div>
             <div><strong>Status:</strong> <span id="infoStatus">—</span></div>
         </div>
 
         <div id="feedbackContent">
-            <div class="loading-overlay" style="position:relative;height:100px;"><div class="loading-spinner"></div></div>
+            <div class="loading-overlay loading-overlay-fixed"><div class="loading-spinner"></div></div>
         </div>
 
-        <div id="feedbackActions" style="margin-top:20px;display:flex;gap:10px;" class="hidden">
+        <div id="feedbackActions" class="inline-actions-row hidden">
             <a href="/scada-checklist-system/views/user/index.php" class="btn btn-secondary">← Back</a>
             <a id="editChecklistBtn" href="#" class="btn btn-primary">✏️ Edit Checklist</a>
         </div>

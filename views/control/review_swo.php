@@ -18,11 +18,11 @@ require_once __DIR__ . '/../components/sidebar.php';
 
 <div class="main-content">
     <div class="topbar checklist-topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="topbar-title" id="reviewTitle">Loading…</h1>
         </div>
-        <div class="topbar-actions" style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-actions">
             <span class="save-indicator hidden" id="saveIndicator"></span>
             <a href="/scada-checklist-system/views/control/index.php" class="btn btn-secondary btn-sm">← Dashboard</a>
         </div>

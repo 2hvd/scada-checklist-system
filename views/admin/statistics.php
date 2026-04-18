@@ -9,7 +9,7 @@ $filter_user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : null;
 ?>
 <div class="main-content">
     <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="topbar-title">Statistics</h1>
         </div>

@@ -82,15 +82,15 @@ const ChecklistItems = {
         const badges = this._roleOrder.map(role => {
             const label = role.charAt(0).toUpperCase() + role.slice(1);
             if (!cfg[role].visible) {
-                return `<span class="badge" style="background:#bdc3c7;color:#fff;">${label}: Off</span>`;
+                return `<span class="badge ci-role-tag ci-role-tag-off">${label}: Off</span>`;
             }
             const parent = cfg[role].parent_item_id
                 ? this._items.find(it => String(it.id) === String(cfg[role].parent_item_id))
                 : null;
-            const parentBadgeText = parent ? ` #${escapeHtml(String(parent.section_number))}` : '—';
-            return `<span class="badge" style="background:#34495e;color:#fff;">${label}${parentBadgeText}</span>`;
+            const parentBadgeText = parent ? `#${escapeHtml(String(parent.section_number))}` : '—';
+            return `<span class="badge ci-role-tag ci-role-tag-on">${label} ${parentBadgeText}</span>`;
         });
-        return badges.join(' ');
+        return badges.join('');
     },
 
     _renderTable(items, tbody) {
@@ -101,45 +101,50 @@ const ChecklistItems = {
 
         tbody.innerHTML = items.map(item => {
             const activeBadge = item.is_active == 1
-                ? '<span class="badge" style="background:#27ae60;color:#fff">Active</span>'
-                : '<span class="badge" style="background:#e74c3c;color:#fff">Inactive</span>';
+                ? '<span class="badge badge-ci-active">Active</span>'
+                : '<span class="badge badge-ci-inactive">Inactive</span>';
 
             const toggleLabel  = item.is_active == 1 ? '⏸ Deactivate' : '▶ Activate';
             const toggleClass  = item.is_active == 1 ? 'btn-warning' : 'btn-success';
             const isChild = !!item.parent_item_id;
-            const childPrefix = isChild ? '<span style="color:#aaa;margin-right:4px;">↳</span>' : '';
-            const descStyle = isChild ? 'max-width:280px;padding-left:20px;' : 'max-width:280px;';
+            const childPrefix = isChild ? '<span class="ci-desc-prefix">↳</span>' : '';
+            const descClass = isChild ? 'ci-desc-cell ci-desc-cell--child' : 'ci-desc-cell';
             const parentBadge = (item.sub_items_count > 0)
-                ? ' <span class="badge" style="background:#3498db;color:#fff;font-size:10px;">Parent</span>'
+                ? '<span class="badge badge-ci-parent">Parent</span>'
                 : '';
             const usageCount = parseInt(item.usage_count) || 0;
             const usageBadge = usageCount > 0
-                ? `<span class="badge" style="background:#f39c12;color:#fff" title="Used in ${usageCount} SWO(s)">⚠️ ${usageCount} SWO${usageCount > 1 ? 's' : ''}</span>`
+                ? `<span class="badge badge-ci-usage" title="Used in ${usageCount} SWO(s)">Used: ${usageCount} SWO${usageCount > 1 ? 's' : ''}</span>`
                 : '<span class="text-muted">—</span>';
             const swoTypeName = item.swo_type_name && item.swo_type_name !== '—' ? item.swo_type_name : null;
             const swoTypeBadge = swoTypeName
-                ? `<span class="badge" style="background:#9b59b6;color:#fff;">${escapeHtml(swoTypeName)}</span>`
+                ? `<span class="badge badge-ci-type">${escapeHtml(swoTypeName)}</span>`
                 : '<span class="text-muted">—</span>';
 
             return `
             <tr>
                 <td>${escapeHtml(item.section_label)}</td>
                 <td>${escapeHtml(String(item.section_number))}</td>
-                <td style="${descStyle}">${childPrefix}${escapeHtml(item.description)}</td>
-                <td><code style="font-size:11px;background:#f4f4f4;padding:2px 5px;border-radius:3px;">${escapeHtml(item.item_key)}</code></td>
+                <td class="${descClass}">${childPrefix}${escapeHtml(item.description)}</td>
+                <td><code class="ci-item-key">${escapeHtml(item.item_key)}</code></td>
                 <td>${swoTypeBadge}</td>
-                <td>${activeBadge}${parentBadge}</td>
-                <td>${escapeHtml(item.created_by_name || '—')}</td>
-                <td style="white-space:nowrap;">${formatDateShort(item.created_at)}</td>
-                <td>${usageBadge}</td>
                 <td>
-                    <div style="display:flex;flex-direction:column;gap:6px;">
-                        <div>${this._roleSummaryHtml(item)}</div>
+                    <div class="ci-status-stack">
+                        ${activeBadge}
+                        ${parentBadge}
+                    </div>
+                </td>
+                <td>${escapeHtml(item.created_by_name || '—')}</td>
+                <td class="ci-created-cell">${formatDateShort(item.created_at)}</td>
+                <td>${usageBadge}</td>
+                <td class="ci-role-cell">
+                    <div class="ci-role-stack">
+                        <div class="ci-role-summary">${this._roleSummaryHtml(item)}</div>
                         <button class="btn btn-secondary btn-sm ci-role-map-btn" data-id="${escapeHtml(String(item.id))}">⚙ Role Box</button>
                     </div>
                 </td>
-                <td>
-                    <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                <td class="ci-actions-cell">
+                    <div class="ci-actions-row">
                         <button class="btn ${toggleClass} btn-sm ci-toggle-btn" data-id="${escapeHtml(String(item.id))}">${toggleLabel}</button>
                         <button class="btn btn-danger btn-sm ci-delete-btn" data-id="${escapeHtml(String(item.id))}" data-key="${escapeHtml(item.item_key)}">🗑 Delete</button>
                     </div>

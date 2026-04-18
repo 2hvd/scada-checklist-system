@@ -21,7 +21,7 @@
     margin: 0;
     font-size: 22px;
     font-weight: 700;
-    color: #1a1a2e;
+    color: var(--primary-blue);
 }
 
 /* ── SWO info bar ── */
@@ -44,11 +44,11 @@
 /* ── Progress section ── */
 .review-progress {
     background: #fff;
-    border: 1px solid #e8eaf0;
+    border: 1px solid #e6ebf2;
     border-radius: 10px;
     padding: 16px 20px;
     margin-bottom: 20px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    box-shadow: var(--shadow-soft);
 }
 
 .review-progress-header {
@@ -111,11 +111,11 @@
 /* ── Review sections ── */
 .review-section {
     background: #fff;
-    border: 1px solid #e8eaf0;
+    border: 1px solid #e6ebf2;
     border-radius: 10px;
     margin-bottom: 20px;
     overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    box-shadow: var(--shadow-soft);
 }
 
 .review-section-header {
@@ -275,11 +275,11 @@
 /* ── Overall comments ── */
 .review-overall-comments {
     background: #fff;
-    border: 1px solid #e8eaf0;
+    border: 1px solid #e6ebf2;
     border-radius: 10px;
     padding: 20px;
     margin-bottom: 20px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    box-shadow: var(--shadow-soft);
 }
 
 .review-overall-comments label {

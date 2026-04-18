@@ -10,7 +10,7 @@ require_once __DIR__ . '/../components/sidebar.php';
 ?>
 <div class="main-content">
     <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="topbar-title">Submissions</h1>
         </div>
@@ -28,7 +28,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                     <h3 class="card-title" id="swoTitle">Loading SWO...</h3>
                     <button class="btn btn-primary btn-sm" onclick="ChecklistPage.exportCSV()">📥 Export CSV</button>
                 </div>
-                <div id="swoInfoBar" style="margin-bottom:16px;font-size:13px;color:#666;"></div>
+                <div id="swoInfoBar" class="review-modal-info"></div>
 
                 <!-- Progress -->
                 <div style="margin-bottom:20px;">
@@ -53,7 +53,7 @@ require_once __DIR__ . '/../components/sidebar.php';
                     <h3 class="card-title">Comments</h3>
                 </div>
                 <div id="commentsContainer"></div>
-                <form id="commentForm" style="margin-top:16px;">
+                <form id="commentForm" class="modal-form-section">
                     <div class="comment-form">
                         <textarea class="form-control" placeholder="Add a comment or review note..." required></textarea>
                         <button type="submit" class="btn btn-primary">Send</button>

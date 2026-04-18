@@ -46,11 +46,11 @@ require_once __DIR__ . '/../components/sidebar.php';
 <link rel="stylesheet" href="/scada-checklist-system/assets/css/review_page.css">
 <div class="main-content">
     <div class="topbar checklist-topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-heading">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <div>
-                <h1 class="topbar-title" style="margin:0;"><?php echo htmlspecialchars($swo['swo_number']); ?></h1>
-                <div style="font-size:12px;color:rgba(255,255,255,.85);"><?php echo htmlspecialchars($swo['station_name']); ?> &mdash; <?php echo htmlspecialchars($swo['swo_type']); ?></div>
+                <h1 class="topbar-title topbar-title-no-margin"><?php echo htmlspecialchars($swo['swo_number']); ?></h1>
+                <div class="topbar-subtitle"><?php echo htmlspecialchars($swo['station_name']); ?> &mdash; <?php echo htmlspecialchars($swo['swo_type']); ?></div>
             </div>
         </div>
         <div class="topbar-actions">
