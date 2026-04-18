@@ -41,10 +41,11 @@ if (!$swo) {
 }
 
 $swo_type_id = !empty($swo['swo_type_id']) ? intval($swo['swo_type_id']) : null;
-$itemSql = "SELECT ci.id, ci.section, ci.section_number, ci.item_key, ci.description, ci.parent_item_id
-              FROM checklist_items ci
-             WHERE ci.is_deleted = 0
-               AND ci.is_active = 1";
+$itemSql = "SELECT ci.id, ci.section, ci.section_number, ci.item_key, ci.description, ci.parent_item_id,
+                   ci.visible_control, ci.control_parent_item_id
+               FROM checklist_items ci
+              WHERE ci.is_deleted = 0
+                AND ci.is_active = 1";
 if ($swo_type_id !== null) {
     $itemSql .= " AND (ci.swo_type_id = ? OR ci.swo_type_id IS NULL)";
 }
@@ -59,6 +60,12 @@ $itemStmt->execute();
 $itemsRes = $itemStmt->get_result();
 $itemRows = [];
 while ($row = $itemsRes->fetch_assoc()) {
+    if (intval($row['visible_control'] ?? 1) !== 1) {
+        continue;
+    }
+    $row['effective_parent_item_id'] = $row['control_parent_item_id'] !== null
+        ? intval($row['control_parent_item_id'])
+        : ($row['parent_item_id'] !== null ? intval($row['parent_item_id']) : null);
     $itemRows[] = $row;
 }
 $itemStmt->close();
@@ -146,10 +153,10 @@ foreach ($bySection as $secKey => $rows) {
     $parents = [];
     $children = [];
     foreach ($rows as $row) {
-        if ($row['parent_item_id'] === null) {
+        if ($row['effective_parent_item_id'] === null) {
             $parents[] = $row;
         } else {
-            $children[$row['parent_item_id']][] = $row;
+            $children[$row['effective_parent_item_id']][] = $row;
         }
     }
 
@@ -213,6 +220,49 @@ foreach ($bySection as $secKey => $rows) {
                 case 'not_yet': $notYetCount++;  break;
                 default:        $emptyCount++;   break;
             }
+        }
+    }
+
+    foreach ($rows as $row) {
+        $parentId = $row['effective_parent_item_id'];
+        if ($parentId === null) {
+            continue;
+        }
+        $parentExists = false;
+        foreach ($parents as $p) {
+            if (intval($p['id']) === intval($parentId)) {
+                $parentExists = true;
+                break;
+            }
+        }
+        if ($parentExists) {
+            continue;
+        }
+
+        $key = $row['item_key'];
+        $status = $userStatuses[$key] ?? 'empty';
+        $supportReview = $supportReviews[$key] ?? ['support_decision' => '', 'support_comment' => ''];
+        $controlReview = $controlReviews[$key] ?? ['decision' => '', 'comment' => ''];
+        $sectionData['items'][] = [
+            'key'              => $key,
+            'label'            => $row['description'],
+            'status'           => $status,
+            'user_comment'     => $userComments[$key] ?? '',
+            'support_decision' => $supportReview['support_decision'],
+            'support_comment'  => $supportReview['support_comment'],
+            'decision'         => $controlReview['decision'],
+            'comment'          => $controlReview['comment'],
+            'is_parent'        => false,
+            'parent_item_id'   => intval($parentId),
+            'item_id'          => intval($row['id']),
+        ];
+        $totalItems++;
+        switch ($status) {
+            case 'done':    $doneCount++;    break;
+            case 'na':      $naCount++;      break;
+            case 'still':   $stillCount++;   break;
+            case 'not_yet': $notYetCount++;  break;
+            default:        $emptyCount++;   break;
         }
     }
     $sections[] = $sectionData;

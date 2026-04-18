@@ -70,7 +70,14 @@ function buildRealtimeVersion($conn) {
                 IFNULL(COUNT(*),0), ':',
                 IFNULL(SUM(CRC32(CONCAT_WS('|',
                     id, item_key, section, section_number, description,
-                    COALESCE(parent_item_id,'NULL'), is_active, is_deleted, COALESCE(swo_type_id,'NULL')
+                    COALESCE(parent_item_id,'NULL'),
+                    COALESCE(user_parent_item_id,'NULL'),
+                    COALESCE(support_parent_item_id,'NULL'),
+                    COALESCE(control_parent_item_id,'NULL'),
+                    COALESCE(visible_user,'1'),
+                    COALESCE(visible_support,'1'),
+                    COALESCE(visible_control,'1'),
+                    is_active, is_deleted, COALESCE(swo_type_id,'NULL')
                 ))),0)
             ) FROM checklist_items"
         );

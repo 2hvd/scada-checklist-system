@@ -38,6 +38,7 @@ if ($swo_type_id === null && $requested_swo_type_id > 0) {
 // Items with no swo_type_id (null) are shown for all SWO types (backward compatible)
 $sql = "SELECT ci.id, ci.section, ci.section_number, ci.item_key, ci.description,
                ci.parent_item_id, ci.swo_type_id,
+               ci.visible_user, ci.user_parent_item_id,
                COALESCE(cs.status, 'empty') AS status,
                cs.updated_at AS status_updated_at,
                uic.comment AS user_comment
@@ -71,6 +72,21 @@ $stmt->bind_param($bind_types, ...$bind_values);
 $stmt->execute();
 $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
+
+$filteredRows = [];
+foreach ($rows as $row) {
+    $isVisible = intval($row['visible_user'] ?? 1) === 1;
+    if (!$isVisible) {
+        continue;
+    }
+    $roleParent = $row['user_parent_item_id'] !== null ? intval($row['user_parent_item_id']) : null;
+    if ($roleParent === null && $row['parent_item_id'] !== null) {
+        $roleParent = intval($row['parent_item_id']);
+    }
+    $row['effective_parent_item_id'] = $roleParent;
+    $filteredRows[] = $row;
+}
+$rows = $filteredRows;
 
 $sectionLabels = [
     'during_config'        => 'During Configuration',
@@ -117,10 +133,10 @@ foreach ($grouped as $section_key => $sectionRows) {
     $children = [];
 
     foreach ($sectionRows as $row) {
-        if ($row['parent_item_id'] === null) {
+        if ($row['effective_parent_item_id'] === null) {
             $parents[] = $row;
         } else {
-            $children[$row['parent_item_id']][] = $row;
+            $children[$row['effective_parent_item_id']][] = $row;
         }
     }
 
@@ -160,11 +176,11 @@ foreach ($grouped as $section_key => $sectionRows) {
                     'status'        => $cst,
                     'user_comment'  => $child['user_comment'] ?? '',
                     'updated_at'    => $child['status_updated_at'],
-                    'is_parent'     => false,
-                    'parent_item_id' => $parent['id'],
-                    'parent_key'    => $parent['item_key'],
-                    'item_id'       => $child['id'],
-                ];
+                'is_parent'     => false,
+                'parent_item_id' => $parent['id'],
+                'parent_key'    => $parent['item_key'],
+                'item_id'       => $child['id'],
+            ];
                 $total++;
                 if ($cst === 'done')        $done++;
                 elseif ($cst === 'na')      $na++;
@@ -177,7 +193,7 @@ foreach ($grouped as $section_key => $sectionRows) {
 
     // Add orphan children (items with parent_item_id but parent not in result set)
     foreach ($sectionRows as $row) {
-        if ($row['parent_item_id'] !== null && !isset($itemById[$row['parent_item_id']])) {
+        if ($row['effective_parent_item_id'] !== null && !isset($itemById[$row['effective_parent_item_id']])) {
             $st = $row['status'];
             $items[] = [
                 'key'           => $row['item_key'],
@@ -186,7 +202,7 @@ foreach ($grouped as $section_key => $sectionRows) {
                 'user_comment'  => $row['user_comment'] ?? '',
                 'updated_at'    => $row['status_updated_at'],
                 'is_parent'     => false,
-                'parent_item_id' => $row['parent_item_id'],
+                'parent_item_id' => $row['effective_parent_item_id'],
                 'item_id'       => $row['id'],
             ];
             $total++;

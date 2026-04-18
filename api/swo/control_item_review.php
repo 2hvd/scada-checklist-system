@@ -72,8 +72,13 @@ $stmt->close();
 $parentChk = $conn->prepare(
     "SELECT ci_child.item_key
        FROM checklist_items ci_parent
-       JOIN checklist_items ci_child ON ci_child.parent_item_id = ci_parent.id AND ci_child.is_deleted = 0
-      WHERE ci_parent.item_key = ?"
+       JOIN checklist_items ci_child
+         ON ci_child.control_parent_item_id = ci_parent.id
+        AND ci_child.is_deleted = 0
+        AND ci_child.is_active = 1
+        AND COALESCE(ci_child.visible_control, 1) = 1
+      WHERE ci_parent.item_key = ?
+        AND COALESCE(ci_parent.visible_control, 1) = 1"
 );
 $parentChk->bind_param('s', $item_key);
 $parentChk->execute();

@@ -169,11 +169,12 @@ require_once __DIR__ . '/../components/sidebar.php';
                                     <th>Created By</th>
                                     <th>Created</th>
                                     <th>Used In</th>
+                                    <th>Role Mapping</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="ciTableBody">
-                                <tr><td colspan="10" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
+                                <tr><td colspan="11" class="text-center"><div class="loading-overlay"><div class="loading-spinner"></div></div></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -237,10 +238,39 @@ require_once __DIR__ . '/../components/sidebar.php';
             </select>
         </div>
         <div class="form-group">
-            <label>Parent Item <small style="color:#999;">(Optional - leave empty for top-level item)</small></label>
-            <select id="ciAddParentItem" class="form-control" onchange="ChecklistItems.onParentItemChange()">
-                <option value="">-- No Parent (Top-level Item) --</option>
-            </select>
+            <label>Role Visibility & Child Mapping *</label>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(190px,1fr));gap:12px;">
+                <div style="border:1px solid #e4e4e4;border-radius:8px;padding:10px;">
+                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                        <input type="checkbox" id="ciAddRoleUserVisible" checked>
+                        <span>User</span>
+                    </label>
+                    <label style="font-size:12px;color:#666;">Child</label>
+                    <select id="ciAddRoleUserParent" class="form-control">
+                        <option value="">-- No Child Parent --</option>
+                    </select>
+                </div>
+                <div style="border:1px solid #e4e4e4;border-radius:8px;padding:10px;">
+                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                        <input type="checkbox" id="ciAddRoleSupportVisible" checked>
+                        <span>Support</span>
+                    </label>
+                    <label style="font-size:12px;color:#666;">Child</label>
+                    <select id="ciAddRoleSupportParent" class="form-control">
+                        <option value="">-- No Child Parent --</option>
+                    </select>
+                </div>
+                <div style="border:1px solid #e4e4e4;border-radius:8px;padding:10px;">
+                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                        <input type="checkbox" id="ciAddRoleControlVisible" checked>
+                        <span>Control</span>
+                    </label>
+                    <label style="font-size:12px;color:#666;">Child</label>
+                    <select id="ciAddRoleControlParent" class="form-control">
+                        <option value="">-- No Child Parent --</option>
+                    </select>
+                </div>
+            </div>
         </div>
         <div class="form-group">
             <label>Item Number * <small style="color:#999;">(auto-suggested)</small></label>
@@ -253,6 +283,54 @@ require_once __DIR__ . '/../components/sidebar.php';
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeModal('addChecklistItemModal')">Cancel</button>
             <button class="btn btn-primary" onclick="ChecklistItems.submitAdd()">Create Item</button>
+        </div>
+    </div>
+</div>
+
+<!-- Checklist Item Role Mapping Modal -->
+<div class="modal-overlay" id="checklistItemRoleMapModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">Role Mapping</span>
+            <button class="modal-close" onclick="closeModal('checklistItemRoleMapModal')">×</button>
+        </div>
+        <input type="hidden" id="ciRoleMapItemId">
+        <div style="font-size:12px;color:#666;margin-bottom:10px;" id="ciRoleMapItemTitle"></div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(190px,1fr));gap:12px;">
+            <div style="border:1px solid #e4e4e4;border-radius:8px;padding:10px;">
+                <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <input type="checkbox" id="ciRoleMapUserVisible" checked>
+                    <span>User</span>
+                </label>
+                <label style="font-size:12px;color:#666;">Child</label>
+                <select id="ciRoleMapUserParent" class="form-control">
+                    <option value="">-- No Child Parent --</option>
+                </select>
+            </div>
+            <div style="border:1px solid #e4e4e4;border-radius:8px;padding:10px;">
+                <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <input type="checkbox" id="ciRoleMapSupportVisible" checked>
+                    <span>Support</span>
+                </label>
+                <label style="font-size:12px;color:#666;">Child</label>
+                <select id="ciRoleMapSupportParent" class="form-control">
+                    <option value="">-- No Child Parent --</option>
+                </select>
+            </div>
+            <div style="border:1px solid #e4e4e4;border-radius:8px;padding:10px;">
+                <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <input type="checkbox" id="ciRoleMapControlVisible" checked>
+                    <span>Control</span>
+                </label>
+                <label style="font-size:12px;color:#666;">Child</label>
+                <select id="ciRoleMapControlParent" class="form-control">
+                    <option value="">-- No Child Parent --</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('checklistItemRoleMapModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="ChecklistItems.submitRoleMapping()">Save</button>
         </div>
     </div>
 </div>
