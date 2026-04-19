@@ -38,6 +38,11 @@ function scalarOrDefault($conn, $sql, $default = '0') {
 }
 
 function maxTimestampExpr(string $column): string {
+    if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $column)) {
+        $maskedColumn = preg_replace('/[^a-zA-Z0-9_]/', '?', $column);
+        error_log('Invalid column name in maxTimestampExpr: ' . $maskedColumn);
+        throw new InvalidArgumentException('Invalid column name for timestamp expression');
+    }
     if (isSQLiteDriver()) {
         return "IFNULL(CAST(strftime('%s', MAX($column)) AS INTEGER), 0)";
     }

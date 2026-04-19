@@ -113,13 +113,17 @@ class SQLiteCompatConnection {
         try {
             $dir = dirname($sqlitePath);
             if (!is_dir($dir)) {
-                mkdir($dir, 0777, true);
+                mkdir($dir, 0700, true);
             }
+            @chmod($dir, 0700);
             $this->pdo = new PDO('sqlite:' . $sqlitePath, null, null, [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => true,
+                PDO::ATTR_EMULATE_PREPARES => false,
             ]);
+            if (is_file($sqlitePath)) {
+                @chmod($sqlitePath, 0600);
+            }
             $this->pdo->exec('PRAGMA foreign_keys = ON');
         } catch (Throwable $e) {
             $this->connect_error = $e->getMessage();
@@ -178,7 +182,7 @@ class SQLiteCompatConnection {
         $updated = $sql;
 
         $updated = preg_replace('/\bNOW\s*\(\s*\)/i', 'CURRENT_TIMESTAMP', $updated);
-        $updated = preg_replace('/\bUNIX_TIMESTAMP\s*\(([^\)]+)\)/i', "CAST(strftime('%s', $1) AS INTEGER)", $updated);
+        $updated = $this->replaceUnixTimestampCalls($updated);
 
         if (stripos($updated, 'ON DUPLICATE KEY UPDATE') !== false) {
             $updated = $this->transformOnDuplicateKey($updated);
@@ -210,10 +214,53 @@ class SQLiteCompatConnection {
             return $sql;
         }
 
-        $updates = preg_replace('/VALUES\s*\(\s*([a-zA-Z0-9_]+)\s*\)/i', 'excluded.$1', $updates);
+        $updates = preg_replace_callback(
+            '/VALUES\s*\(\s*([^)]+)\s*\)/i',
+            static function ($matches) {
+                $expr = trim($matches[1]);
+                if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $expr)) {
+                    return 'excluded.' . $expr;
+                }
+                return $matches[0];
+            },
+            $updates
+        );
         $updates = preg_replace('/\bNOW\s*\(\s*\)/i', 'CURRENT_TIMESTAMP', $updates);
 
         $conflictCols = implode(', ', $conflictMap[$table]);
         return "INSERT INTO {$table} (" . implode(', ', $columns) . ") VALUES ({$values}) ON CONFLICT({$conflictCols}) DO UPDATE SET {$updates}";
+    }
+
+    private function replaceUnixTimestampCalls(string $sql): string {
+        $needle = 'UNIX_TIMESTAMP(';
+        $offset = 0;
+
+        while (($start = stripos($sql, $needle, $offset)) !== false) {
+            $openPos = $start + strlen($needle) - 1;
+            $depth = 1;
+            $i = $openPos + 1;
+            $len = strlen($sql);
+
+            while ($i < $len && $depth > 0) {
+                $char = $sql[$i];
+                if ($char === '(') {
+                    $depth++;
+                } elseif ($char === ')') {
+                    $depth--;
+                }
+                $i++;
+            }
+
+            if ($depth !== 0) {
+                break;
+            }
+
+            $arg = trim(substr($sql, $openPos + 1, $i - $openPos - 2));
+            $replacement = "CAST(strftime('%s', {$arg}) AS INTEGER)";
+            $sql = substr($sql, 0, $start) . $replacement . substr($sql, $i);
+            $offset = $start + strlen($replacement);
+        }
+
+        return $sql;
     }
 }
