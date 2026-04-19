@@ -4,12 +4,22 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/../../config/functions.php';
 
-function tableExists($conn, $tableName) {
-    $stmt = $conn->prepare("SHOW TABLES LIKE ?");
+function isSQLiteDriver(): bool {
+    return defined('DB_DRIVER') && strtolower(DB_DRIVER) === 'sqlite';
+}
+
+function tableExists($conn, $tableName): bool {
+    if (isSQLiteDriver()) {
+        $stmt = $conn->prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?");
+    } else {
+        $stmt = $conn->prepare("SHOW TABLES LIKE ?");
+    }
+
     if (!$stmt) {
         error_log('check_session tableExists prepare failed: ' . $conn->error);
         return false;
     }
+
     $stmt->bind_param('s', $tableName);
     $stmt->execute();
     $exists = $stmt->get_result()->num_rows > 0;
@@ -27,76 +37,42 @@ function scalarOrDefault($conn, $sql, $default = '0') {
     return isset($row[0]) && $row[0] !== null ? (string)$row[0] : (string)$default;
 }
 
-function buildRealtimeVersion($conn) {
+function maxTimestampExpr(string $column): string {
+    if (isSQLiteDriver()) {
+        return "IFNULL(CAST(strftime('%s', MAX($column)) AS INTEGER), 0)";
+    }
+    return "IFNULL(UNIX_TIMESTAMP(MAX($column)), 0)";
+}
+
+function buildRealtimeVersion($conn): string {
     $parts = [];
 
-    // Check all needed tables in a single query
-    $needed = ['user_item_comments', 'support_item_reviews', 'control_item_reviews',
-               'support_reviews', 'control_reviews', 'swo_list', 'checklist_items'];
-    $placeholders = implode(',', array_fill(0, count($needed), '?'));
-    $stmt = $conn->prepare("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ($placeholders)");
-    $types = str_repeat('s', count($needed));
-    $stmt->bind_param($types, ...$needed);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    $existingTables = [];
-    while ($row = $res->fetch_row()) {
-        $existingTables[$row[0]] = true;
-    }
-    $stmt->close();
+    $tablesWithTimeCols = [
+        ['audit_log', 'timestamp'],
+        ['checklist_status', 'updated_at'],
+        ['comments', 'created_at'],
+        ['user_item_comments', 'saved_at'],
+        ['support_item_reviews', 'reviewed_at'],
+        ['control_item_reviews', 'reviewed_at'],
+        ['support_reviews', 'created_at'],
+        ['control_reviews', 'created_at'],
+    ];
 
-    $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(timestamp)), 0) FROM audit_log");
-    $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(updated_at)), 0) FROM checklist_status");
-    $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(created_at)), 0) FROM comments");
+    foreach ($tablesWithTimeCols as [$table, $column]) {
+        if (tableExists($conn, $table)) {
+            $parts[] = scalarOrDefault($conn, "SELECT " . maxTimestampExpr($column) . " FROM $table");
+            $parts[] = scalarOrDefault($conn, "SELECT COUNT(*) FROM $table");
+        }
+    }
 
-    if (isset($existingTables['user_item_comments'])) {
-        $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(saved_at)), 0) FROM user_item_comments");
+    if (tableExists($conn, 'swo_list')) {
+        $parts[] = scalarOrDefault($conn, "SELECT COUNT(*) FROM swo_list");
+        $parts[] = scalarOrDefault($conn, "SELECT " . maxTimestampExpr('created_at') . " FROM swo_list");
     }
-    if (isset($existingTables['support_item_reviews'])) {
-        $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(reviewed_at)), 0) FROM support_item_reviews");
-    }
-    if (isset($existingTables['control_item_reviews'])) {
-        $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(reviewed_at)), 0) FROM control_item_reviews");
-    }
-    if (isset($existingTables['support_reviews'])) {
-        $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(created_at)), 0) FROM support_reviews");
-    }
-    if (isset($existingTables['control_reviews'])) {
-        $parts[] = scalarOrDefault($conn, "SELECT IFNULL(UNIX_TIMESTAMP(MAX(created_at)), 0) FROM control_reviews");
-    }
-    if (isset($existingTables['swo_list'])) {
-        $parts[] = scalarOrDefault(
-            $conn,
-            "SELECT CONCAT(
-                IFNULL(COUNT(*),0), ':',
-                IFNULL(SUM(CRC32(CONCAT_WS('|',
-                    id, swo_number, station_name, swo_type, status,
-                    COALESCE(created_by,'NULL'), COALESCE(assigned_to,'NULL'), COALESCE(approved_by,'NULL'),
-                    COALESCE(assigned_at,'NULL'), COALESCE(submitted_at,'NULL'), COALESCE(approved_at,'NULL'),
-                    COALESCE(support_reviewed_at,'NULL'), COALESCE(control_reviewed_at,'NULL'),
-                    COALESCE(rejection_reason,'NULL')
-                ))),0)
-            ) FROM swo_list"
-        );
-    }
-    if (isset($existingTables['checklist_items'])) {
-        $parts[] = scalarOrDefault(
-            $conn,
-            "SELECT CONCAT(
-                IFNULL(COUNT(*),0), ':',
-                IFNULL(SUM(CRC32(CONCAT_WS('|',
-                    id, item_key, section, section_number, description,
-                    COALESCE(parent_item_id,'NULL'),
-                    COALESCE(user_parent_item_id,'NULL'),
-                    COALESCE(support_parent_item_id,'NULL'),
-                    COALESCE(control_parent_item_id,'NULL'),
-                    COALESCE(visible_user,'1'),
-                    COALESCE(visible_support,'1'),
-                    COALESCE(visible_control,'1'),
-                    is_active, is_deleted, COALESCE(swo_type_id,'NULL')
-                ))),0)
-            ) FROM checklist_items"
-        );
+
+    if (tableExists($conn, 'checklist_items')) {
+        $parts[] = scalarOrDefault($conn, "SELECT COUNT(*) FROM checklist_items");
+        $parts[] = scalarOrDefault($conn, "SELECT " . maxTimestampExpr('created_at') . " FROM checklist_items");
     }
 
     return hash('sha256', implode('|', $parts));

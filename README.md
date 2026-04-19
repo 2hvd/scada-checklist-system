@@ -1,6 +1,6 @@
 # SCADA Checklist System
 
-A complete web-based SCADA commissioning checklist management system built with PHP, MySQL, HTML/CSS/JS — designed to run on XAMPP.
+A complete web-based SCADA commissioning checklist management system built with PHP, SQLite/MySQL, HTML/CSS/JS.
 
 ## Features
 
@@ -15,7 +15,7 @@ A complete web-based SCADA commissioning checklist management system built with 
 - **Session management** for authenticated access
 - **Responsive design** — works on desktop and mobile
 
-## Quick Start (XAMPP)
+## Quick Start (SQLite - Default)
 
 ### 1. Install & Place Files
 
@@ -24,23 +24,18 @@ XAMPP htdocs/
 └── scada-checklist-system/   ← place entire project here
 ```
 
-### 2. Start XAMPP Services
+### 2. Create SQLite Database
 
-Start **Apache** and **MySQL** in the XAMPP Control Panel.
+Create the SQLite file from provided scripts:
 
-### 3. Create the Database
-
-Open **phpMyAdmin** (`http://localhost/phpmyadmin`) and run:
-
-```sql
--- Step 1: Create schema
-SOURCE /path/to/scada-checklist-system/database/schema.sql;
-
--- Step 2: Insert sample data
-SOURCE /path/to/scada-checklist-system/database/sample_data.sql;
+```bash
+sqlite3 /path/to/scada-checklist-system/database/scada_checklist.sqlite < /path/to/scada-checklist-system/database/schema_sqlite.sql
+sqlite3 /path/to/scada-checklist-system/database/scada_checklist.sqlite < /path/to/scada-checklist-system/database/sample_data_sqlite.sql
 ```
 
-Or import via phpMyAdmin → Import tab.
+### 3. Start Apache/PHP
+
+Run with your preferred PHP server or XAMPP Apache.
 
 ### 4. Set Passwords
 
@@ -115,13 +110,21 @@ Progress = (done + na) / 24 × 100%
 
 ## Configuration
 
-Edit `config/db_config.php` to change database credentials:
+Default driver is SQLite. You can switch using environment variables:
 
 ```php
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');          // Set your MySQL password here
-define('DB_NAME', 'scada_checklist');
+DB_DRIVER=sqlite
+SQLITE_PATH=/absolute/path/to/database/scada_checklist.sqlite
+```
+
+For MySQL mode:
+
+```php
+DB_DRIVER=mysql
+DB_HOST=localhost
+DB_USER=root
+DB_PASS=
+DB_NAME=scada_checklist
 ```
 
 ## Security Notes
